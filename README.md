@@ -2,7 +2,10 @@
 Репозиторий проекта Patreon команды Usage limit reached
 
 ### Участники команды
-
+- [Жуков Константин](https://github.com/ZhkvK)
+- [Александр Конторжевский](https://github.com/KorneplodVictor)
+- [Фёдор Семёнов](https://github.com/7drezz)
+- [Даниил Паронько](https://github.com/Juuwe)
 
 ### Внешние ссылки
  - [Figma]()
