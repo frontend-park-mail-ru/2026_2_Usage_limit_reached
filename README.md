@@ -8,10 +8,10 @@
 - [Даниил Паронько](https://github.com/Juuwe)
 
 ### Внешние ссылки
- - [Figma]()
+ - [Figma](https://www.figma.com/design/DoxQoepIBqsBeURC9C0ZUY/Patreon)
  - [Backend](https://github.com/go-park-mail-ru/2026_2_usage_limit_reached)
  - [Deploy]()
- - [Jira]()
+ - [Jira](https://drezz.atlassian.net/jira/software/projects/PTN/boards/34/backlog)
 
 ### Правила оформления Pull Requests
   1. Ветка создается с названием `PTN-###`, где ### - номер задачи в jira.
