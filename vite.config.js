@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
-import handlebars from 'vite-plugin-handlebars';
-import { fileURLToPath, URL } from 'node:url';
+import handlebars from './plugins/handlebars.js';
 
 export default defineConfig({
   root: 'src',
@@ -13,9 +12,5 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
-  plugins: [
-    handlebars({
-      partialDirectory: fileURLToPath(new URL('./src/components', import.meta.url)),
-    }),
-  ],
+  plugins: [handlebars()],
 });
