@@ -1,4 +1,9 @@
 import Handlebars from 'handlebars';
+import formFieldTemplate from '../components/formField/formField.hbs?raw';
+import logoTemplate from '../components/logo/logo.hbs?raw';
+
+Handlebars.registerPartial('formField', formFieldTemplate);
+Handlebars.registerPartial('logo', logoTemplate);
 
 /**
  * Компилирует Handlebars-шаблон и подставляет данные.
