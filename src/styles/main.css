@@ -1,0 +1,16 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.header a {
+  color: #555;
+  text-decoration: none;
+}
+
+.header a:hover {
+  color: #000;
+}
