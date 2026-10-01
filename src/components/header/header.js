@@ -1,4 +1,4 @@
-import template from './header.hbs?raw';
+import template from './header.hbs';
 import { render } from '../../app/view.js';
 
 export function renderHeader() {

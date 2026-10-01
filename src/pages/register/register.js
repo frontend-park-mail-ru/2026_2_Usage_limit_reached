@@ -1,4 +1,4 @@
-import template from './register.hbs?raw';
+import template from './register.hbs';
 import { render } from '../../app/view.js';
 
 export function renderRegister() {

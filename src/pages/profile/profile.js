@@ -1,4 +1,4 @@
-import template from './profile.hbs?raw';
+import template from './profile.hbs';
 import { render } from '../../app/view.js';
 
 export function renderProfile() {
