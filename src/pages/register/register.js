@@ -26,8 +26,13 @@ const FIELD_ERRORS = {
   409: { email: 'Эта почта или имя пользователя уже заняты' },
 };
 
-/** Текст общей ошибки, когда сервер не ответил. */
-const NETWORK_ERROR = 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз';
+/**
+ * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
+ * @type {Object<number, string>}
+ */
+const FORM_ERRORS = {
+  0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
+};
 
 /** Текст общей ошибки на любой другой ответ сервера. */
 const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
@@ -62,7 +67,7 @@ async function submitRegister(form, data) {
     if (fieldErrors) {
       showErrors(form, fieldErrors);
     } else {
-      setFormError(form, err.status === 0 ? NETWORK_ERROR : UNKNOWN_ERROR);
+      setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
     }
   } finally {
     button.disabled = false;
