@@ -23,18 +23,20 @@ export const required = (message = 'Обязательное поле') =>
 /**
  * Минимальная длина строки.
  * @param {number} min - минимально допустимое количество символов
+ * @param {string} [message] - текст ошибки
  * @returns {Rule}
  */
-export const minLength = (min) =>
-  (value) => (value.length >= min ? null : `Минимум ${min} символов`);
+export const minLength = (min, message = `Минимум ${min} символов`) =>
+  (value) => (value.length >= min ? null : message);
 
 /**
  * Максимальная длина строки.
  * @param {number} max - максимально допустимое количество символов
+ * @param {string} [message] - текст ошибки
  * @returns {Rule}
  */
-export const maxLength = (max) =>
-  (value) => (value.length <= max ? null : `Максимум ${max} символов`);
+export const maxLength = (max, message = `Максимум ${max} символов`) =>
+  (value) => (value.length <= max ? null : message);
 
 /**
  * Значение должно соответствовать регулярному выражению.
