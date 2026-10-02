@@ -3,10 +3,7 @@ import { renderRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 
-/**
- * Соответствие URL-пути и функции рендера страницы.
- * @type {Record<string, () => string>}
- */
+// Соответствие URL-пути и функции рендера страницы.
 const routes = {
   '/login': renderLogin,
   '/register': renderRegister,
@@ -17,6 +14,20 @@ function renderCurrentRoute() {
   const path = window.location.pathname;
   const page = routes[path] || renderNotFound;
   document.getElementById('app').innerHTML = page();
+  bindLinks();
+}
+
+function bindLinks() {
+  document.querySelectorAll('a[data-link]').forEach((link) => {
+    // Пересоздаем ссылку, чтобы убрать старые обработчики при повторных вызовах.
+    const cleanLink = link.cloneNode(true);
+    link.replaceWith(cleanLink);
+
+    cleanLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate(cleanLink.getAttribute('href'));
+    });
+  });
 }
 
 /**
@@ -29,18 +40,10 @@ export function navigate(path) {
 }
 
 /**
- * Перехватывает клики по внутренним ссылкам, реагирует на кнопки
- * назад/вперед и рендерит страницу, соответствующую текущему URL.
- * Вызывается один раз при старте.
+ * Слушает переходы по кнопкам назад/вперед и рендерит 
+ * страницу, соответствующую текущему URL. Вызывается один раз при старте.
  */
 export function initRouter() {
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a[data-link]');
-    if (!link) return;
-    e.preventDefault();
-    navigate(link.getAttribute('href'));
-  });
-
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
 }

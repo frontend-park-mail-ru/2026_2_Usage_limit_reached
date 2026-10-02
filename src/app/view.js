@@ -1,4 +1,4 @@
-import Handlebars from 'handlebars';
+const Handlebars = window.Handlebars;
 
 /**
  * Компилирует Handlebars-шаблон и подставляет данные.
