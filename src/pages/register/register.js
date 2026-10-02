@@ -1,4 +1,3 @@
-import template from './register.hbs';
 import { render } from '../../app/view.js';
 import { navigate } from '../../app/router.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
@@ -42,7 +41,7 @@ const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте 
  * @returns {string} HTML страницы.
  */
 export function renderRegister() {
-  return render(template);
+  return render('pages/register/register');
 }
 
 /**
