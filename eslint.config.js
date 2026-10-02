@@ -8,14 +8,17 @@ import globals from 'globals';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
-  { ignores: ['dist/'] },
+  { ignores: ['src/templates.js'] },
   js.configs.recommended,
   {
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        Handlebars: 'readonly',
+      },
     },
     rules: {
       eqeqeq: ['error', 'always'],
@@ -23,6 +26,12 @@ export default defineConfig([
       'prefer-const': 'error',
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
+    },
+  },
+  {
+    files: ['server/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ]);
