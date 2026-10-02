@@ -1,22 +1,42 @@
-import { renderLogin } from '../pages/login/login.js';
-import { renderRegister } from '../pages/register/register.js';
+import { renderLogin, initLogin } from '../pages/login/login.js';
+import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 
 /**
- * Соответствие URL-пути и функции рендера страницы.
- * @type {Record<string, () => string>}
+ * Страница: функция рендера и необязательная функция,
+ * которая вешает обработчики событий после вставки HTML.
+ * @typedef {Object} Route
+ * @property {() => string} render - Возвращает HTML страницы.
+ * @property {(root: HTMLElement) => void} [init] - Подключает обработчики к отрисованной странице.
+ */
+
+/**
+ * Соответствие URL-пути и страницы.
+ * @type {Object<string, Route>}
  */
 const routes = {
-  '/login': renderLogin,
-  '/register': renderRegister,
-  '/profile': renderProfile,
+  '/login': { render: renderLogin, init: initLogin },
+  '/register': { render: renderRegister, init: initRegister },
+  '/profile': { render: renderProfile },
 };
 
+/** @type {Route} */
+const notFoundRoute = { render: renderNotFound };
+
+/**
+ * Находит страницу по текущему URL, отрисовывает её в #app
+ * и вызывает её init, если он есть. Для неизвестного пути показывает 404.
+ */
 function renderCurrentRoute() {
   const path = window.location.pathname;
-  const page = routes[path] || renderNotFound;
-  document.getElementById('app').innerHTML = page();
+  const route = routes[path] || notFoundRoute;
+  const root = document.getElementById('app');
+
+  root.innerHTML = route.render();
+  if (route.init) {
+    route.init(root);
+  }
 }
 
 /**
