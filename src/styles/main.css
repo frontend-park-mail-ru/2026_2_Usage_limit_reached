@@ -22,6 +22,7 @@
   --color-grey-9: #999999;
   --color-grey-c: #cccccc;
   --color-white: #ffffff;
+  --color-error: #b3261e;
 }
 
 body {
@@ -135,6 +136,28 @@ body {
 
 .form-field__toggle--visible .form-field__icon--visible {
   display: block;
+}
+
+.form-field__input--invalid,
+.form-field__input--invalid:focus {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.form-field__control:has(.form-field__input--invalid) .form-field__toggle {
+  color: var(--color-error);
+}
+
+.form-field__error {
+  margin: 0 0 -7px;
+  padding: 0 3px;
+  color: var(--color-error);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.form-field__error:empty {
+  display: none;
 }
 
 .button {
