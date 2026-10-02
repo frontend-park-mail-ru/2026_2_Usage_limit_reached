@@ -1,4 +1,4 @@
-import { renderLogin } from '../pages/login/login.js';
+import { renderLogin, initLogin } from '../pages/login/login.js';
 import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
@@ -16,7 +16,7 @@ import { renderNotFound } from '../pages/notFound/notFound.js';
  * @type {Object<string, Route>}
  */
 const routes = {
-  '/login': { render: renderLogin },
+  '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
   '/profile': { render: renderProfile },
 };
