@@ -1,8 +1,11 @@
 import template from './register.hbs?raw';
 import { render } from '../../app/view.js';
+import { navigate } from '../../app/router.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
-import { bindValidation } from '../../modules/validation/bindForm.js';
+import { bindValidation, showErrors, setFormError } from '../../modules/validation/bindForm.js';
 import { registerSchema } from '../../modules/validation/schemas.js';
+import { signup } from '../../modules/api/auth.js';
+import { ApiError } from '../../modules/api/request.js';
 
 /**
  * Данные, которые пользователь ввёл в форму регистрации.
@@ -15,6 +18,21 @@ import { registerSchema } from '../../modules/validation/schemas.js';
  */
 
 /**
+ * Ошибки сервера, которые показываются под полями: код ответа → поле → текст.
+ * @type {Object<number, Object<string, string>>}
+ */
+const FIELD_ERRORS = {
+  400: { email: 'Проверьте адрес электронной почты' },
+  409: { email: 'Эта почта или имя пользователя уже заняты' },
+};
+
+/** Текст общей ошибки, когда сервер не ответил. */
+const NETWORK_ERROR = 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз';
+
+/** Текст общей ошибки на любой другой ответ сервера. */
+const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
+
+/**
  * Возвращает HTML страницы регистрации.
  * @returns {string} HTML страницы.
  */
@@ -23,11 +41,32 @@ export function renderRegister() {
 }
 
 /**
- * Отправляет данные регистрации. Пока выводит их в консоль, запрос на сервер будет в PTN-13.
+ * Отправляет данные регистрации на сервер.
+ * При успехе переходит в профиль, при ошибке показывает её в форме.
+ * @param {HTMLFormElement} form - Форма регистрации.
  * @param {RegisterData} data - Проверенные данные формы.
+ * @returns {Promise<void>}
  */
-function submitRegister(data) {
-  console.log('register', data);
+async function submitRegister(form, data) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  setFormError(form, null);
+
+  try {
+    await signup(data);
+    navigate('/profile');
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+
+    const fieldErrors = FIELD_ERRORS[err.status];
+    if (fieldErrors) {
+      showErrors(form, fieldErrors);
+    } else {
+      setFormError(form, err.status === 0 ? NETWORK_ERROR : UNKNOWN_ERROR);
+    }
+  } finally {
+    button.disabled = false;
+  }
 }
 
 /**
@@ -38,5 +77,5 @@ export function initRegister(root) {
   const form = root.querySelector('#register-form');
 
   initPasswordToggles(form);
-  bindValidation(form, registerSchema, submitRegister);
+  bindValidation(form, registerSchema, (data) => submitRegister(form, data));
 }
