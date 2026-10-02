@@ -2,7 +2,8 @@
  * @file Связывает схему валидации с HTML-формой:
  * берёт значения из полей, проверяет их и показывает ошибки под полями.
  * Контракт разметки: name у поля = ключ схемы,
- * текст ошибки выводится в элемент [data-error-for="<name>"].
+ * текст ошибки выводится в элемент [data-error-for="<name>"],
+ * общая ошибка формы — в элемент [data-form-error].
  */
 
 import { validate, validateField } from './validate.js';
@@ -42,6 +43,19 @@ export const showErrors = (form, errors) => {
   for (const [name, error] of Object.entries(errors)) {
     setFieldError(form, name, error);
   }
+};
+
+/**
+ * Показывает общую ошибку формы, не привязанную к полю
+ * (например, «сервер недоступен»), или убирает её.
+ * @param {HTMLFormElement} form - форма
+ * @param {string|null} error - текст ошибки или null, если ошибки нет
+ */
+export const setFormError = (form, error) => {
+  const errorEl = form.querySelector('[data-form-error]');
+  if (!errorEl) return;
+
+  errorEl.textContent = error ?? '';
 };
 
 /**
