@@ -187,3 +187,8 @@ body {
   background: var(--color-white);
   color: var(--color-primary);
 }
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
