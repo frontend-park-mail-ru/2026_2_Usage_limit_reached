@@ -2,7 +2,7 @@ import template from './login.hbs?raw';
 import { render } from '../../app/view.js';
 import { navigate } from '../../app/router.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
-import { bindValidation, showErrors, setFormError } from '../../modules/validation/bindForm.js';
+import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
 import { loginSchema } from '../../modules/validation/schemas.js';
 import { login } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
@@ -13,14 +13,6 @@ import { ApiError } from '../../modules/api/request.js';
  * @property {string} login - Адрес электронной почты или имя пользователя.
  * @property {string} password - Пароль.
  */
-
-/**
- * Ошибки сервера, которые показываются под полями: код ответа → поле → текст.
- * @type {Object<number, Object<string, string>>}
- */
-const FIELD_ERRORS = {
-  400: { login: 'Пока войти можно только по адресу электронной почты' },
-};
 
 /**
  * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
@@ -55,17 +47,12 @@ async function submitLogin(form, data) {
   setFormError(form, null);
 
   try {
-    await login({ email: data.login, password: data.password });
+    await login(data);
     navigate('/profile');
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
 
-    const fieldErrors = FIELD_ERRORS[err.status];
-    if (fieldErrors) {
-      showErrors(form, fieldErrors);
-    } else {
-      setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
-    }
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
   } finally {
     button.disabled = false;
   }
