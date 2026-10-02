@@ -30,14 +30,15 @@ export const signup = ({ email, username, nickname, password }) =>
 
 /**
  * Входит в аккаунт. При успехе бэкенд ставит куку сессии.
+ * Бэкенд сам определяет, почта это или имя пользователя.
  * @param {Object} data - Данные из формы входа.
- * @param {string} data.email - Адрес электронной почты.
+ * @param {string} data.login - Адрес электронной почты или имя пользователя.
  * @param {string} data.password - Пароль.
  * @returns {Promise<User>} Вошедший пользователь.
- * @throws {import('./request.js').ApiError} 400 — неверные данные, 401 — неверный email или пароль.
+ * @throws {import('./request.js').ApiError} 400 — неверные данные, 401 — неверный логин или пароль.
  */
-export const login = ({ email, password }) =>
-  request('/login', { method: 'POST', data: { email, password } });
+export const login = ({ login, password }) =>
+  request('/login', { method: 'POST', data: { login, password } });
 
 /**
  * Выходит из аккаунта: бэкенд удаляет куку сессии.
