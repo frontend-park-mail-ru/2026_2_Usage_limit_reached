@@ -1,6 +1,8 @@
 import template from './register.hbs?raw';
 import { render } from '../../app/view.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
+import { bindValidation } from '../../modules/validation/bindForm.js';
+import { registerSchema } from '../../modules/validation/schemas.js';
 
 /**
  * Данные, которые пользователь ввёл в форму регистрации.
@@ -21,6 +23,14 @@ export function renderRegister() {
 }
 
 /**
+ * Отправляет данные регистрации. Пока выводит их в консоль, запрос на сервер будет в PTN-13.
+ * @param {RegisterData} data - Проверенные данные формы.
+ */
+function submitRegister(data) {
+  console.log('register', data);
+}
+
+/**
  * Подключает обработчики формы регистрации после того, как страница отрисована.
  * @param {HTMLElement} root - Контейнер, в который отрисована страница.
  */
@@ -28,14 +38,5 @@ export function initRegister(root) {
   const form = root.querySelector('#register-form');
 
   initPasswordToggles(form);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    /** @type {RegisterData} */
-    const data = Object.fromEntries(new FormData(form));
-
-    // Отправка на сервер будет в задаче про API, проверка полей — в задаче про валидацию.
-    console.log('register', data);
-  });
+  bindValidation(form, registerSchema, submitRegister);
 }
