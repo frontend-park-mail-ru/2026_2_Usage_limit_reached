@@ -1,0 +1,12 @@
+import { render } from '../../app/view.js';
+
+const template = `
+  <section class="page page--register">
+    <h1 class="page__title">Регистрация</h1>
+    <p class="page__text">Страница регистрации в разработке.</p>
+  </section>
+`;
+
+export function renderRegister() {
+  return render(template);
+}
