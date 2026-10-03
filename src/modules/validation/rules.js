@@ -48,10 +48,10 @@ export const pattern = (regexp, message) =>
   (value) => (regexp.test(value) ? null : message);
 
 /**
- * Базовая проверка формата email: что-то@что-то.что-то
+ * Проверка формата email, та же регулярка, что на бэкенде (VAL_EMAIL_REGEXP).
  * @type {Rule}
  */
-export const email = pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Некорректный email');
+export const email = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Некорректный email');
 
 /**
  * Значение должно совпадать со значением другого поля формы.
