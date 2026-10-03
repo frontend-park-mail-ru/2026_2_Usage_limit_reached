@@ -34,9 +34,24 @@ function renderCurrentRoute() {
   const root = document.getElementById('app');
 
   root.innerHTML = route.render();
+  bindPageLinks(root);
   if (route.init) {
     route.init(root);
   }
+}
+
+/**
+ * Вешает обработчики на внутренние ссылки страницы, чтобы переходы шли через роутер.
+ * Содержимое #app пересоздаётся при каждом рендере, поэтому старых обработчиков на ссылках нет.
+ * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ */
+function bindPageLinks(root) {
+  root.querySelectorAll('a[data-link]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate(link.getAttribute('href'));
+    });
+  });
 }
 
 /**
@@ -49,18 +64,10 @@ export function navigate(path) {
 }
 
 /**
- * Перехватывает клики по внутренним ссылкам, реагирует на кнопки
- * назад/вперед и рендерит страницу, соответствующую текущему URL.
- * Вызывается один раз при старте.
+ * Слушает переходы по кнопкам назад/вперед и рендерит 
+ * страницу, соответствующую текущему URL. Вызывается один раз при старте.
  */
 export function initRouter() {
-  document.addEventListener('click', (e) => {
-    const link = e.target.closest('a[data-link]');
-    if (!link) return;
-    e.preventDefault();
-    navigate(link.getAttribute('href'));
-  });
-
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
 }
