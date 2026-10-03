@@ -1,4 +1,10 @@
+import { formFieldTemplate } from '../components/formField/formField.js';
+import { logoTemplate } from '../components/logo/logo.js';
+
 const Handlebars = window.Handlebars;
+
+Handlebars.registerPartial('formField', formFieldTemplate);
+Handlebars.registerPartial('logo', logoTemplate);
 
 /**
  * Компилирует Handlebars-шаблон и подставляет данные.
