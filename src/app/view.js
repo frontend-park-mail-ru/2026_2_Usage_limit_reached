@@ -1,6 +1,7 @@
-import Handlebars from 'handlebars';
-import formFieldTemplate from '../components/formField/formField.hbs?raw';
-import logoTemplate from '../components/logo/logo.hbs?raw';
+import { formFieldTemplate } from '../components/formField/formField.js';
+import { logoTemplate } from '../components/logo/logo.js';
+
+const Handlebars = window.Handlebars;
 
 Handlebars.registerPartial('formField', formFieldTemplate);
 Handlebars.registerPartial('logo', logoTemplate);
