@@ -14,20 +14,6 @@ function renderCurrentRoute() {
   const path = window.location.pathname;
   const page = routes[path] || renderNotFound;
   document.getElementById('app').innerHTML = page();
-  bindLinks();
-}
-
-function bindLinks() {
-  document.querySelectorAll('a[data-link]').forEach((link) => {
-    // Пересоздаем ссылку, чтобы убрать старые обработчики при повторных вызовах.
-    const cleanLink = link.cloneNode(true);
-    link.replaceWith(cleanLink);
-
-    cleanLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigate(cleanLink.getAttribute('href'));
-    });
-  });
 }
 
 /**
