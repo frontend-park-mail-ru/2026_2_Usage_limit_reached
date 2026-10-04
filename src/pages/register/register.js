@@ -16,26 +16,6 @@ import { ApiError } from '../../modules/api/request.js';
  * @property {string} passwordRepeat
  */
 
-const template = `
-  <section class="page page--auth">
-    <form class="auth-form" id="register-form" novalidate>
-      {{> logo}}
-      <div class="auth-form__header">
-        <h1 class="auth-form__title">Добро пожаловать!</h1>
-        <p class="auth-form__subtitle">Создайте аккаунт, чтобы начать</p>
-      </div>
-      {{> formField id="register-email" name="email" type="email" label="Адрес электронной почты" autocomplete="email" placeholder="email@example.com"}}
-      {{> formField id="register-username" name="username" type="text" label="Имя пользователя" autocomplete="username" placeholder="ivan_petrov"}}
-      {{> formField id="register-nickname" name="nickname" type="text" label="Отображаемое имя" autocomplete="name" placeholder="Иван Петров"}}
-      {{> formField id="register-password" name="password" type="password" label="Пароль" autocomplete="new-password" placeholder="••••••••" passwordToggle=true}}
-      {{> formField id="register-password-repeat" name="passwordRepeat" type="password" label="Повторите пароль" autocomplete="new-password" placeholder="••••••••" passwordToggle=true}}
-      <p class="form-field__error" data-form-error aria-live="polite"></p>
-      <button class="button button--primary" type="submit">Зарегистрироваться</button>
-      <a class="button button--secondary" href="/login" data-link>У меня уже есть аккаунт</a>
-    </form>
-  </section>
-`;
-
 /**
  * Ошибки сервера.
  * @type {Object<number, Object<string, string>>}
@@ -60,7 +40,7 @@ const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте 
  * @returns {string}
  */
 export function renderRegister() {
-  return render(template);
+  return render('pages/register/register');
 }
 
 /**

@@ -1,20 +1,30 @@
-import { formFieldTemplate } from '../components/formField/formField.js';
-import { logoTemplate } from '../components/logo/logo.js';
-
-const Handlebars = window.Handlebars;
-
-Handlebars.registerPartial('formField', formFieldTemplate);
-Handlebars.registerPartial('logo', logoTemplate);
+const COMPONENTS_PREFIX = 'components/';
 
 /**
- * Компилирует Handlebars-шаблон и подставляет данные.
- *
- * @param {string} templateStr - Строка шаблона.
- * @param {Object} [data={}] - Данные для подстановки.
- *
- * @returns {string} Готовый HTML.
+ * Регистрирует шаблоны всех компонентов как partials.
+ * Имя partial совпадает с именем файла: components/logo/logo → {{> logo}}.
  */
-export function render(templateStr, data = {}) {
-  const template = Handlebars.compile(templateStr);
+function registerPartials() {
+  for (const [name, template] of Object.entries(Handlebars.templates)) {
+    if (name.startsWith(COMPONENTS_PREFIX)) {
+      Handlebars.registerPartial(name.split('/').pop(), template);
+    }
+  }
+}
+
+registerPartials();
+
+/**
+ * Находит шаблон по имени и подставляет в него данные.
+ * @param {string} name
+ * @param {Object} [data={}]
+ * @returns {string}
+ * @throws {Error}
+ */
+export function render(name, data = {}) {
+  const template = Handlebars.templates[name];
+  if (!template) {
+    throw new Error(`Шаблон ${name} не найден`);
+  }
   return template(data);
 }

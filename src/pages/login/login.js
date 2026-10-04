@@ -13,23 +13,6 @@ import { ApiError } from '../../modules/api/request.js';
  * @property {string} password
  */
 
-const template = `
-  <section class="page page--auth">
-    <form class="auth-form" id="login-form" novalidate>
-      {{> logo}}
-      <div class="auth-form__header">
-        <h1 class="auth-form__title">С возвращением!</h1>
-        <p class="auth-form__subtitle">Войдите в аккаунт, чтобы продолжить</p>
-      </div>
-      {{> formField id="login-user" name="login" type="text" label="Адрес электронной почты или имя пользователя" autocomplete="username" placeholder="email@example.com"}}
-      {{> formField id="login-password" name="password" type="password" label="Пароль" autocomplete="current-password" placeholder="••••••••" passwordToggle=true}}
-      <p class="form-field__error" data-form-error aria-live="polite"></p>
-      <button class="button button--primary" type="submit">Войти</button>
-      <a class="button button--secondary" href="/register" data-link>Создать новый аккаунт</a>
-    </form>
-  </section>
-`;
-
 /**
  * Общие ошибки формы.
  * @type {Object<number, string>}
@@ -46,7 +29,7 @@ const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте 
  * @returns {string}
  */
 export function renderLogin() {
-  return render(template);
+  return render('pages/login/login');
 }
 
 /**

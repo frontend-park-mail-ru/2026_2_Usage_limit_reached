@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "serve -s src",
-    "start": "serve -s src",
+    "precompile": "handlebars src -e hbs -f src/templates.js",
+    "start": "npm run precompile && node server/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky"
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/frontend-park-mail-ru/2026_2_Usage_limit_reached#readme",
   "dependencies": {
+    "express": "^5.2.1",
     "handlebars": "^4.7.9"
   },
   "devDependencies": {
@@ -27,8 +28,7 @@
     "eslint": "^9.39.5",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "serve": "^14.2.6"
+    "lint-staged": "^16.4.0"
   },
   "lint-staged": {
     "*.js": "eslint --fix"
