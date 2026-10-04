@@ -1,4 +1,3 @@
-/** Папка компонентов: шаблоны из неё регистрируются как partials. */
 const COMPONENTS_PREFIX = 'components/';
 
 /**
@@ -17,10 +16,10 @@ registerPartials();
 
 /**
  * Находит шаблон по имени и подставляет в него данные.
- * @param {string} name - Путь к шаблону от src без расширения, например 'pages/login/login'.
- * @param {Object} [data={}] - Данные для подстановки.
- * @returns {string} Готовый HTML.
- * @throws {Error} Если шаблона нет: забыли запустить npm run precompile или опечатались в имени.
+ * @param {string} name
+ * @param {Object} [data={}]
+ * @returns {string}
+ * @throws {Error}
  */
 export function render(name, data = {}) {
   const template = Handlebars.templates[name];
