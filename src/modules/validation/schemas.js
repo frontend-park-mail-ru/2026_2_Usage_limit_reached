@@ -1,9 +1,3 @@
-/**
- * @file Схемы валидации форм.
- * Схема описывает, какие правила применяются к каждому полю формы.
- * Ключ схемы совпадает с атрибутом name у поля ввода.
- */
-
 import { required, minLength, maxLength, pattern, email, sameAs } from './rules.js';
 
 /**

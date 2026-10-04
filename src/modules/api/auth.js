@@ -1,18 +1,26 @@
-/**
- * @file Запросы авторизации: регистрация, вход, выход и текущий пользователь.
- * Сессия хранится в куке token: её ставит и удаляет бэкенд,
- * фронт её не видит и только прикладывает к запросам.
- */
-
 import { request } from './request.js';
 
 /**
- * Пользователь в ответе бэкенда.
+ * Пользователь в ответе на регистрацию и вход.
  * @typedef {Object} User
  * @property {string} email - Адрес электронной почты.
  * @property {string} username - Имя пользователя.
  * @property {string} nickname - Отображаемое имя.
- * @property {string} status - Статус аккаунта, например 'active'.
+ */
+
+/**
+ * Профиль текущего пользователя.
+ * @typedef {Object} Profile
+ * @property {Object} user - Данные пользователя.
+ * @property {string} user.id - Идентификатор .
+ * @property {string} user.email - Адрес электронной почты.
+ * @property {string} user.username - Имя пользователя.
+ * @property {string} user.nickname - Отображаемое имя.
+ * @property {string} user.avatar_key - Ключ аватарки, пустая строка, если её нет.
+ * @property {string} user.created_at - Дата регистрации .
+ * @property {Object} [author] - Есть, только если пользователь автор.
+ * @property {string} author.bio - О себе.
+ * @property {string} author.category - Категория.
  */
 
 /**
@@ -50,9 +58,8 @@ export const logout = async () => {
 };
 
 /**
- * Возвращает пользователя, которому принадлежит кука сессии.
- * Так фронт узнаёт, вошёл ли пользователь: саму куку JS прочитать не может.
- * @returns {Promise<User>} Текущий пользователь.
- * @throws {import('./request.js').ApiError} 401 — пользователь не вошёл.
+ * Возвращает профиль текущего пользователя.
+ * @returns {Promise<Profile>} Профиль текущего пользователя.
+ * @throws {import('./request.js').ApiError} 401 — пользователь не вошёл, 404 — пользователь не найден.
  */
-export const getMe = () => request('/me');
+export const getMe = () => request('/profile/me');
