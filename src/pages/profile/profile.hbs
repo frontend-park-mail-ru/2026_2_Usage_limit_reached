@@ -1,4 +1,60 @@
-<section class="page page--profile">
-  <h1 class="page__title">Профиль</h1>
-  <p class="page__text">Страница профиля в разработке.</p>
+<section class="profile" aria-labelledby="profile-name">
+  <div class="profile__summary">
+    <div class="profile__identity">
+      <img class="profile__avatar" src="{{avatarUrl}}" alt="Аватар {{name}}" />
+      <div class="profile__info">
+        <div class="profile__heading">
+          <h1 class="profile__name" id="profile-name">{{name}}</h1>
+          <span class="profile__badge">Автор</span>
+        </div>
+        <p class="profile__username">{{username}}</p>
+        <p class="profile__bio">{{bio}}</p>
+        <p class="profile__post-count">{{postCountLabel}}</p>
+      </div>
+    </div>
+    <div class="profile__actions">
+      <button class="button profile__button profile__button--statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+      <button class="button profile__button profile__button--edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
+    </div>
+  </div>
+
+  <section class="profile__posts" aria-labelledby="profile-posts-title">
+    <div class="profile__toolbar">
+      <h2 class="profile__title" id="profile-posts-title">Посты</h2>
+      {{#if hasPosts}}
+        <div class="profile__controls">
+          <button class="button profile__button profile__button--add" type="button" aria-disabled="true" title="Будет доступно позже">
+            <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+            Добавить пост
+          </button>
+          <label class="profile__sort-label" for="profile-sort">Порядок постов</label>
+          <select class="profile__sort" id="profile-sort" name="profile-sort">
+            <option value="newest">Сначала новые</option>
+          </select>
+        </div>
+      {{/if}}
+    </div>
+
+    {{#if hasPosts}}
+      <div class="profile__grid">
+        {{#each posts}}
+          {{> postCard}}
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="profile__empty">
+        <div class="profile__empty-icon" aria-hidden="true">
+          <img src="/assets/profile/file.svg" alt="" />
+        </div>
+        <div class="profile__empty-content">
+          <h3 class="profile__empty-title">Вы пока не опубликовали ни одного поста</h3>
+          <p class="profile__empty-text">Опубликуйте первый пост, чтобы ваш профиль ожил.</p>
+          <button class="button profile__button profile__button--add" type="button" aria-disabled="true" title="Будет доступно позже">
+            <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+            Добавить пост
+          </button>
+        </div>
+      </div>
+    {{/if}}
+  </section>
 </section>

@@ -1,0 +1,125 @@
+:root {
+  --color-sidebar-border: rgba(61, 64, 91, 0.12);
+  --color-sidebar-hover: #f4f4f5;
+  --color-sidebar-pressed: #fbefeb;
+}
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-layout--sidebar {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: start;
+}
+
+.app-layout__content {
+  min-width: 0;
+}
+
+#sidebar:not([hidden]) {
+  position: sticky;
+  top: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 32px 15px 32px 16px;
+  border-right: 1px solid var(--color-sidebar-border);
+  background: var(--color-white);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar__top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 64px;
+  flex-shrink: 0;
+}
+
+.sidebar__logo {
+  display: block;
+}
+
+.sidebar__items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: default;
+  text-decoration: none;
+}
+
+button.sidebar__item:hover {
+  background: var(--color-sidebar-hover);
+}
+
+button.sidebar__item:active {
+  background: var(--color-sidebar-pressed);
+  color: var(--color-primary);
+}
+
+.sidebar__item:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.sidebar__item--profile {
+  cursor: pointer;
+}
+
+.sidebar__item--profile[aria-current='page'] {
+  cursor: default;
+}
+
+.sidebar__item--profile:not([aria-current='page']):hover {
+  background: var(--color-sidebar-hover);
+}
+
+.sidebar__item--profile:not([aria-current='page']):active,
+.sidebar__item--profile[aria-current='page'] {
+  background: var(--color-sidebar-pressed);
+}
+
+.sidebar__icon {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  background: currentColor;
+  mask: var(--sidebar-icon) center / contain no-repeat;
+}
+
+.sidebar__icon--search {
+  --sidebar-icon: url('/assets/sidebar/search.svg');
+}
+
+.sidebar__icon--notification {
+  --sidebar-icon: url('/assets/sidebar/notification.svg');
+}
+
+.sidebar__icon--subscribes {
+  --sidebar-icon: url('/assets/sidebar/subscribes.svg');
+}

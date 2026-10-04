@@ -10,8 +10,10 @@
   <link rel="stylesheet" href="/styles/main.css" />
 </head>
 <body>
-  <div id="header"></div>
-  <div id="app"></div>
+  <div class="app-layout" id="layout">
+    <div id="sidebar" hidden></div>
+    <div id="app" class="app-layout__content"></div>
+  </div>
   <script src="/vendor/handlebars.runtime.min.js"></script>
   <script src="/templates.js"></script>
   <script type="module" src="/main.js"></script>

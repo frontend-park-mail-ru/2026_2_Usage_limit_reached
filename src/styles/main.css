@@ -1,7 +1,9 @@
-@import url('../components/header/header.css');
+@import url('../components/sidebar/sidebar.css');
 @import url('../components/formField/formField.css');
 @import url('./auth.css');
 @import url('./button.css');
+@import url('./profile.css');
+@import url('../components/postCard/postCard.css');
 
 :root {
   --color-primary: #e07a5f;
@@ -11,6 +13,8 @@
   --color-grey-c: #cccccc;
   --color-white: #ffffff;
   --color-error: #b3261e;
+  --color-secondary: #81b29a;
+  --color-profile-border: rgba(61, 64, 91, 0.5);
 }
 
 body {

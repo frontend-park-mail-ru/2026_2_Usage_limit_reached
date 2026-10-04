@@ -1,5 +1,5 @@
 import { render } from '../../app/view.js';
-import { navigate } from '../../app/router.js';
+import { bindLinks } from '../../app/linkClick.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
 import { bindValidation, showErrors, setFormError } from '../../modules/validation/bindForm.js';
 import { registerSchema } from '../../modules/validation/schemas.js';
@@ -49,9 +49,10 @@ export function renderRegister() {
  * При успехе переходит в профиль, при ошибке показывает её в форме.
  * @param {HTMLFormElement} form - Форма регистрации.
  * @param {RegisterData} data - Проверенные данные формы.
+ * @param {(path: string) => void} navigate - Функция перехода из роутера.
  * @returns {Promise<void>}
  */
-async function submitRegister(form, data) {
+async function submitRegister(form, data, navigate) {
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   setFormError(form, null);
@@ -74,12 +75,14 @@ async function submitRegister(form, data) {
 }
 
 /**
- * Подключает обработчики формы регистрации после того, как страница отрисована.
+ * Подключает обработчики формы регистрации и ссылок после рендера страницы.
  * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * @param {(path: string) => void} navigate - Функция перехода из роутера.
  */
-export function initRegister(root) {
+export function initRegister(root, navigate) {
   const form = root.querySelector('#register-form');
 
   initPasswordToggles(form);
-  bindValidation(form, registerSchema, (data) => submitRegister(form, data));
+  bindValidation(form, registerSchema, (data) => submitRegister(form, data, navigate));
+  bindLinks(root, navigate);
 }

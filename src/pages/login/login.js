@@ -1,5 +1,5 @@
 import { render } from '../../app/view.js';
-import { navigate } from '../../app/router.js';
+import { bindLinks } from '../../app/linkClick.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
 import { loginSchema } from '../../modules/validation/schemas.js';
@@ -38,9 +38,10 @@ export function renderLogin() {
  * При успехе переходит в профиль, при ошибке показывает её в форме.
  * @param {HTMLFormElement} form - Форма входа.
  * @param {LoginData} data - Проверенные данные формы.
+ * @param {(path: string) => void} navigate - Функция перехода из роутера.
  * @returns {Promise<void>}
  */
-async function submitLogin(form, data) {
+async function submitLogin(form, data, navigate) {
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   setFormError(form, null);
@@ -58,12 +59,14 @@ async function submitLogin(form, data) {
 }
 
 /**
- * Подключает обработчики формы входа после того, как страница отрисована.
+ * Подключает обработчики формы входа и ссылок после рендера страницы.
  * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * @param {(path: string) => void} navigate - Функция перехода из роутера.
  */
-export function initLogin(root) {
+export function initLogin(root, navigate) {
   const form = root.querySelector('#login-form');
 
   initPasswordToggles(form);
-  bindValidation(form, loginSchema, (data) => submitLogin(form, data));
+  bindValidation(form, loginSchema, (data) => submitLogin(form, data, navigate));
+  bindLinks(root, navigate);
 }
