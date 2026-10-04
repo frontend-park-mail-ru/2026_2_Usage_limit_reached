@@ -1,5 +1,7 @@
 import { render } from '../../app/view.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
+import { bindValidation } from '../../modules/validation/bindForm.js';
+import { loginSchema } from '../../modules/validation/schemas.js';
 
 /**
  * Данные, которые пользователь ввёл в форму входа.
@@ -10,7 +12,7 @@ import { initPasswordToggles } from '../../components/formField/formField.js';
 
 const template = `
   <section class="page page--auth">
-    <form class="auth-form" id="login-form">
+    <form class="auth-form" id="login-form" novalidate>
       {{> logo}}
       <div class="auth-form__header">
         <h1 class="auth-form__title">С возвращением!</h1>
@@ -33,6 +35,14 @@ export function renderLogin() {
 }
 
 /**
+ * Отправляет данные входа. Пока выводит их в консоль, запрос на сервер будет в PTN-13.
+ * @param {LoginData} data - Проверенные данные формы.
+ */
+function submitLogin(data) {
+  console.log('login', data);
+}
+
+/**
  * Подключает обработчики формы входа после того, как страница отрисована.
  * @param {HTMLElement} root - Контейнер, в который отрисована страница.
  */
@@ -40,12 +50,5 @@ export function initLogin(root) {
   const form = root.querySelector('#login-form');
 
   initPasswordToggles(form);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const data = Object.fromEntries(new FormData(form));
-
-    console.log('login', data);
-  });
+  bindValidation(form, loginSchema, submitLogin);
 }

@@ -14,6 +14,7 @@ export const formFieldTemplate = `
         type="{{type}}"
         autocomplete="{{autocomplete}}"
         placeholder="{{placeholder}}"
+        aria-describedby="{{id}}-error"
       />
       {{#if passwordToggle}}
         <button class="form-field__toggle" type="button" data-password-toggle="{{id}}" aria-label="Показать пароль">
@@ -27,6 +28,7 @@ export const formFieldTemplate = `
         </button>
       {{/if}}
     </div>
+    <p class="form-field__error" id="{{id}}-error" data-error-for="{{name}}" aria-live="polite"></p>
   </div>
 `;
 

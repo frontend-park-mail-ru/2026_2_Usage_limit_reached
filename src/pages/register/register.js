@@ -1,5 +1,7 @@
 import { render } from '../../app/view.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
+import { bindValidation } from '../../modules/validation/bindForm.js';
+import { registerSchema } from '../../modules/validation/schemas.js';
 
 /**
  * Данные, которые пользователь ввёл в форму регистрации.
@@ -13,7 +15,7 @@ import { initPasswordToggles } from '../../components/formField/formField.js';
 
 const template = `
   <section class="page page--auth">
-    <form class="auth-form" id="register-form">
+    <form class="auth-form" id="register-form" novalidate>
       {{> logo}}
       <div class="auth-form__header">
         <h1 class="auth-form__title">Добро пожаловать!</h1>
@@ -39,6 +41,14 @@ export function renderRegister() {
 }
 
 /**
+ * Отправляет данные регистрации. Пока выводит их в консоль, запрос на сервер будет в PTN-13.
+ * @param {RegisterData} data - Проверенные данные формы.
+ */
+function submitRegister(data) {
+  console.log('register', data);
+}
+
+/**
  * Подключает обработчики формы регистрации после того, как страница отрисована.
  * @param {HTMLElement} root - Контейнер, в который отрисована страница.
  */
@@ -46,13 +56,5 @@ export function initRegister(root) {
   const form = root.querySelector('#register-form');
 
   initPasswordToggles(form);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const data = Object.fromEntries(new FormData(form));
-
-    // Отправка на сервер будет в задаче про API, проверка полей — в задаче про валидацию.
-    console.log('register', data);
-  });
+  bindValidation(form, registerSchema, submitRegister);
 }
