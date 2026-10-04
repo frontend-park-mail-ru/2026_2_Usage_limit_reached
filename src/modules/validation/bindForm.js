@@ -1,10 +1,3 @@
-/**
- * @file Связывает схему валидации с HTML-формой:
- * берёт значения из полей, проверяет их и показывает ошибки под полями.
- * Контракт разметки: name у поля = ключ схемы,
- * текст ошибки выводится в элемент [data-error-for="<name>"].
- */
-
 import { validate, validateField } from './validate.js';
 
 /** Класс, которым помечается поле с ошибкой. */
@@ -28,8 +21,8 @@ export const setFieldError = (form, name, error) => {
   const errorEl = form.querySelector(`[data-error-for="${name}"]`);
   if (!input || !errorEl) return;
 
-  input.classList.toggle(INVALID_CLASS, Boolean(error));
-  input.setAttribute('aria-invalid', String(Boolean(error)));
+  input.classList.toggle(INVALID_CLASS, !!error);
+  input.setAttribute('aria-invalid', String(!!error));
   errorEl.textContent = error ?? '';
 };
 
