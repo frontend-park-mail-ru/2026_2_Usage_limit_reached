@@ -1,8 +1,4 @@
 /**
- * @file Движок валидации: проверка значений формы по схеме.
- */
-
-/**
  * Результат валидации формы.
  * @typedef {Object} ValidationResult
  * @property {boolean} isValid - true, если ошибок нет
