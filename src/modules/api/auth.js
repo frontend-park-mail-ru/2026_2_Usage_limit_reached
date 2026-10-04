@@ -12,12 +12,12 @@ import { request } from './request.js';
  * Профиль текущего пользователя.
  * @typedef {Object} Profile
  * @property {Object} user - Данные пользователя.
- * @property {string} user.id - Идентификатор .
+ * @property {string} user.id - Идентификатор.
  * @property {string} user.email - Адрес электронной почты.
  * @property {string} user.username - Имя пользователя.
  * @property {string} user.nickname - Отображаемое имя.
  * @property {string} user.avatar_key - Ключ аватарки, пустая строка, если её нет.
- * @property {string} user.created_at - Дата регистрации .
+ * @property {string} user.created_at - Дата регистрации.
  * @property {Object} [author] - Есть, только если пользователь автор.
  * @property {string} author.bio - О себе.
  * @property {string} author.category - Категория.
