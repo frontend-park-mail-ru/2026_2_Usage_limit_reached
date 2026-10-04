@@ -46,9 +46,7 @@ function renderCurrentRoute() {
   updateLayout(route.layout || 'plain');
   setActiveSidebarLink(path);
   root.innerHTML = route.render();
-  if (route.init) {
-    route.init(root, navigate);
-  }
+  route.init?.(root, navigate);
 }
 
 /**
