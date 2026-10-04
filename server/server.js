@@ -1,9 +1,3 @@
-/**
- * @file Сервер для разработки: отдаёт файлы фронтенда,
- * а на любой другой путь отдаёт index.html, чтобы работал роутер SPA.
- * Запуск: npm.cmd start.
- */
-
 import express from 'express';
 import path from 'node:path';
 

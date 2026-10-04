@@ -1,10 +1,3 @@
-/**
- * @file Обёртка над Handlebars: регистрирует компоненты как partials
- * и превращает шаблон с данными в HTML.
- * Шаблоны прекомпилирует утилита handlebars (npm run precompile)
- * в файл templates.js, он подключён в index.html и кладёт их в Handlebars.templates.
- */
-
 /** Папка компонентов: шаблоны из неё регистрируются как partials. */
 const COMPONENTS_PREFIX = 'components/';
 
