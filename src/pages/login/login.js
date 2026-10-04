@@ -1,13 +1,16 @@
 import { render } from '../../app/view.js';
+import { navigate } from '../../app/router.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
-import { bindValidation } from '../../modules/validation/bindForm.js';
+import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
 import { loginSchema } from '../../modules/validation/schemas.js';
+import { login } from '../../modules/api/auth.js';
+import { ApiError } from '../../modules/api/request.js';
 
 /**
  * Данные, которые пользователь ввёл в форму входа.
  * @typedef {Object} LoginData
- * @property {string} login - Адрес электронной почты или имя пользователя.
- * @property {string} password - Пароль.
+ * @property {string} login
+ * @property {string} password
  */
 
 const template = `
@@ -20,6 +23,7 @@ const template = `
       </div>
       {{> formField id="login-user" name="login" type="text" label="Адрес электронной почты или имя пользователя" autocomplete="username" placeholder="email@example.com"}}
       {{> formField id="login-password" name="password" type="password" label="Пароль" autocomplete="current-password" placeholder="••••••••" passwordToggle=true}}
+      <p class="form-field__error" data-form-error aria-live="polite"></p>
       <button class="button button--primary" type="submit">Войти</button>
       <a class="button button--secondary" href="/register" data-link>Создать новый аккаунт</a>
     </form>
@@ -27,28 +31,54 @@ const template = `
 `;
 
 /**
+ * Общие ошибки формы.
+ * @type {Object<number, string>}
+ */
+const FORM_ERRORS = {
+  0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
+  401: 'Неверные данные для входа!',
+};
+
+const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
+
+/**
  * Возвращает HTML страницы входа.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderLogin() {
   return render(template);
 }
 
 /**
- * Отправляет данные входа. Пока выводит их в консоль, запрос на сервер будет в PTN-13.
- * @param {LoginData} data - Проверенные данные формы.
+ * Отправляет данные входа на сервер.
+ * @param {HTMLFormElement} form
+ * @param {LoginData} data
+ * @returns {Promise<void>}
  */
-function submitLogin(data) {
-  console.log('login', data);
+async function submitLogin(form, data) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  setFormError(form, null);
+
+  try {
+    await login(data);
+    navigate('/profile');
+  } catch (err) {
+    if (!(err instanceof ApiError)) throw err;
+
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 /**
- * Подключает обработчики формы входа после того, как страница отрисована.
- * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * Подключает обработчики формы входа.
+ * @param {HTMLElement} root
  */
 export function initLogin(root) {
   const form = root.querySelector('#login-form');
 
   initPasswordToggles(form);
-  bindValidation(form, loginSchema, submitLogin);
+  bindValidation(form, loginSchema, (data) => submitLogin(form, data));
 }

@@ -1,20 +1,19 @@
 import { validate, validateField } from './validate.js';
 
-/** Класс, которым помечается поле с ошибкой. */
 const INVALID_CLASS = 'form-field__input--invalid';
 
 /**
  * Собирает значения всех полей формы.
- * @param {HTMLFormElement} form - форма
- * @returns {Object<string, string>} имя поля → значение
+ * @param {HTMLFormElement} form
+ * @returns {Object<string, string>}
  */
 const getValues = (form) => Object.fromEntries(new FormData(form));
 
 /**
  * Показывает ошибку под полем или убирает её.
- * @param {HTMLFormElement} form - форма
- * @param {string} name - имя поля
- * @param {string|null} error - текст ошибки или null, если ошибки нет
+ * @param {HTMLFormElement} form
+ * @param {string} name
+ * @param {string|null} error
  */
 export const setFieldError = (form, name, error) => {
   const input = form.elements.namedItem(name);
@@ -27,9 +26,9 @@ export const setFieldError = (form, name, error) => {
 };
 
 /**
- * Показывает ошибки под несколькими полями, например пришедшие с сервера.
- * @param {HTMLFormElement} form - форма
- * @param {Object<string, string>} errors - имя поля → текст ошибки
+ * Показывает ошибки под несколькими полями.
+ * @param {HTMLFormElement} form
+ * @param {Object<string, string>} errors
  */
 export const showErrors = (form, errors) => {
   for (const [name, error] of Object.entries(errors)) {
@@ -38,12 +37,23 @@ export const showErrors = (form, errors) => {
 };
 
 /**
+ * Показывает общую ошибку формы, не привязанную к полю
+ * или убирает её.
+ * @param {HTMLFormElement} form
+ * @param {string|null} error
+ */
+export const setFormError = (form, error) => {
+  const errorEl = form.querySelector('[data-form-error]');
+  if (!errorEl) return;
+
+  errorEl.textContent = error ?? '';
+};
+
+/**
  * Подключает валидацию к форме.
- * Ошибки появляются при отправке, а при вводе исчезают,
- * как только значение в красном поле становится верным.
- * @param {HTMLFormElement} form - форма
- * @param {import('./schemas.js').Schema} schema - схема формы
- * @param {(values: Object<string, string>) => void} onSubmit - вызывается, если все поля верны
+ * @param {HTMLFormElement} form
+ * @param {Schema} schema
+ * @param {(values: Object<string, string>) => void} onSubmit
  */
 export const bindValidation = (form, schema, onSubmit) => {
   form.addEventListener('input', () => {

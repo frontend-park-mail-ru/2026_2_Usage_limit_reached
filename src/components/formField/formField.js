@@ -1,6 +1,5 @@
 /**
- * Шаблон поля формы: подпись, input и необязательная кнопка «показать пароль».
- * Регистрируется как partial formField в view.js.
+ * Шаблон поля формы
  * @type {string}
  */
 export const formFieldTemplate = `
@@ -34,10 +33,8 @@ export const formFieldTemplate = `
 
 /**
  * Включает кнопки «показать пароль» внутри контейнера.
- * Кнопка находит своё поле по id из атрибута data-password-toggle
- * и переключает у него type между password и text.
  *
- * @param {HTMLElement} root - Контейнер с полями (обычно форма).
+ * @param {HTMLElement} root
  */
 export function initPasswordToggles(root) {
   root.addEventListener('click', (e) => {
