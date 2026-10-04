@@ -28,8 +28,8 @@ export const setFieldError = (form, name, error) => {
   const errorEl = form.querySelector(`[data-error-for="${name}"]`);
   if (!input || !errorEl) return;
 
-  input.classList.toggle(INVALID_CLASS, Boolean(error));
-  input.setAttribute('aria-invalid', String(Boolean(error)));
+  input.classList.toggle(INVALID_CLASS, !!error);
+  input.setAttribute('aria-invalid', String(!!error));
   errorEl.textContent = error ?? '';
 };
 
