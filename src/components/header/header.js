@@ -8,7 +8,7 @@ export function renderHeader() {
  * Вешает обработчики клика на ссылки шапки, чтобы переходы шли через роутер.
  * Вызывается один раз при старте приложения.
  *
- * @param {(path: string) => void} navigate - Функция навигации из роутера.
+ * @param {(path: string) => void} navigate
  */
 export function bindHeaderLinks(navigate) {
   document.querySelectorAll('#header a[data-link]').forEach((link) => {

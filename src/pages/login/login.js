@@ -9,8 +9,8 @@ import { ApiError } from '../../modules/api/request.js';
 /**
  * Данные формы входа.
  * @typedef {Object} LoginData
- * @property {string} login - Адрес электронной почты или имя пользователя.
- * @property {string} password - Пароль.
+ * @property {string} login
+ * @property {string} password
  */
 
 /**
@@ -26,7 +26,7 @@ const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте 
 
 /**
  * Возвращает HTML страницы входа.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderLogin() {
   return render('pages/login/login');

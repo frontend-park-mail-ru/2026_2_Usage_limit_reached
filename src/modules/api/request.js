@@ -1,12 +1,12 @@
 import { API_BASE_URL } from './config.js';
 
 /**
- * Ошибка запроса к API: сервер ответил ошибкой или не ответил вовсе.
+ * Ошибка запроса к API
  */
 export class ApiError extends Error {
   /**
-   * @param {number} status - HTTP-код ошибки или 0, если сервер недоступен.
-   * @param {string} message - Текст ошибки от сервера.
+   * @param {number} status
+   * @param {string} message
    */
   constructor(status, message) {
     super(message);
@@ -16,13 +16,13 @@ export class ApiError extends Error {
 }
 
 /**
- * Отправляет запрос к бэкенду и возвращает тело ответа.
- * @param {string} path - Путь запроса, например '/login'.
- * @param {Object} [options] - Параметры запроса.
- * @param {string} [options.method='GET'] - HTTP-метод.
- * @param {Object} [options.data] - Данные, которые уйдут в теле запроса как JSON.
- * @returns {Promise<*>} Тело ответа сервера, разобранное из JSON.
- * @throws {ApiError} Если сервер вернул ошибку или недоступен.
+ * Запрос на бэкенд
+ * @param {string} path
+ * @param {Object} [options]
+ * @param {string} [options.method='GET']
+ * @param {Object} [options.data]
+ * @returns {Promise<*>}
+ * @throws {ApiError}
  */
 export const request = async (path, { method = 'GET', data } = {}) => {
   let response;

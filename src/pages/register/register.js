@@ -37,7 +37,7 @@ const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте 
 
 /**
  * Возвращает HTML страницы регистрации.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderRegister() {
   return render('pages/register/register');
