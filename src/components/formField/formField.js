@@ -1,9 +1,7 @@
 /**
  * Включает кнопки «показать пароль» внутри контейнера.
- * Кнопка находит своё поле по id из атрибута data-password-toggle
- * и переключает у него type между password и text.
  *
- * @param {HTMLElement} root - Контейнер с полями (обычно форма).
+ * @param {HTMLElement} root
  */
 export function initPasswordToggles(root) {
   root.addEventListener('click', (e) => {

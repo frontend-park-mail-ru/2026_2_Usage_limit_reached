@@ -1,14 +1,14 @@
 /**
  * Правило валидации.
  * @callback Rule
- * @param {string} value - значение проверяемого поля
- * @param {Object<string, string>} [values] - значения всех полей формы
- * @returns {string|null} текст ошибки или null, если ошибок нет
+ * @param {string} value
+ * @param {Object<string, string>} [values]
+ * @returns {string|null}
  */
 
 /**
- * Поле не должно быть пустым (пробелы не считаются).
- * @param {string} [message] - текст ошибки
+ * Поле не должно быть пустым
+ * @param {string} [message]
  * @returns {Rule}
  */
 export const required = (message = 'Обязательное поле') =>
@@ -16,8 +16,8 @@ export const required = (message = 'Обязательное поле') =>
 
 /**
  * Минимальная длина строки.
- * @param {number} min - минимально допустимое количество символов
- * @param {string} [message] - текст ошибки
+ * @param {number} min
+ * @param {string} [message]
  * @returns {Rule}
  */
 export const minLength = (min, message = `Минимум ${min} символов`) =>
@@ -25,8 +25,8 @@ export const minLength = (min, message = `Минимум ${min} символов
 
 /**
  * Максимальная длина строки.
- * @param {number} max - максимально допустимое количество символов
- * @param {string} [message] - текст ошибки
+ * @param {number} max
+ * @param {string} [message]
  * @returns {Rule}
  */
 export const maxLength = (max, message = `Максимум ${max} символов`) =>
@@ -34,23 +34,23 @@ export const maxLength = (max, message = `Максимум ${max} символо
 
 /**
  * Значение должно соответствовать регулярному выражению.
- * @param {RegExp} regexp - шаблон для проверки
- * @param {string} message - текст ошибки
+ * @param {RegExp} regexp
+ * @param {string} message
  * @returns {Rule}
  */
 export const pattern = (regexp, message) =>
   (value) => (regexp.test(value) ? null : message);
 
 /**
- * Проверка формата email, та же регулярка, что на бэкенде (VAL_EMAIL_REGEXP).
+ * Проверка формата email
  * @type {Rule}
  */
 export const email = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Некорректный email');
 
 /**
  * Значение должно совпадать со значением другого поля формы.
- * @param {string} field - имя поля, с которым сравниваем
- * @param {string} message - текст ошибки
+ * @param {string} field
+ * @param {string} message
  * @returns {Rule}
  */
 export const sameAs = (field, message) =>

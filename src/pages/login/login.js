@@ -9,12 +9,12 @@ import { ApiError } from '../../modules/api/request.js';
 /**
  * Данные, которые пользователь ввёл в форму входа.
  * @typedef {Object} LoginData
- * @property {string} login - Адрес электронной почты или имя пользователя.
- * @property {string} password - Пароль.
+ * @property {string} login
+ * @property {string} password
  */
 
 /**
- * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
+ * Общие ошибки формы.
  * @type {Object<number, string>}
  */
 const FORM_ERRORS = {
@@ -22,12 +22,11 @@ const FORM_ERRORS = {
   401: 'Неверные данные для входа!',
 };
 
-/** Текст общей ошибки на любой другой ответ сервера. */
 const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
 
 /**
  * Возвращает HTML страницы входа.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderLogin() {
   return render('pages/login/login');
@@ -35,9 +34,8 @@ export function renderLogin() {
 
 /**
  * Отправляет данные входа на сервер.
- * При успехе переходит в профиль, при ошибке показывает её в форме.
- * @param {HTMLFormElement} form - Форма входа.
- * @param {LoginData} data - Проверенные данные формы.
+ * @param {HTMLFormElement} form
+ * @param {LoginData} data
  * @returns {Promise<void>}
  */
 async function submitLogin(form, data) {
@@ -58,8 +56,8 @@ async function submitLogin(form, data) {
 }
 
 /**
- * Подключает обработчики формы входа после того, как страница отрисована.
- * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * Подключает обработчики формы входа.
+ * @param {HTMLElement} root
  */
 export function initLogin(root) {
   const form = root.querySelector('#login-form');

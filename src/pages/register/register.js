@@ -9,15 +9,15 @@ import { ApiError } from '../../modules/api/request.js';
 /**
  * Данные, которые пользователь ввёл в форму регистрации.
  * @typedef {Object} RegisterData
- * @property {string} email - Адрес электронной почты.
- * @property {string} username - Имя пользователя.
- * @property {string} nickname - Отображаемое имя (на бэке поле nickname).
- * @property {string} password - Пароль.
- * @property {string} passwordRepeat - Повтор пароля.
+ * @property {string} email
+ * @property {string} username
+ * @property {string} nickname
+ * @property {string} password
+ * @property {string} passwordRepeat
  */
 
 /**
- * Ошибки сервера, которые показываются под полями: код ответа → поле → текст.
+ * Ошибки сервера.
  * @type {Object<number, Object<string, string>>}
  */
 const FIELD_ERRORS = {
@@ -26,19 +26,18 @@ const FIELD_ERRORS = {
 };
 
 /**
- * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
+ * Общие ошибки формы.
  * @type {Object<number, string>}
  */
 const FORM_ERRORS = {
   0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
 };
 
-/** Текст общей ошибки на любой другой ответ сервера. */
 const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
 
 /**
  * Возвращает HTML страницы регистрации.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderRegister() {
   return render('pages/register/register');
@@ -46,9 +45,8 @@ export function renderRegister() {
 
 /**
  * Отправляет данные регистрации на сервер.
- * При успехе переходит в профиль, при ошибке показывает её в форме.
- * @param {HTMLFormElement} form - Форма регистрации.
- * @param {RegisterData} data - Проверенные данные формы.
+ * @param {HTMLFormElement} form
+ * @param {RegisterData} data
  * @returns {Promise<void>}
  */
 async function submitRegister(form, data) {
@@ -74,8 +72,8 @@ async function submitRegister(form, data) {
 }
 
 /**
- * Подключает обработчики формы регистрации после того, как страница отрисована.
- * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * Подключает обработчики формы регистрации.
+ * @param {HTMLElement} root
  */
 export function initRegister(root) {
   const form = root.querySelector('#register-form');
