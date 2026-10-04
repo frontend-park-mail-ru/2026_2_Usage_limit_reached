@@ -1,16 +1,20 @@
-.header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 16px 24px;
-  border-bottom: 1px solid #ddd;
+@import url('../components/header/header.css');
+@import url('../components/formField/formField.css');
+@import url('./auth.css');
+@import url('./button.css');
+
+:root {
+  --color-primary: #e07a5f;
+  --color-background: #f4f1de;
+  --color-text: #3d405b;
+  --color-grey-9: #999999;
+  --color-grey-c: #cccccc;
+  --color-white: #ffffff;
 }
 
-.header a {
-  color: #555;
-  text-decoration: none;
-}
-
-.header a:hover {
-  color: #000;
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
 }

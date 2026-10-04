@@ -1,19 +1,45 @@
 import { renderLogin } from '../pages/login/login.js';
-import { renderRegister } from '../pages/register/register.js';
+import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 
-// Соответствие URL-пути и функции рендера страницы.
+/** Соответствие URL-пути и страницы. */
 const routes = {
-  '/login': renderLogin,
-  '/register': renderRegister,
-  '/profile': renderProfile,
+  '/login': { render: renderLogin },
+  '/register': { render: renderRegister, init: initRegister },
+  '/profile': { render: renderProfile },
 };
 
+const notFoundRoute = { render: renderNotFound };
+
+/**
+ * Находит страницу по текущему URL, отрисовывает её в #app
+ * и вызывает её init, если он есть. Для неизвестного пути показывает 404.
+ */
 function renderCurrentRoute() {
   const path = window.location.pathname;
-  const page = routes[path] || renderNotFound;
-  document.getElementById('app').innerHTML = page();
+  const route = routes[path] || notFoundRoute;
+  const root = document.getElementById('app');
+
+  root.innerHTML = route.render();
+  bindPageLinks(root);
+  if (route.init) {
+    route.init(root);
+  }
+}
+
+/**
+ * Вешает обработчики на внутренние ссылки страницы, чтобы переходы шли через роутер.
+ * Содержимое #app пересоздаётся при каждом рендере, поэтому старых обработчиков на ссылках нет.
+ * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ */
+function bindPageLinks(root) {
+  root.querySelectorAll('a[data-link]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigate(link.getAttribute('href'));
+    });
+  });
 }
 
 /**
