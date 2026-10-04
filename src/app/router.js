@@ -3,7 +3,6 @@ import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 
-/** Соответствие URL-пути и страницы. */
 const routes = {
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
@@ -12,10 +11,6 @@ const routes = {
 
 const notFoundRoute = { render: renderNotFound };
 
-/**
- * Находит страницу по текущему URL, отрисовывает её в #app
- * и вызывает её init, если он есть. Для неизвестного пути показывает 404.
- */
 function renderCurrentRoute() {
   const path = window.location.pathname;
   const route = routes[path] || notFoundRoute;
@@ -29,9 +24,8 @@ function renderCurrentRoute() {
 }
 
 /**
- * Вешает обработчики на внутренние ссылки страницы, чтобы переходы шли через роутер.
- * Содержимое #app пересоздаётся при каждом рендере, поэтому старых обработчиков на ссылках нет.
- * @param {HTMLElement} root - Контейнер, в который отрисована страница.
+ * Вешает обработчики на внутренние ссылки страницы.
+ * @param {HTMLElement} root
  */
 function bindPageLinks(root) {
   root.querySelectorAll('a[data-link]').forEach((link) => {
@@ -44,7 +38,7 @@ function bindPageLinks(root) {
 
 /**
  * Переходит на указанный путь без перезагрузки страницы.
- * @param {string} path - Путь, на который нужно перейти.
+ * @param {string} path
  */
 export function navigate(path) {
   history.pushState({}, '', path);
@@ -52,8 +46,7 @@ export function navigate(path) {
 }
 
 /**
- * Слушает переходы по кнопкам назад/вперед и рендерит 
- * страницу, соответствующую текущему URL. Вызывается один раз при старте.
+ * Слушает переходы по кнопкам назад/вперед.
  */
 export function initRouter() {
   window.addEventListener('popstate', renderCurrentRoute);
