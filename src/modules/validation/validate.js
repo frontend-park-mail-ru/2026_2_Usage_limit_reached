@@ -1,16 +1,16 @@
 /**
  * Результат валидации формы.
  * @typedef {Object} ValidationResult
- * @property {boolean} isValid - true, если ошибок нет
- * @property {Object<string, string>} errors - имя поля → текст ошибки
+ * @property {boolean} isValid
+ * @property {Object<string, string>} errors
  */
 
 /**
  * Проверяет одно поле и возвращает первую найденную ошибку.
- * @param {string} field - имя поля
- * @param {Object<string, string>} values - значения всех полей формы
- * @param {import('./schemas.js').Schema} schema - схема формы
- * @returns {string|null} текст ошибки или null
+ * @param {string} field
+ * @param {Object<string, string>} values
+ * @param {Schema} schema
+ * @returns {string|null}
  */
 export const validateField = (field, values, schema) => {
   const rules = schema[field] ?? [];
@@ -28,8 +28,8 @@ export const validateField = (field, values, schema) => {
 
 /**
  * Проверяет все поля формы по схеме.
- * @param {Object<string, string>} values - значения всех полей формы
- * @param {import('./schemas.js').Schema} schema - схема формы
+ * @param {Object<string, string>} values
+ * @param {Schema} schema
  * @returns {ValidationResult}
  */
 export const validate = (values, schema) => {
