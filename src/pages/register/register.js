@@ -50,7 +50,6 @@ export function initRegister(root) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    /** @type {RegisterData} */
     const data = Object.fromEntries(new FormData(form));
 
     // Отправка на сервер будет в задаче про API, проверка полей — в задаче про валидацию.

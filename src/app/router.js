@@ -3,25 +3,13 @@ import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 
-/**
- * Страница: функция рендера и необязательная функция,
- * которая вешает обработчики событий после вставки HTML.
- * @typedef {Object} Route
- * @property {() => string} render - Возвращает HTML страницы.
- * @property {(root: HTMLElement) => void} [init] - Подключает обработчики к отрисованной странице.
- */
-
-/**
- * Соответствие URL-пути и страницы.
- * @type {Object<string, Route>}
- */
+/** Соответствие URL-пути и страницы. */
 const routes = {
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
   '/profile': { render: renderProfile },
 };
 
-/** @type {Route} */
 const notFoundRoute = { render: renderNotFound };
 
 /**
