@@ -1,8 +1,3 @@
-/**
- * @file Настройки ESLint: какие файлы проверять и по каким правилам.
- * Запуск: npm run lint (проверка) и npm run lint:fix (с автоисправлением).
- */
-
 import js from '@eslint/js';
 import globals from 'globals';
 import { defineConfig } from 'eslint/config';
