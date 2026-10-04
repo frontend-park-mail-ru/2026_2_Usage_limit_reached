@@ -1,20 +1,34 @@
 import { render } from '../../app/view.js';
-import { bindLinks } from '../../app/linkClick.js';
+import { bindLinks } from '../../utils/helpers/bindLinks.js';
 
 /**
- * Возвращает общий сайдбар профиля без логики будущих разделов.
- * @returns {string} HTML навигации.
+ * Возвращает HTML сайдбара.
+ * @returns {string} HTML сайдбара.
  */
 export function renderSidebar() {
   return render('components/sidebar/sidebar');
 }
 
 /**
- * Подключает переходы только к ссылкам нового экземпляра сайдбара.
- * Вызывается после его рендера при смене layout.
- * @param {(path: string) => void} navigate - Функция перехода из роутера.
+ * Подключает ссылки сайдбара.
+ * @param {(path: string) => void} navigate - Функция перехода.
  * @returns {void}
  */
 export function bindSidebarLinks(navigate) {
   bindLinks(document.getElementById('sidebar'), navigate);
+}
+
+/**
+ * Отмечает текущую страницу в сайдбаре.
+ * @param {string} path - Путь страницы.
+ * @returns {void}
+ */
+export function setActiveSidebarLink(path) {
+  const profileLink = document.querySelector('#sidebar a[data-link]');
+  if (!profileLink) return;
+  if (path === '/profile') {
+    profileLink.setAttribute('aria-current', 'page');
+  } else {
+    profileLink.removeAttribute('aria-current');
+  }
 }

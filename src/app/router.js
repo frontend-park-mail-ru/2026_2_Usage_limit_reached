@@ -2,9 +2,8 @@ import { renderLogin, initLogin } from '../pages/login/login.js';
 import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
-import { renderSidebar, bindSidebarLinks } from '../components/sidebar/sidebar.js';
+import { renderSidebar, bindSidebarLinks, setActiveSidebarLink } from '../components/sidebar/sidebar.js';
 
-/** Соответствие URL-пути и страницы. */
 const routes = {
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
@@ -13,27 +12,31 @@ const routes = {
 
 const notFoundRoute = { render: renderNotFound };
 
-/** Последний показанный layout; undefined означает первый рендер. */
 let currentLayout;
 
 /**
- * Пересоздаёт общую навигацию только при смене layout.
- * @param {string} layout - sidebar для профиля, plain для остальных страниц.
+ * Обновляет сайдбар при смене layout.
+ * @param {string} layout - Layout страницы.
+ * @returns {void}
  */
 function updateLayout(layout) {
   if (currentLayout === layout) return;
   const sidebar = document.getElementById('sidebar');
   const hasSidebar = layout === 'sidebar';
-  sidebar.innerHTML = hasSidebar ? renderSidebar() : '';
-  if (hasSidebar) bindSidebarLinks(navigate);
+  if (hasSidebar) {
+    sidebar.innerHTML = renderSidebar();
+    bindSidebarLinks(navigate);
+  } else {
+    sidebar.innerHTML = '';
+  }
   sidebar.hidden = !hasSidebar;
   document.getElementById('layout').classList.toggle('app-layout--sidebar', hasSidebar);
   currentLayout = layout;
 }
 
 /**
- * Находит страницу по текущему URL, отрисовывает её в #app
- * и вызывает её init, если он есть. Для неизвестного пути показывает 404.
+ * Показывает страницу по текущему адресу.
+ * @returns {void}
  */
 function renderCurrentRoute() {
   const path = window.location.pathname;
@@ -41,11 +44,7 @@ function renderCurrentRoute() {
   const root = document.getElementById('app');
 
   updateLayout(route.layout || 'plain');
-  const profileLink = document.querySelector('#sidebar a[data-link]');
-  if (profileLink) {
-    if (path === '/profile') profileLink.setAttribute('aria-current', 'page');
-    else profileLink.removeAttribute('aria-current');
-  }
+  setActiveSidebarLink(path);
   root.innerHTML = route.render();
   if (route.init) {
     route.init(root, navigate);
@@ -53,10 +52,8 @@ function renderCurrentRoute() {
 }
 
 /**
- * Переходит на указанный путь без перезагрузки страницы.
- * Текущий pathname + search не добавляет историю и не пересоздаёт страницу,
- * чтобы сохранить её состояние и фокус.
- * @param {string} path - Путь, на который нужно перейти.
+ * Открывает страницу по указанному пути.
+ * @param {string} path - Путь страницы.
  * @returns {void}
  */
 export function navigate(path) {
@@ -67,8 +64,8 @@ export function navigate(path) {
 }
 
 /**
- * Слушает переходы по кнопкам назад/вперед и рендерит 
- * страницу, соответствующую текущему URL. Вызывается один раз при старте.
+ * Запускает роутер и подключает кнопки истории браузера.
+ * @returns {void}
  */
 export function initRouter() {
   window.addEventListener('popstate', renderCurrentRoute);

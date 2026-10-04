@@ -1,5 +1,5 @@
 import { render } from '../../app/view.js';
-import { bindLinks } from '../../app/linkClick.js';
+import { bindLinks } from '../../utils/helpers/bindLinks.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
 import { loginSchema } from '../../modules/validation/schemas.js';
@@ -7,14 +7,14 @@ import { login } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
 
 /**
- * Данные, которые пользователь ввёл в форму входа.
+ * Данные формы входа.
  * @typedef {Object} LoginData
  * @property {string} login - Адрес электронной почты или имя пользователя.
  * @property {string} password - Пароль.
  */
 
 /**
- * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
+ * Сообщения для ошибок входа. Код 0 означает сетевую ошибку.
  * @type {Object<number, string>}
  */
 const FORM_ERRORS = {
@@ -22,7 +22,6 @@ const FORM_ERRORS = {
   401: 'Неверные данные для входа!',
 };
 
-/** Текст общей ошибки на любой другой ответ сервера. */
 const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
 
 /**
@@ -34,11 +33,10 @@ export function renderLogin() {
 }
 
 /**
- * Отправляет данные входа на сервер.
- * При успехе переходит в профиль, при ошибке показывает её в форме.
+ * Отправляет форму входа.
  * @param {HTMLFormElement} form - Форма входа.
  * @param {LoginData} data - Проверенные данные формы.
- * @param {(path: string) => void} navigate - Функция перехода из роутера.
+ * @param {(path: string) => void} navigate - Функция перехода.
  * @returns {Promise<void>}
  */
 async function submitLogin(form, data, navigate) {
@@ -59,9 +57,10 @@ async function submitLogin(form, data, navigate) {
 }
 
 /**
- * Подключает обработчики формы входа и ссылок после рендера страницы.
- * @param {HTMLElement} root - Контейнер, в который отрисована страница.
- * @param {(path: string) => void} navigate - Функция перехода из роутера.
+ * Подключает форму и ссылки страницы входа.
+ * @param {HTMLElement} root - Контейнер страницы.
+ * @param {(path: string) => void} navigate - Функция перехода.
+ * @returns {void}
  */
 export function initLogin(root, navigate) {
   const form = root.querySelector('#login-form');
