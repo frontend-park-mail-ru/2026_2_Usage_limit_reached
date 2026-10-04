@@ -1,9 +1,3 @@
-/**
- * @file Обёртка над fetch для запросов к бэкенду.
- * Отправляет данные в JSON, прикладывает куки и разбирает ответ
- * формата { status, body } или { status, error }.
- */
-
 import { API_BASE_URL } from './config.js';
 
 /**
