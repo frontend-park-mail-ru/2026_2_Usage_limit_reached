@@ -8,8 +8,7 @@ export function formatPostCount(count) {
   const last = count % 10;
   let word = 'постов';
   if (lastTwo < 11 || lastTwo > 14) {
-    if (last === 1) word = 'пост';
-    else if (last >= 2 && last <= 4) word = 'поста';
+    word = last === 1 ? 'пост' : last >= 2 && last <= 4 ? 'поста' : 'постов';
   }
   return `${count} ${word}`;
 }
