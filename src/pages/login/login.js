@@ -44,7 +44,6 @@ export function initLogin(root) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    /** @type {LoginData} */
     const data = Object.fromEntries(new FormData(form));
 
     console.log('login', data);
