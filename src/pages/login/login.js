@@ -9,12 +9,12 @@ import { ApiError } from '../../modules/api/request.js';
 /**
  * Данные, которые пользователь ввёл в форму входа.
  * @typedef {Object} LoginData
- * @property {string} login - Адрес электронной почты или имя пользователя.
- * @property {string} password - Пароль.
+ * @property {string} login
+ * @property {string} password
  */
 
 /**
- * Общие ошибки формы: код ответа → текст. 0 — сервер не ответил.
+ * Общие ошибки формы.
  * @type {Object<number, string>}
  */
 const FORM_ERRORS = {
@@ -22,12 +22,11 @@ const FORM_ERRORS = {
   401: 'Неверные данные для входа!',
 };
 
-/** Текст общей ошибки на любой другой ответ сервера. */
 const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
 
 /**
  * Возвращает HTML страницы входа.
- * @returns {string} HTML страницы.
+ * @returns {string}
  */
 export function renderLogin() {
   return render('pages/login/login');

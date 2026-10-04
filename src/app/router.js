@@ -4,7 +4,6 @@ import { renderProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 import { renderSidebar, bindSidebarLinks } from '../components/sidebar/sidebar.js';
 
-/** Соответствие URL-пути и страницы. */
 const routes = {
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
@@ -67,8 +66,7 @@ export function navigate(path) {
 }
 
 /**
- * Слушает переходы по кнопкам назад/вперед и рендерит 
- * страницу, соответствующую текущему URL. Вызывается один раз при старте.
+ * Слушает переходы по кнопкам назад/вперед.
  */
 export function initRouter() {
   window.addEventListener('popstate', renderCurrentRoute);
