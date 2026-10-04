@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 const ROOT_DIR = path.join(import.meta.dirname, '..');
 
