@@ -47,6 +47,15 @@
 
     {{> postsList}}
   </section>
+  {{else}}
+    <section class="profile__author-invite" aria-labelledby="profile-author-title">
+      <div class="profile__author-content">
+        <h2 class="profile__author-title" id="profile-author-title">Станьте автором, чтобы начать публиковать контент</h2>
+        <p class="profile__author-text">Делитесь своими идеями, историями и знаниями с аудиторией. Авторский профиль даёт доступ к публикации постов, статистике и другим возможностям.</p>
+        <button class="button profile__button profile__button--become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
+      </div>
+      <img class="profile__author-image" src="/assets/profile/img-author.svg" alt="" />
+    </section>
   {{/if}}
 </section>
 {{/if}}
