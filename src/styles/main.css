@@ -15,6 +15,15 @@
   --color-error: #b3261e;
   --color-secondary: #81b29a;
   --color-profile-border: rgba(61, 64, 91, 0.5);
+  --color-primary-hover: #c96a50;
+  --color-primary-pressed: #b35a45;
+  --color-secondary-button-hover: rgba(224, 122, 95, 0.06);
+  --color-secondary-button-pressed: rgba(224, 122, 95, 0.12);
+  --color-input-border: #e7e8eb;
+  --color-input-border-hover: #d1d1d8;
+  --color-input-placeholder: #9d9fac;
+  --color-toggle-hover-background: #f4f4f5;
+  --color-toggle-pressed-background: #fbefeb;
 }
 
 body {

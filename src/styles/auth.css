@@ -38,3 +38,26 @@
   font-size: 16px;
   line-height: 19px;
 }
+
+.auth-form .button--primary:not(:disabled):hover {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
+}
+
+.auth-form .button--primary:not(:disabled):active {
+  border-color: var(--color-primary-pressed);
+  background: var(--color-primary-pressed);
+}
+
+.auth-form .button--secondary:hover {
+  background: var(--color-secondary-button-hover);
+}
+
+.auth-form .button--secondary:active {
+  background: var(--color-secondary-button-pressed);
+}
+
+.auth-form .button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
