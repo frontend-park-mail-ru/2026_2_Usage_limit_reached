@@ -1,10 +1,12 @@
 import { renderLogin, initLogin } from '../pages/login/login.js';
+import { renderHome, initHome } from '../pages/home/home.js';
 import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile, initProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
 
 const routes = {
+  '/': { render: renderHome, init: initHome },
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
   '/profile': { render: renderProfile, init: initProfile, layout: 'sidebar' },
@@ -54,12 +56,15 @@ function renderCurrentRoute() {
 /**
  * Открывает страницу по указанному пути.
  * @param {string} path - Путь страницы.
+ * @param {Object} [options={}] - Параметры перехода.
+ * @param {boolean} [options.replace=false] - Заменить текущую запись истории.
  * @returns {void}
  */
-export function navigate(path) {
+export function navigate(path, { replace = false } = {}) {
   const url = new URL(path, window.location.href);
   if (url.pathname + url.search === window.location.pathname + window.location.search) return;
-  history.pushState({}, '', path);
+  if (replace) history.replaceState({}, '', path);
+  else history.pushState({}, '', path);
   renderCurrentRoute();
 }
 
