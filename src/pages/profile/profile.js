@@ -26,7 +26,7 @@ export function buildProfileViewModel(profileResponse, postsResponse) {
     username: `@${profileResponse.user.username}`,
     hasAuthor: Boolean(profileResponse.author),
     bio: profileResponse.author?.bio ?? '',
-    avatarUrl: '/assets/profile/avatar.png',
+    avatarUrl: '/assets/profile/avatar-placeholder.svg',
     postCountLabel: formatPostCount(posts.length),
     hasPosts: posts.length > 0,
     posts,
