@@ -108,10 +108,12 @@
 .profile__actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   flex: 0 1 389px;
   max-width: 100%;
   min-width: 0;
   gap: 24px;
+  margin-left: auto;
   padding: 6px 0;
 }
 
