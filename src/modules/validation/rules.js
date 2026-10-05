@@ -21,7 +21,7 @@ export const required = (message = 'Обязательное поле') =>
  * @returns {Rule}
  */
 export const minLength = (min, message = `Минимум ${min} символов`) =>
-  (value) => (value.length >= min ? null : message);
+  (value) => ([...value].length >= min ? null : message);
 
 /**
  * Максимальная длина строки.
@@ -30,7 +30,16 @@ export const minLength = (min, message = `Минимум ${min} символов
  * @returns {Rule}
  */
 export const maxLength = (max, message = `Максимум ${max} символов`) =>
-  (value) => (value.length <= max ? null : message);
+  (value) => ([...value].length <= max ? null : message);
+
+/**
+ * Проверяет длину строки в байтах UTF-8.
+ * @param {number} max - Максимальная длина в байтах.
+ * @param {string} message - Сообщение об ошибке.
+ * @returns {Rule} Правило проверки.
+ */
+export const maxByteLength = (max, message) =>
+  (value) => (new TextEncoder().encode(value).length <= max ? null : message);
 
 /**
  * Значение должно соответствовать регулярному выражению.
@@ -45,7 +54,7 @@ export const pattern = (regexp, message) =>
  * Проверка формата email
  * @type {Rule}
  */
-export const email = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Некорректный email');
+export const email = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Введите корректный адрес электронной почты');
 
 /**
  * Значение должно совпадать со значением другого поля формы.
