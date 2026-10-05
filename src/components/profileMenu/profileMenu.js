@@ -12,20 +12,8 @@ import { bindLinks } from '../../utils/helpers/bindLinks.js';
 export function initProfileMenu(menu, button, navigate) {
   const logoutButton = menu.querySelector('[data-logout]');
   const error = menu.querySelector('.profile-menu__error');
-  const sidebar = button.closest('.sidebar');
   let pending = false;
   let destroyed = false;
-
-  /**
-   * Размещает меню возле кнопки в пределах окна.
-   * @returns {void}
-   */
-  function positionMenu() {
-    const rect = button.getBoundingClientRect();
-    const panel = menu.getBoundingClientRect();
-    menu.style.left = `${Math.max(8, Math.min(rect.right + 16, window.innerWidth - panel.width - 8))}px`;
-    menu.style.top = `${Math.max(8, Math.min(rect.bottom - panel.height, window.innerHeight - panel.height - 8))}px`;
-  }
 
   /**
    * Закрывает меню и снимает временные слушатели.
@@ -37,8 +25,6 @@ export function initProfileMenu(menu, button, navigate) {
     button.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', handleOutsideClick);
     document.removeEventListener('keydown', handleKeydown);
-    window.removeEventListener('resize', positionMenu);
-    sidebar.removeEventListener('scroll', positionMenu);
     if (restoreFocus && button.isConnected) button.focus();
   }
 
@@ -49,11 +35,8 @@ export function initProfileMenu(menu, button, navigate) {
   function open() {
     menu.hidden = false;
     button.setAttribute('aria-expanded', 'true');
-    positionMenu();
     document.addEventListener('click', handleOutsideClick);
     document.addEventListener('keydown', handleKeydown);
-    window.addEventListener('resize', positionMenu);
-    sidebar.addEventListener('scroll', positionMenu);
     menu.querySelector('a[data-link]').focus();
   }
 

@@ -13,8 +13,10 @@
       </button>
     </div>
   </div>
-  <button class="sidebar__item sidebar__item--profile" type="button" aria-label="Профиль" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
-    <img src="/assets/sidebar/profile.svg" alt="" aria-hidden="true">
-  </button>
+  <div class="sidebar__bottom">
+    <button class="sidebar__item sidebar__item--profile" type="button" aria-label="Профиль" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
+      <img src="/assets/sidebar/profile.svg" alt="" aria-hidden="true">
+    </button>
+    {{> profileMenu}}
+  </div>
 </nav>
-{{> profileMenu}}
