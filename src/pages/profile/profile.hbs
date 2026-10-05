@@ -1,3 +1,10 @@
+{{#if message}}
+  <section class="profile" aria-label="Профиль">
+    <div class="profile__summary">
+      <p class="{{#if isError}}form-field__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+    </div>
+  </section>
+{{else}}
 <section class="profile" aria-labelledby="profile-name">
   <div class="profile__summary">
     <div class="profile__identity">
@@ -5,11 +12,13 @@
       <div class="profile__info">
         <div class="profile__heading">
           <h1 class="profile__name" id="profile-name">{{name}}</h1>
-          <span class="profile__badge">Автор</span>
+          {{#if hasAuthor}}<span class="profile__badge">Автор</span>{{/if}}
         </div>
         <p class="profile__username">{{username}}</p>
-        <p class="profile__bio">{{bio}}</p>
-        <p class="profile__post-count">{{postCountLabel}}</p>
+        {{#if hasAuthor}}
+          <p class="profile__bio">{{bio}}</p>
+          <p class="profile__post-count">{{postCountLabel}}</p>
+        {{/if}}
       </div>
     </div>
     <div class="profile__actions">
@@ -18,6 +27,7 @@
     </div>
   </div>
 
+  {{#if hasAuthor}}
   <section class="profile__posts" aria-labelledby="profile-posts-title">
     <div class="profile__toolbar">
       <h2 class="profile__title" id="profile-posts-title">Посты</h2>
@@ -37,4 +47,6 @@
 
     {{> postsList}}
   </section>
+  {{/if}}
 </section>
+{{/if}}

@@ -1,23 +1,9 @@
 <article class="post-card" aria-labelledby="post-title-{{id}}">
   <div class="post-card__preview">
-    {{#if imageUrl}}
-      <img class="post-card__image" src="{{imageUrl}}" alt="{{imageAlt}}" />
-    {{else}}
-      <p class="post-card__excerpt">{{body}}</p>
-    {{/if}}
+    <p class="post-card__excerpt">{{body}}</p>
   </div>
   <h3 class="post-card__title" id="post-title-{{id}}">{{title}}</h3>
   <div class="post-card__footer">
-    <div class="post-card__counters">
-      <span class="post-card__counter" aria-label="Лайки: {{likes}}">
-        <span class="post-card__icon" aria-hidden="true"><img src="/assets/profile/heart.svg" alt="" /></span>
-        {{likes}}
-      </span>
-      <span class="post-card__counter" aria-label="Комментарии: {{comments}}">
-        <span class="post-card__icon" aria-hidden="true"><img src="/assets/profile/comment.svg" alt="" /></span>
-        {{comments}}
-      </span>
-    </div>
     {{#if publishedAt}}
       <time class="post-card__time" datetime="{{publishedAt}}">{{publishedAtLabel}}</time>
     {{/if}}
