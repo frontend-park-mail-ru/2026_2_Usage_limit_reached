@@ -1,0 +1,58 @@
+.post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 307px;
+  border-radius: 16px;
+  background: var(--color-white);
+  overflow: hidden;
+}
+
+.post-card__preview {
+  flex-shrink: 0;
+  height: 225px;
+  overflow: hidden;
+}
+
+.post-card__excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 10;
+  margin: 16px;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: normal;
+  overflow-wrap: anywhere;
+}
+
+.post-card__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 12px;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
+  overflow-wrap: anywhere;
+}
+
+.post-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+  padding: 0 12px 8px;
+  font-size: 14px;
+  line-height: normal;
+}
+
+.post-card__time {
+  white-space: nowrap;
+}

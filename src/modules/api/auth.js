@@ -23,3 +23,9 @@ export const signup = ({ email, username, nickname, password }) =>
  */
 export const login = ({ login, password }) =>
   request('/login', { method: 'POST', data: { login, password } });
+
+/**
+ * Завершает сессию пользователя.
+ * @returns {Promise<Object>} Ответ сервера.
+ */
+export const logout = () => request('/logout', { method: 'POST' });

@@ -1,4 +1,63 @@
-<section class="page page--profile">
-  <h1 class="page__title">Профиль</h1>
-  <p class="page__text">Страница профиля в разработке.</p>
+{{#if message}}
+  <section class="profile" aria-label="Профиль">
+    <div class="profile__summary">
+      <p class="{{#if isError}}form-field__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+    </div>
+  </section>
+{{else}}
+<section class="profile" aria-labelledby="profile-name">
+  <div class="profile__summary">
+    <div class="profile__identity">
+      <img class="profile__avatar" src="{{avatarUrl}}" alt="Заглушка аватара" />
+      <div class="profile__info">
+        <div class="profile__heading">
+          <h1 class="profile__name" id="profile-name">{{name}}</h1>
+          {{#if hasAuthor}}<span class="profile__badge">Автор</span>{{/if}}
+        </div>
+        <p class="profile__username">{{username}}</p>
+        {{#if hasAuthor}}
+          <p class="profile__bio">{{bio}}</p>
+          <p class="profile__post-count">{{postCountLabel}}</p>
+        {{/if}}
+      </div>
+    </div>
+    <div class="profile__actions">
+      {{#if hasAuthor}}
+        <button class="button profile__button profile__button--statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+      {{/if}}
+      <button class="button profile__button profile__button--edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
+    </div>
+  </div>
+
+  {{#if hasAuthor}}
+  <section class="profile__posts" aria-labelledby="profile-posts-title">
+    <div class="profile__toolbar">
+      <h2 class="profile__title" id="profile-posts-title">Посты</h2>
+      {{#if hasPosts}}
+        <div class="profile__controls">
+          <button class="button profile__button profile__button--add" type="button" aria-disabled="true" title="Будет доступно позже">
+            <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+            Добавить пост
+          </button>
+          <label class="profile__sort-label" for="profile-sort">Порядок постов</label>
+          <select class="profile__sort" id="profile-sort" name="profile-sort">
+            <option value="newest">Сначала новые</option>
+          </select>
+        </div>
+      {{/if}}
+    </div>
+
+    {{> postsList}}
+  </section>
+  {{else}}
+    <section class="profile__author-invite" aria-labelledby="profile-author-title">
+      <div class="profile__author-content">
+        <h2 class="profile__author-title" id="profile-author-title">Станьте автором, чтобы начать публиковать контент</h2>
+        <p class="profile__author-text">Делитесь своими идеями, историями и знаниями с аудиторией. Авторский профиль даёт доступ к публикации постов, статистике и другим возможностям.</p>
+        <button class="button profile__button profile__button--become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
+      </div>
+      <img class="profile__author-image" src="/assets/profile/img-author.svg" alt="" />
+    </section>
+  {{/if}}
 </section>
+{{/if}}

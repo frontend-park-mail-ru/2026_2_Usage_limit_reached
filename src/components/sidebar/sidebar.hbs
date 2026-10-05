@@ -1,0 +1,20 @@
+<nav class="sidebar" aria-label="Основная навигация">
+  <div class="sidebar__top">
+    <img class="sidebar__logo" src="/assets/sidebar/logo.svg" alt="" aria-hidden="true">
+    <div class="sidebar__items">
+      <button class="sidebar__item sidebar__item--search" type="button" aria-disabled="true" aria-label="Поиск" title="Будет доступно позже">
+        <span class="sidebar__icon sidebar__icon--search" aria-hidden="true"></span>
+      </button>
+      <button class="sidebar__item sidebar__item--notification" type="button" aria-disabled="true" aria-label="Уведомления" title="Будет доступно позже">
+        <span class="sidebar__icon sidebar__icon--notification" aria-hidden="true"></span>
+      </button>
+      <button class="sidebar__item sidebar__item--subscribes" type="button" aria-disabled="true" aria-label="Подписки" title="Будет доступно позже">
+        <span class="sidebar__icon sidebar__icon--subscribes" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+  <button class="sidebar__item sidebar__item--profile" type="button" aria-label="Профиль" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
+    <img src="/assets/sidebar/profile.svg" alt="" aria-hidden="true">
+  </button>
+</nav>
+{{> profileMenu}}

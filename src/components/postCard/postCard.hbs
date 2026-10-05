@@ -1,0 +1,11 @@
+<article class="post-card" aria-labelledby="post-title-{{id}}">
+  <div class="post-card__preview">
+    <p class="post-card__excerpt">{{body}}</p>
+  </div>
+  <h3 class="post-card__title" id="post-title-{{id}}">{{title}}</h3>
+  <div class="post-card__footer">
+    {{#if publishedAt}}
+      <time class="post-card__time" datetime="{{publishedAt}}">{{publishedAtLabel}}</time>
+    {{/if}}
+  </div>
+</article>

@@ -38,9 +38,9 @@ export const showErrors = (form, errors) => {
 
 /**
  * Показывает общую ошибку формы, не привязанную к полю
- * или убирает её.
- * @param {HTMLFormElement} form
- * @param {string|null} error
+ * (например, "сервер недоступен"), или убирает её.
+ * @param {HTMLFormElement} form - форма
+ * @param {string|null} error - текст ошибки или null, если ошибки нет
  */
 export const setFormError = (form, error) => {
   const errorEl = form.querySelector('[data-form-error]');

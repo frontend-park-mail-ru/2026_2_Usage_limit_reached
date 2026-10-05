@@ -1,5 +1,5 @@
 import { render } from '../../app/view.js';
-import { navigate } from '../../app/router.js';
+import { bindLinks } from '../../utils/helpers/bindLinks.js';
 import { initPasswordToggles } from '../../components/formField/formField.js';
 import { bindValidation, showErrors, setFormError } from '../../modules/validation/bindForm.js';
 import { registerSchema } from '../../modules/validation/schemas.js';
@@ -7,17 +7,17 @@ import { signup } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
 
 /**
- * Данные, которые пользователь ввёл в форму регистрации.
+ * Данные формы регистрации.
  * @typedef {Object} RegisterData
- * @property {string} email
- * @property {string} username
- * @property {string} nickname
- * @property {string} password
- * @property {string} passwordRepeat
+ * @property {string} email - Адрес электронной почты.
+ * @property {string} username - Имя пользователя.
+ * @property {string} nickname - Отображаемое имя.
+ * @property {string} password - Пароль.
+ * @property {string} passwordRepeat - Повтор пароля.
  */
 
 /**
- * Ошибки сервера.
+ * Сообщения для ошибок полей регистрации.
  * @type {Object<number, Object<string, string>>}
  */
 const FIELD_ERRORS = {
@@ -26,7 +26,7 @@ const FIELD_ERRORS = {
 };
 
 /**
- * Общие ошибки формы.
+ * Сообщения для ошибок регистрации. Код 0 означает сетевую ошибку.
  * @type {Object<number, string>}
  */
 const FORM_ERRORS = {
@@ -44,12 +44,13 @@ export function renderRegister() {
 }
 
 /**
- * Отправляет данные регистрации на сервер.
- * @param {HTMLFormElement} form
- * @param {RegisterData} data
+ * Отправляет форму регистрации.
+ * @param {HTMLFormElement} form - Форма регистрации.
+ * @param {RegisterData} data - Проверенные данные формы.
+ * @param {(path: string) => void} navigate - Функция перехода.
  * @returns {Promise<void>}
  */
-async function submitRegister(form, data) {
+async function submitRegister(form, data, navigate) {
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   setFormError(form, null);
@@ -72,12 +73,15 @@ async function submitRegister(form, data) {
 }
 
 /**
- * Подключает обработчики формы регистрации.
- * @param {HTMLElement} root
+ * Подключает форму и ссылки страницы регистрации.
+ * @param {HTMLElement} root - Контейнер страницы.
+ * @param {(path: string) => void} navigate - Функция перехода.
+ * @returns {void}
  */
-export function initRegister(root) {
+export function initRegister(root, navigate) {
   const form = root.querySelector('#register-form');
 
   initPasswordToggles(form);
-  bindValidation(form, registerSchema, (data) => submitRegister(form, data));
+  bindValidation(form, registerSchema, (data) => submitRegister(form, data, navigate));
+  bindLinks(root, navigate);
 }
