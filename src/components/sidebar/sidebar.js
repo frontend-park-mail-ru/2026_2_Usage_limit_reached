@@ -1,5 +1,7 @@
 import { render } from '../../app/view.js';
-import { bindLinks } from '../../utils/helpers/bindLinks.js';
+import { initProfileMenu } from '../profileMenu/profileMenu.js';
+
+let profileMenu;
 
 /**
  * Возвращает HTML сайдбара.
@@ -15,7 +17,29 @@ export function renderSidebar() {
  * @returns {void}
  */
 export function bindSidebarLinks(navigate) {
-  bindLinks(document.getElementById('sidebar'), navigate);
+  const container = document.getElementById('sidebar');
+  profileMenu = initProfileMenu(
+    container.querySelector('.profile-menu'),
+    container.querySelector('.sidebar__item--profile'),
+    navigate,
+  );
+}
+
+/**
+ * Закрывает меню профиля.
+ * @returns {void}
+ */
+export function closeSidebarMenu() {
+  profileMenu?.close();
+}
+
+/**
+ * Снимает обработчики меню сайдбара.
+ * @returns {void}
+ */
+export function destroySidebar() {
+  profileMenu?.destroy();
+  profileMenu = null;
 }
 
 /**
@@ -24,11 +48,11 @@ export function bindSidebarLinks(navigate) {
  * @returns {void}
  */
 export function setActiveSidebarLink(path) {
-  const profileLink = document.querySelector('#sidebar a[data-link]');
-  if (!profileLink) return;
+  const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
+  if (!profileButton) return;
   if (path === '/profile') {
-    profileLink.setAttribute('aria-current', 'page');
+    profileButton.setAttribute('aria-current', 'page');
   } else {
-    profileLink.removeAttribute('aria-current');
+    profileButton.removeAttribute('aria-current');
   }
 }

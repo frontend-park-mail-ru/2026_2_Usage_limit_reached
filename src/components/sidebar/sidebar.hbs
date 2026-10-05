@@ -13,7 +13,8 @@
       </button>
     </div>
   </div>
-  <a class="sidebar__item sidebar__item--profile" href="/profile" data-link aria-label="Профиль">
+  <button class="sidebar__item sidebar__item--profile" type="button" aria-label="Профиль" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
     <img src="/assets/sidebar/profile.svg" alt="" aria-hidden="true">
-  </a>
+  </button>
 </nav>
+{{> profileMenu}}

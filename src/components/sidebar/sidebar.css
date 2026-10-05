@@ -2,6 +2,8 @@
   --color-sidebar-border: rgba(61, 64, 91, 0.12);
   --color-sidebar-hover: #f4f4f5;
   --color-sidebar-pressed: #fbefeb;
+  --color-sidebar-profile-hover: #f5dfd7;
+  --color-sidebar-profile-pressed: #efd0c5;
 }
 
 .app-layout {
@@ -21,6 +23,7 @@
 #sidebar:not([hidden]) {
   position: sticky;
   top: 0;
+  z-index: 10;
 }
 
 .sidebar {
@@ -72,11 +75,11 @@
   text-decoration: none;
 }
 
-button.sidebar__item:hover {
+button.sidebar__item:not(.sidebar__item--profile):hover {
   background: var(--color-sidebar-hover);
 }
 
-button.sidebar__item:active {
+button.sidebar__item:not(.sidebar__item--profile):active {
   background: var(--color-sidebar-pressed);
   color: var(--color-primary);
 }
@@ -91,16 +94,22 @@ button.sidebar__item:active {
 }
 
 .sidebar__item--profile[aria-current='page'] {
-  cursor: default;
+  background: var(--color-sidebar-pressed);
 }
 
 .sidebar__item--profile:not([aria-current='page']):hover {
   background: var(--color-sidebar-hover);
 }
 
-.sidebar__item--profile:not([aria-current='page']):active,
-.sidebar__item--profile[aria-current='page'] {
-  background: var(--color-sidebar-pressed);
+.sidebar__item--profile[aria-current='page']:hover {
+  background: var(--color-sidebar-profile-hover);
+}
+
+.sidebar__item--profile:active,
+.sidebar__item--profile:hover:active,
+.sidebar__item--profile[aria-expanded='true'],
+.sidebar__item--profile[aria-expanded='true']:hover {
+  background: var(--color-sidebar-profile-pressed);
 }
 
 .sidebar__icon {

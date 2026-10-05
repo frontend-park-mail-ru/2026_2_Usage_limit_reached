@@ -2,7 +2,7 @@ import { renderLogin, initLogin } from '../pages/login/login.js';
 import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile, initProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
-import { renderSidebar, bindSidebarLinks, setActiveSidebarLink } from '../components/sidebar/sidebar.js';
+import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
 
 const routes = {
   '/login': { render: renderLogin, init: initLogin },
@@ -21,6 +21,7 @@ let currentLayout;
  */
 function updateLayout(layout) {
   if (currentLayout === layout) return;
+  destroySidebar();
   const sidebar = document.getElementById('sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
@@ -43,6 +44,7 @@ function renderCurrentRoute() {
   const route = routes[path] || notFoundRoute;
   const root = document.getElementById('app');
 
+  closeSidebarMenu();
   updateLayout(route.layout || 'plain');
   setActiveSidebarLink(path);
   root.innerHTML = route.render();
