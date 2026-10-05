@@ -22,7 +22,9 @@
       </div>
     </div>
     <div class="profile__actions">
-      <button class="button profile__button profile__button--statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+      {{#if hasAuthor}}
+        <button class="button profile__button profile__button--statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+      {{/if}}
       <button class="button profile__button profile__button--edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
     </div>
   </div>
