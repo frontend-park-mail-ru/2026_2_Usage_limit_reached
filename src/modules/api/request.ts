@@ -1,6 +1,5 @@
 import { API_BASE_URL } from './config.js';
 
-
 export class ApiError extends Error {
   status: number;
 
@@ -11,12 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-
 type RequestOptions = {
   method?: string;
   data?: object;
 };
-
 
 export const request = async <T>(path: string, { method = 'GET', data }: RequestOptions = {}): Promise<T> => {
   let response: Response;
