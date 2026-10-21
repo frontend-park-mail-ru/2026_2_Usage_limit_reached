@@ -1,12 +1,17 @@
 import js from '@eslint/js';
 import globals from 'globals';
+import tseslint from 'typescript-eslint';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
-  { ignores: ['src/templates.js'] },
+  { ignores: ['dist/', 'src/templates.js'] },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['**/*.ts'],
+    extends: [tseslint.configs.recommended],
+  },
+  {
+    files: ['**/*.{js,ts}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
