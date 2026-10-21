@@ -1,26 +1,24 @@
 import { logout } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
 import { bindLinks } from '../../utils/helpers/bindLinks.js';
+import { requireElement } from '../../utils/helpers/dom.js';
 
-/**
- * Подключает меню профиля и выход из аккаунта.
- * @param {HTMLElement} menu - Панель меню.
- * @param {HTMLButtonElement} button - Кнопка открытия.
- * @param {(path: string) => void} navigate - Функция перехода.
- * @returns {{close: Function, destroy: Function}} Управление меню.
- */
-export function initProfileMenu(menu, button, navigate) {
-  const logoutButton = menu.querySelector('[data-logout]');
-  const error = menu.querySelector('.profile-menu__error');
+export type ProfileMenu = {
+  close: () => void;
+  destroy: () => void;
+};
+
+export function initProfileMenu(
+  menu: HTMLElement,
+  button: HTMLButtonElement,
+  navigate: (path: string) => void,
+): ProfileMenu {
+  const logoutButton = requireElement<HTMLButtonElement>(menu, '[data-logout]');
+  const error = requireElement<HTMLElement>(menu, '.profile-menu__error');
   let pending = false;
   let destroyed = false;
 
-  /**
-   * Закрывает меню и снимает временные слушатели.
-   * @param {boolean} [restoreFocus=false] - Вернуть фокус на кнопку.
-   * @returns {void}
-   */
-  function close(restoreFocus = false) {
+  function close(restoreFocus = false): void {
     menu.hidden = true;
     button.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', handleOutsideClick);
@@ -28,42 +26,25 @@ export function initProfileMenu(menu, button, navigate) {
     if (restoreFocus && button.isConnected) button.focus();
   }
 
-  /**
-   * Открывает меню и переводит фокус на первый пункт.
-   * @returns {void}
-   */
-  function open() {
+  function open(): void {
     menu.hidden = false;
     button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', handleOutsideClick);
     document.addEventListener('keydown', handleKeydown);
-    menu.querySelector('a[data-link]').focus();
+    menu.querySelector<HTMLElement>('a[data-link]')?.focus();
   }
 
-  /**
-   * Переключает видимость меню.
-   * @returns {void}
-   */
-  function toggle() {
+  function toggle(): void {
     if (menu.hidden) open();
     else close();
   }
 
-  /**
-   * Закрывает меню при клике снаружи.
-   * @param {MouseEvent} event - Событие клика.
-   * @returns {void}
-   */
-  function handleOutsideClick(event) {
+  function handleOutsideClick(event: MouseEvent): void {
+    if (!(event.target instanceof Node)) return;
     if (!menu.contains(event.target) && !button.contains(event.target)) close();
   }
 
-  /**
-   * Обрабатывает Escape и переходы по пунктам меню.
-   * @param {KeyboardEvent} event - Событие клавиатуры.
-   * @returns {void}
-   */
-  function handleKeydown(event) {
+  function handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
       close(true);
@@ -72,19 +53,16 @@ export function initProfileMenu(menu, button, navigate) {
     if (!menu.contains(document.activeElement)) return;
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    const items = [...menu.querySelectorAll('[role="menuitem"]')].filter((item) => !item.disabled);
-    const current = items.indexOf(document.activeElement);
+    const items = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+      .filter((item) => !(item instanceof HTMLButtonElement && item.disabled));
+    const current = items.findIndex((item) => item === document.activeElement);
     let next = event.key === 'ArrowUp' ? current - 1 : current + 1;
     if (event.key === 'Home') next = 0;
     if (event.key === 'End') next = items.length - 1;
     items[(next + items.length) % items.length].focus();
   }
 
-  /**
-   * Завершает сессию или показывает ошибку выхода.
-   * @returns {Promise<void>}
-   */
-  async function handleLogout() {
+  async function handleLogout(): Promise<void> {
     if (pending) return;
     pending = true;
     logoutButton.disabled = true;
@@ -111,11 +89,7 @@ export function initProfileMenu(menu, button, navigate) {
     }
   }
 
-  /**
-   * Снимает обработчики перед удалением сайдбара.
-   * @returns {void}
-   */
-  function destroy() {
+  function destroy(): void {
     destroyed = true;
     close();
     button.removeEventListener('click', toggle);
