@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "precompile": "handlebars src -e hbs -f src/templates.js",
-    "start": "npm run precompile && node server/server.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "npm run precompile && npm run build && node server/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky"
@@ -28,9 +30,11 @@
     "eslint": "^9.39.5",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0"
+    "lint-staged": "^16.4.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0"
   },
   "lint-staged": {
-    "*.js": "eslint --fix"
+    "*.{js,ts}": "eslint --fix"
   }
 }

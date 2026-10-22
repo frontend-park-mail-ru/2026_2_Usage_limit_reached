@@ -2,21 +2,14 @@ import { render } from '../../app/view.js';
 import { getProfile } from '../../modules/api/profile.js';
 import { ApiError } from '../../modules/api/request.js';
 
-/**
- * Возвращает текст проверки авторизации.
- * @returns {string} HTML страницы.
- */
-export function renderHome() {
+export function renderHome(): string {
   return render('pages/home/home', { message: 'Проверка авторизации...' });
 }
 
-/**
- * Проверяет сессию и открывает профиль или страницу входа.
- * @param {HTMLElement} root - Контейнер страницы.
- * @param {(path: string, options?: Object) => void} navigate - Функция перехода.
- * @returns {Promise<void>}
- */
-export async function initHome(root, navigate) {
+export async function initHome(
+  root: HTMLElement,
+  navigate: (path: string, options?: { replace?: boolean }) => void,
+): Promise<void> {
   const page = root.firstElementChild;
   try {
     await getProfile();
