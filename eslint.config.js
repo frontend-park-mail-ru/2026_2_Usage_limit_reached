@@ -15,10 +15,7 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: {
-        ...globals.browser,
-        Handlebars: 'readonly',
-      },
+      globals: globals.browser,
     },
     rules: {
       eqeqeq: ['error', 'always'],
