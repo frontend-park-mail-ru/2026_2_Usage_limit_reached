@@ -4,6 +4,7 @@
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./profile.css');
+@import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
 
 :root {
