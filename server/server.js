@@ -13,6 +13,11 @@ const HANDLEBARS_RUNTIME = path.join(ROOT_DIR, 'node_modules', 'handlebars', 'di
 
 const app = express();
 
+app.use((req, res, next) => {
+  res.set('X-Frame-Options', 'DENY');
+  next();
+});
+
 app.use(express.static(DIST_DIR));
 app.use(express.static(SRC_DIR));
 
