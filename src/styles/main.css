@@ -4,7 +4,16 @@
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./profile.css');
+@import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../assets/fonts/inter-variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
 
 :root {
   --color-primary: #e07a5f;
@@ -32,4 +41,5 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   font-family: 'Inter', sans-serif;
+  font-optical-sizing: none;
 }

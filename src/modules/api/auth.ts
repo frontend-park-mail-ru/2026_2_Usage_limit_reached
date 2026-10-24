@@ -1,0 +1,28 @@
+import { request } from './request.js';
+
+export type SignupData = {
+  email: string;
+  username: string;
+  nickname: string;
+  password: string;
+};
+
+export type LoginData = {
+  login: string;
+  password: string;
+};
+
+export type AuthUser = {
+  email: string;
+  username: string;
+  nickname: string;
+};
+
+export const signup = ({ email, username, nickname, password }: SignupData) =>
+  request<AuthUser>('/signup', { method: 'POST', data: { email, username, nickname, password } });
+
+export const login = ({ login, password }: LoginData) =>
+  request<AuthUser>('/login', { method: 'POST', data: { login, password } });
+
+/** Завершает сессию пользователя. Успешный ответ не содержит тела. */
+export const logout = () => request<void>('/logout', { method: 'POST', responseType: 'empty' });

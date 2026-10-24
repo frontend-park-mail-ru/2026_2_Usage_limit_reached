@@ -58,8 +58,7 @@
 }
 
 .profile__name,
-.profile__title,
-.profile__empty-title {
+.profile__title {
   margin: 0;
   font-size: 32px;
   font-weight: 700;
@@ -79,8 +78,7 @@
 }
 
 .profile__username,
-.profile__bio,
-.profile__empty-text {
+.profile__bio {
   margin: 0;
   font-size: 16px;
   line-height: normal;
@@ -252,50 +250,6 @@
   box-sizing: border-box;
 }
 
-.profile__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px 16px;
-}
-
-.profile__empty {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 128px;
-  min-height: 307px;
-  padding: 32px 16px;
-  border-radius: 16px;
-  background: var(--color-white);
-  box-sizing: border-box;
-}
-
-.profile__empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 128px;
-  height: 128px;
-  border: 5px solid var(--color-text);
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-.profile__empty-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 0 1 680px;
-  max-width: 680px;
-  min-width: 0;
-}
-
-.profile__empty-content .profile__button--add {
-  width: 100%;
-}
-
 .profile__author-invite {
   display: flex;
   align-items: center;
@@ -356,20 +310,6 @@
   .profile {
     padding: 32px;
   }
-
-  .profile__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .profile__empty {
-    flex-direction: column;
-    gap: 32px;
-  }
-
-  .profile__empty-content {
-    flex: 0 1 auto;
-    width: 100%;
-  }
 }
 
 @media (max-width: 1024px) {
@@ -387,10 +327,6 @@
 @media (max-width: 720px) {
   .profile {
     padding: 16px;
-  }
-
-  .profile__grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .profile__actions,

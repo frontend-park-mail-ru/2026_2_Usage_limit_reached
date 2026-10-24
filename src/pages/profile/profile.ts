@@ -1,15 +1,10 @@
 import { render } from '../../app/view.js';
 import { getProfile, getProfilePosts } from '../../modules/api/profile.js';
+import type { Profile, ProfilePosts } from '../../modules/api/profile.js';
 import { ApiError } from '../../modules/api/request.js';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.js';
 
-/**
- * Готовит профиль и посты для шаблона.
- * @param {Object} profileResponse - Данные пользователя.
- * @param {Object} postsResponse - Данные постов.
- * @returns {Object} Данные для шаблона.
- */
-export function buildProfileViewModel(profileResponse, postsResponse) {
+export function buildProfileViewModel(profileResponse: Profile, postsResponse: ProfilePosts) {
   const referenceTime = new Date();
   const posts = postsResponse.posts.filter((post) => post.status === 'published').map((post) => {
     const publishedAt = post.published_at ?? '';
@@ -24,7 +19,7 @@ export function buildProfileViewModel(profileResponse, postsResponse) {
   return {
     name: profileResponse.user.nickname,
     username: `@${profileResponse.user.username}`,
-    hasAuthor: Boolean(profileResponse.author),
+    hasAuthor: !!profileResponse.author,
     bio: profileResponse.author?.bio ?? '',
     avatarUrl: '/assets/profile/avatar-placeholder.svg',
     postCountLabel: formatPostCount(posts.length),
@@ -33,22 +28,11 @@ export function buildProfileViewModel(profileResponse, postsResponse) {
   };
 }
 
-/**
- * Возвращает каркас профиля с текстом загрузки.
- * @returns {string} HTML страницы профиля.
- */
-export function renderProfile() {
+export function renderProfile(): string {
   return render('pages/profile/profile', { message: 'Загрузка профиля...' });
 }
 
-/**
- * Загружает профиль и показывает данные или ошибку.
- * @param {HTMLElement} root - Контейнер страницы.
- * @param {(path: string) => void} navigate - Функция перехода.
- * @returns {Promise<void>}
- */
-export async function initProfile(root, navigate) {
-  // Проверяем узел, чтобы старый запрос не обновил повторно открытый профиль.
+export async function initProfile(root: HTMLElement, navigate: (path: string) => void): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {
     const [profileResponse, postsResponse] = await Promise.all([getProfile(), getProfilePosts()]);

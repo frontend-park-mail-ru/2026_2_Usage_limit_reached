@@ -4,27 +4,35 @@ import { renderRegister, initRegister } from '../pages/register/register.js';
 import { renderProfile, initProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
+import { requireElement } from '../utils/helpers/dom.js';
 
-const routes = {
+type Layout = 'plain' | 'sidebar';
+
+type NavigateOptions = {
+  replace?: boolean;
+};
+
+type Route = {
+  render: () => string;
+  init?: (root: HTMLElement, navigate: (path: string, options?: NavigateOptions) => void) => void;
+  layout?: Layout;
+};
+
+const routes: Record<string, Route> = {
   '/': { render: renderHome, init: initHome },
   '/login': { render: renderLogin, init: initLogin },
   '/register': { render: renderRegister, init: initRegister },
   '/profile': { render: renderProfile, init: initProfile, layout: 'sidebar' },
 };
 
-const notFoundRoute = { render: renderNotFound };
+const notFoundRoute: Route = { render: renderNotFound };
 
-let currentLayout;
+let currentLayout: Layout | undefined;
 
-/**
- * Обновляет сайдбар при смене layout.
- * @param {string} layout - Layout страницы.
- * @returns {void}
- */
-function updateLayout(layout) {
+function updateLayout(layout: Layout): void {
   if (currentLayout === layout) return;
   destroySidebar();
-  const sidebar = document.getElementById('sidebar');
+  const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
@@ -33,18 +41,14 @@ function updateLayout(layout) {
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  document.getElementById('layout').classList.toggle('app-layout--sidebar', hasSidebar);
+  requireElement(document, '#layout').classList.toggle('app-layout--sidebar', hasSidebar);
   currentLayout = layout;
 }
 
-/**
- * Показывает страницу по текущему адресу.
- * @returns {void}
- */
-function renderCurrentRoute() {
+function renderCurrentRoute(): void {
   const path = window.location.pathname;
   const route = routes[path] || notFoundRoute;
-  const root = document.getElementById('app');
+  const root = requireElement<HTMLElement>(document, '#app');
 
   closeSidebarMenu();
   updateLayout(route.layout || 'plain');
@@ -53,14 +57,7 @@ function renderCurrentRoute() {
   route.init?.(root, navigate);
 }
 
-/**
- * Открывает страницу по указанному пути.
- * @param {string} path - Путь страницы.
- * @param {Object} [options={}] - Параметры перехода.
- * @param {boolean} [options.replace=false] - Заменить текущую запись истории.
- * @returns {void}
- */
-export function navigate(path, { replace = false } = {}) {
+export function navigate(path: string, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
   if (url.pathname + url.search === window.location.pathname + window.location.search) return;
   if (replace) history.replaceState({}, '', path);
@@ -68,11 +65,7 @@ export function navigate(path, { replace = false } = {}) {
   renderCurrentRoute();
 }
 
-/**
- * Запускает роутер и подключает кнопки истории браузера.
- * @returns {void}
- */
-export function initRouter() {
+export function initRouter(): void {
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
 }
