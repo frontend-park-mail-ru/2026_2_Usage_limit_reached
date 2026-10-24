@@ -24,4 +24,4 @@ export const signup = ({ email, username, nickname, password }: SignupData) =>
 export const login = ({ login, password }: LoginData) =>
   request<AuthUser>('/login', { method: 'POST', data: { login, password } });
 
-export const logout = () => request<unknown>('/logout', { method: 'POST' });
+export const logout = () => request<void>('/logout', { method: 'POST', responseType: 'empty' });

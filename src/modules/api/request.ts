@@ -13,9 +13,10 @@ export class ApiError extends Error {
 type RequestOptions = {
   method?: string;
   data?: object;
+  responseType?: 'json' | 'empty';
 };
 
-export const request = async <T>(path: string, { method = 'GET', data }: RequestOptions = {}): Promise<T> => {
+export const request = async <T>(path: string, { method = 'GET', data, responseType = 'json' }: RequestOptions = {}): Promise<T> => {
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -28,11 +29,19 @@ export const request = async <T>(path: string, { method = 'GET', data }: Request
     throw new ApiError(0, 'network error');
   }
 
-  const json: unknown = await response.json().catch(() => ({}));
+  if (response.ok && responseType === 'empty') return undefined as T;
+
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    throw new ApiError(response.status, response.ok ? 'invalid JSON response' : 'unknown error');
+  }
 
   if (!response.ok) {
-    const { error } = json as { error?: string };
-    throw new ApiError(response.status, error ?? 'unknown error');
+    const message = typeof json === 'object' && json !== null
+      && 'error' in json && typeof json.error === 'string' ? json.error : 'unknown error';
+    throw new ApiError(response.status, message);
   }
   return json as T;
 };
