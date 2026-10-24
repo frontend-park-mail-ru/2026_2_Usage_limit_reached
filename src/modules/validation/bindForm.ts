@@ -6,6 +6,10 @@ const INVALID_CLASS = 'form-field__input--invalid';
 
 const getValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as FormValues;
 
+/**
+ * Показывает ошибку под полем или убирает её.
+ * @param error - null убирает сообщение.
+ */
 export const setFieldError = (form: HTMLFormElement, name: string, error: string | null) => {
   const input = form.elements.namedItem(name);
   const errorEl = form.querySelector(`[data-error-for="${name}"]`);
@@ -22,6 +26,7 @@ export const showErrors = (form: HTMLFormElement, errors: Record<string, string>
   }
 };
 
+/** Показывает общую ошибку формы; null убирает сообщение. */
 export const setFormError = (form: HTMLFormElement, error: string | null, kind: 'data' | 'server' = 'server'): void => {
   const errorEl = form.querySelector<HTMLElement>('[data-form-error]');
   if (!errorEl) return;
@@ -34,6 +39,11 @@ export const setFormError = (form: HTMLFormElement, error: string | null, kind: 
   }
 };
 
+/**
+ * Подключает проверку формы. После первой попытки отправки
+ * ошибки обновляются при вводе.
+ * Общие ошибки категории "data" сбрасываются при вводе.
+ */
 export const bindValidation = (form: HTMLFormElement, schema: Schema, onSubmit: (values: FormValues) => void): void => {
   let hasSubmitted = false;
 

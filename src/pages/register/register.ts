@@ -8,6 +8,7 @@ import { signup } from '../../modules/api/auth.js';
 import type { SignupData } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
 
+/** Сообщения для ошибок регистрации. Код 0 означает сетевую ошибку. */
 const FORM_ERRORS: Record<number, string> = {
   0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
   400: 'Проверьте введённые данные',
@@ -37,13 +38,20 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
 
     const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
     const currentValues = new FormData(form);
-    if (kind === 'data' && [...submittedValues].some(([name, value]) => currentValues.get(name) !== value)) return;
+    const valuesChanged = [...submittedValues].some(
+      ([name, value]) => currentValues.get(name) !== value
+    );
+
+    if (kind === 'data' && valuesChanged) {
+      return;
+    }
     setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     if (form.isConnected) button.disabled = false;
   }
 }
 
+/** Подключает форму и ссылки страницы регистрации. */
 export function initRegister(root: HTMLElement, navigate: (path: string) => void): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 

@@ -3,6 +3,9 @@ import { API_BASE_URL } from './config.js';
 export class ApiError extends Error {
   status: number;
 
+  /**
+   * @param status - HTTP-статус ответа или 0 при сетевой ошибке.
+   */
   constructor(status: number, message: string) {
     super(message);
     this.name = 'ApiError';
@@ -16,6 +19,11 @@ type RequestOptions = {
   responseType?: 'json' | 'empty';
 };
 
+/**
+ * Выполняет запрос к backend с cookie.
+ * По умолчанию ожидает JSON; при responseType="empty" возвращает undefined.
+ * @throws {ApiError} При ошибке сети, HTTP или разбора JSON.
+ */
 export const request = async <T>(path: string, { method = 'GET', data, responseType = 'json' }: RequestOptions = {}): Promise<T> => {
   let response: Response;
   try {
