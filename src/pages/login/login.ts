@@ -31,7 +31,8 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: (pa
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
 
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
+    const kind = err.status === 400 || err.status === 401 ? 'data' : 'server';
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     button.disabled = false;
   }

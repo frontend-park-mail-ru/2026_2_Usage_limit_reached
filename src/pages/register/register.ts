@@ -31,7 +31,8 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
 
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
+    const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     button.disabled = false;
   }
