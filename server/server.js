@@ -21,6 +21,19 @@ app.get('/vendor/handlebars.runtime.min.js', (req, res) => {
 });
 
 app.use((req, res) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.set('Allow', 'GET, HEAD').sendStatus(405);
+    return;
+  }
+
+  const isResource = path.extname(req.path) !== ''
+    || ['/assets/', '/styles/', '/vendor/'].some((prefix) => req.path.startsWith(prefix));
+
+  if (isResource || !req.accepts('html')) {
+    res.sendStatus(404);
+    return;
+  }
+
   res.sendFile(path.join(SRC_DIR, 'index.html'));
 });
 
