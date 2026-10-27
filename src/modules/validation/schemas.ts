@@ -1,34 +1,13 @@
-import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.js';
+import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.ts';
+import type { Schema } from './validation.types.ts';
+import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES } from './schemas.constants.ts';
 
-/**
- * Схема валидации
- * @typedef {Object<string, Rule[]>} Schema
- */
-
-const EMAIL_MAX = 254;
-const USERNAME_MIN = 3;
-const USERNAME_MAX = 32;
-const NICKNAME_MAX = 64;
-const PASSWORD_MIN = 8;
-const PASSWORD_MAX = 64;
-const PASSWORD_MAX_BYTES = 72;
-
-/**
- * Схема формы логина.
- * Поля формы: login, password.
- * @type {Schema}
- */
-export const loginSchema = {
+export const loginSchema: Schema = {
   login: [required('Введите адрес электронной почты или имя пользователя')],
   password: [required('Введите пароль')],
 };
 
-/**
- * Схема формы регистрации.
- * Поля формы: email, username, nickname, password, passwordRepeat.
- * @type {Schema}
- */
-export const registerSchema = {
+export const registerSchema: Schema = {
   email: [
     required('Введите адрес электронной почты'),
     maxLength(EMAIL_MAX, 'Максимальная длина адреса электронной почты — 254 символа'),

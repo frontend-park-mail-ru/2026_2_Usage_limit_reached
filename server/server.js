@@ -7,10 +7,13 @@ const ROOT_DIR = path.join(import.meta.dirname, '..');
 
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 
+const DIST_DIR = path.join(ROOT_DIR, 'dist');
+
 const HANDLEBARS_RUNTIME = path.join(ROOT_DIR, 'node_modules', 'handlebars', 'dist', 'handlebars.runtime.min.js');
 
 const app = express();
 
+app.use(express.static(DIST_DIR));
 app.use(express.static(SRC_DIR));
 
 app.get('/vendor/handlebars.runtime.min.js', (req, res) => {
