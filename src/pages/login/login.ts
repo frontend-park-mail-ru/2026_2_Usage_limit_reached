@@ -24,7 +24,9 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Nav
     await login(data);
     navigate(ROUTES.profile);
   } catch (err) {
-    if (!(err instanceof ApiError)) throw err;
+    if (!(err instanceof ApiError)) {
+      throw err;
+    }
 
     setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
   } finally {

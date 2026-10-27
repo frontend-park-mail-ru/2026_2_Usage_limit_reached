@@ -6,7 +6,9 @@ export function bindLinks(container: HTMLElement, navigate: Navigate): void {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       const href = link.getAttribute('href');
-      if (href && isRoutePath(href)) navigate(href);
+      if (href && isRoutePath(href)) {
+        navigate(href);
+      }
     });
   });
 }

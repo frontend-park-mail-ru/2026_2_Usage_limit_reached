@@ -24,7 +24,9 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
     await signup(data);
     navigate(ROUTES.profile);
   } catch (err) {
-    if (!(err instanceof ApiError)) throw err;
+    if (!(err instanceof ApiError)) {
+      throw err;
+    }
 
     setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
   } finally {

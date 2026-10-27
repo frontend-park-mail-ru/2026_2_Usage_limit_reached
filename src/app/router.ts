@@ -21,7 +21,9 @@ const notFoundRoute: Route = { render: renderNotFound };
 let currentLayout: Layout | undefined;
 
 function updateLayout(layout: Layout): void {
-  if (currentLayout === layout) return;
+  if (currentLayout === layout) {
+    return;
+  }
   destroySidebar();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
@@ -50,7 +52,9 @@ function renderCurrentRoute(): void {
 
 export function navigate(path: RoutePath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
-  if (url.pathname + url.search === window.location.pathname + window.location.search) return;
+  if (url.pathname + url.search === window.location.pathname + window.location.search) {
+    return;
+  }
   if (replace) {
     history.replaceState({}, '', path);
   } else {

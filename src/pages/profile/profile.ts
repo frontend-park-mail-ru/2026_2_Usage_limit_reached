@@ -38,11 +38,15 @@ export async function initProfile(root: HTMLElement, navigate: Navigate): Promis
   const loadingPage = root.firstElementChild;
   try {
     const [profileResponse, postsResponse] = await Promise.all([getProfile(), getProfilePosts()]);
-    if (root.firstElementChild !== loadingPage) return;
+    if (root.firstElementChild !== loadingPage) {
+      return;
+    }
     const data = buildProfileViewModel(profileResponse, postsResponse);
     root.innerHTML = render('pages/profile/profile', data);
   } catch (err) {
-    if (root.firstElementChild !== loadingPage) return;
+    if (root.firstElementChild !== loadingPage) {
+      return;
+    }
     if (err instanceof ApiError && err.status === 401) {
       navigate(ROUTES.login);
       return;

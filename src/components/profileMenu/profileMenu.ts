@@ -21,7 +21,9 @@ export function initProfileMenu(
     button.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', handleOutsideClick);
     document.removeEventListener('keydown', handleKeydown);
-    if (restoreFocus && button.isConnected) button.focus();
+    if (restoreFocus && button.isConnected) {
+      button.focus();
+    }
   }
 
   function open(): void {
@@ -41,8 +43,12 @@ export function initProfileMenu(
   }
 
   function handleOutsideClick(event: MouseEvent): void {
-    if (!(event.target instanceof Node)) return;
-    if (!menu.contains(event.target) && !button.contains(event.target)) close();
+    if (!(event.target instanceof Node)) {
+      return;
+    }
+    if (!menu.contains(event.target) && !button.contains(event.target)) {
+      close();
+    }
   }
 
   function handleKeydown(event: KeyboardEvent): void {
@@ -51,20 +57,30 @@ export function initProfileMenu(
       close(true);
       return;
     }
-    if (!menu.contains(document.activeElement)) return;
-    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    if (!menu.contains(document.activeElement)) {
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
     event.preventDefault();
     const items = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
       .filter((item) => !(item instanceof HTMLButtonElement && item.disabled));
     const current = items.findIndex((item) => item === document.activeElement);
     let next = event.key === 'ArrowUp' ? current - 1 : current + 1;
-    if (event.key === 'Home') next = 0;
-    if (event.key === 'End') next = items.length - 1;
+    if (event.key === 'Home') {
+      next = 0;
+    }
+    if (event.key === 'End') {
+      next = items.length - 1;
+    }
     items[(next + items.length) % items.length].focus();
   }
 
   async function handleLogout(): Promise<void> {
-    if (pending) return;
+    if (pending) {
+      return;
+    }
     pending = true;
     logoutButton.disabled = true;
     error.hidden = true;
@@ -72,9 +88,13 @@ export function initProfileMenu(
     close();
     try {
       await logout();
-      if (!destroyed) navigate(ROUTES.login);
+      if (!destroyed) {
+        navigate(ROUTES.login);
+      }
     } catch (err) {
-      if (destroyed) return;
+      if (destroyed) {
+        return;
+      }
       if (err instanceof ApiError && err.status === 401) {
         navigate(ROUTES.login);
         return;

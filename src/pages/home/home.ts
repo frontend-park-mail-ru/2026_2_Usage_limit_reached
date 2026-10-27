@@ -15,10 +15,14 @@ export async function initHome(
   const page = root.firstElementChild;
   try {
     await getProfile();
-    if (root.firstElementChild !== page) return;
+    if (root.firstElementChild !== page) {
+      return;
+    }
     navigate(ROUTES.profile, { replace: true });
   } catch (err) {
-    if (root.firstElementChild !== page) return;
+    if (root.firstElementChild !== page) {
+      return;
+    }
     if (err instanceof ApiError && err.status === 401) {
       navigate(ROUTES.login, { replace: true });
       return;

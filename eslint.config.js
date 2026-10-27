@@ -23,6 +23,7 @@ export default defineConfig([
       'prefer-const': 'error',
       semi: ['error', 'always'],
       quotes: ['error', 'single', { avoidEscape: true }],
+      curly: ['error', 'all'],
     },
   },
   {

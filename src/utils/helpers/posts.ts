@@ -9,11 +9,19 @@ export function formatPostCount(count: number): string {
 }
 
 export function formatPublishedAt(publishedAt: string, referenceTime: Date): string {
-  if (!publishedAt) return '';
+  if (!publishedAt) {
+    return '';
+  }
   const minutes = Math.max(0, Math.floor((referenceTime.getTime() - new Date(publishedAt).getTime()) / 60000));
-  if (minutes < 1) return 'Только что';
-  if (minutes < 60) return `${minutes} мин. назад`;
+  if (minutes < 1) {
+    return 'Только что';
+  }
+  if (minutes < 60) {
+    return `${minutes} мин. назад`;
+  }
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} ч. назад`;
+  if (hours < 24) {
+    return `${hours} ч. назад`;
+  }
   return new Intl.RelativeTimeFormat('ru', { numeric: 'always' }).format(-Math.floor(hours / 24), 'day');
 }

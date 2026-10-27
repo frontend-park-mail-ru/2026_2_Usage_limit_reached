@@ -11,7 +11,9 @@ export function bindHeaderLinks(navigate: Navigate): void {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const href = link.getAttribute('href');
-      if (href && isRoutePath(href)) navigate(href);
+      if (href && isRoutePath(href)) {
+        navigate(href);
+      }
     });
   });
 }

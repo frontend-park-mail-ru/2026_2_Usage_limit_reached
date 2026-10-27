@@ -14,7 +14,9 @@ export function bindSidebarLinks(navigate: Navigate): void {
   const container = document.getElementById('sidebar');
   const menu = container?.querySelector<HTMLElement>('.profile-menu');
   const button = container?.querySelector<HTMLButtonElement>('.sidebar__item--profile');
-  if (!menu || !button) return;
+  if (!menu || !button) {
+    return;
+  }
   profileMenu = initProfileMenu(menu, button, navigate);
 }
 
@@ -29,7 +31,9 @@ export function destroySidebar(): void {
 
 export function setActiveSidebarLink(path: string): void {
   const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
-  if (!profileButton) return;
+  if (!profileButton) {
+    return;
+  }
   if (path === ROUTES.profile) {
     profileButton.setAttribute('aria-current', 'page');
   } else {
