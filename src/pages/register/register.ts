@@ -7,6 +7,8 @@ import { registerSchema } from '../../modules/validation/schemas.js';
 import { signup } from '../../modules/api/auth.js';
 import type { SignupData } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
+import { ROUTES } from '../../app/paths.js';
+import type { Navigate } from '../../app/paths.js';
 
 const FORM_ERRORS: Record<number, string> = {
   0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
@@ -20,14 +22,14 @@ export function renderRegister(): string {
   return render('pages/register/register');
 }
 
-async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: (path: string) => void): Promise<void> {
+async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: Navigate): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   button.disabled = true;
   setFormError(form, null);
 
   try {
     await signup(data);
-    navigate('/profile');
+    navigate(ROUTES.profile);
   } catch (err) {
     if (!(err instanceof ApiError)) throw err;
 
@@ -37,7 +39,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
   }
 }
 
-export function initRegister(root: HTMLElement, navigate: (path: string) => void): void {
+export function initRegister(root: HTMLElement, navigate: Navigate): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 
   initPasswordToggles(form);

@@ -2,6 +2,8 @@ import { logout } from '../../modules/api/auth.js';
 import { ApiError } from '../../modules/api/request.js';
 import { bindLinks } from '../../utils/helpers/bindLinks.js';
 import { requireElement } from '../../utils/helpers/dom.js';
+import { ROUTES } from '../../app/paths.js';
+import type { Navigate } from '../../app/paths.js';
 
 export type ProfileMenu = {
   close: () => void;
@@ -11,7 +13,7 @@ export type ProfileMenu = {
 export function initProfileMenu(
   menu: HTMLElement,
   button: HTMLButtonElement,
-  navigate: (path: string) => void,
+  navigate: Navigate,
 ): ProfileMenu {
   const logoutButton = requireElement<HTMLButtonElement>(menu, '[data-logout]');
   const error = requireElement<HTMLElement>(menu, '.profile-menu__error');
@@ -71,11 +73,11 @@ export function initProfileMenu(
     close();
     try {
       await logout();
-      if (!destroyed) navigate('/login');
+      if (!destroyed) navigate(ROUTES.login);
     } catch (err) {
       if (destroyed) return;
       if (err instanceof ApiError && err.status === 401) {
-        navigate('/login');
+        navigate(ROUTES.login);
         return;
       }
       error.textContent = err instanceof ApiError && err.status === 0

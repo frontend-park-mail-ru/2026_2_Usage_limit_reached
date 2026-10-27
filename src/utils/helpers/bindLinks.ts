@@ -1,9 +1,12 @@
-export function bindLinks(container: HTMLElement, navigate: (path: string) => void): void {
+import { isRoutePath } from '../../app/paths.js';
+import type { Navigate } from '../../app/paths.js';
+
+export function bindLinks(container: HTMLElement, navigate: Navigate): void {
   container.querySelectorAll('a[data-link]').forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       const href = link.getAttribute('href');
-      if (href) navigate(href);
+      if (href && isRoutePath(href)) navigate(href);
     });
   });
 }

@@ -3,6 +3,8 @@ import { getProfile, getProfilePosts } from '../../modules/api/profile.js';
 import type { Profile, ProfilePosts } from '../../modules/api/profile.js';
 import { ApiError } from '../../modules/api/request.js';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.js';
+import { ROUTES } from '../../app/paths.js';
+import type { Navigate } from '../../app/paths.js';
 
 export function buildProfileViewModel(profileResponse: Profile, postsResponse: ProfilePosts) {
   const referenceTime = new Date();
@@ -32,7 +34,7 @@ export function renderProfile(): string {
   return render('pages/profile/profile', { message: 'Загрузка профиля...' });
 }
 
-export async function initProfile(root: HTMLElement, navigate: (path: string) => void): Promise<void> {
+export async function initProfile(root: HTMLElement, navigate: Navigate): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {
     const [profileResponse, postsResponse] = await Promise.all([getProfile(), getProfilePosts()]);
@@ -42,7 +44,7 @@ export async function initProfile(root: HTMLElement, navigate: (path: string) =>
   } catch (err) {
     if (root.firstElementChild !== loadingPage) return;
     if (err instanceof ApiError && err.status === 401) {
-      navigate('/login');
+      navigate(ROUTES.login);
       return;
     }
     const message = err instanceof ApiError && err.status === 0

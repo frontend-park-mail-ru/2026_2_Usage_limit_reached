@@ -5,24 +5,22 @@ import { renderProfile, initProfile } from '../pages/profile/profile.js';
 import { renderNotFound } from '../pages/notFound/notFound.js';
 import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
 import { requireElement } from '../utils/helpers/dom.js';
+import { ROUTES, isRoutePath } from './paths.js';
+import type { Navigate, NavigateOptions, RoutePath } from './paths.js';
 
 type Layout = 'plain' | 'sidebar';
 
-type NavigateOptions = {
-  replace?: boolean;
-};
-
 type Route = {
   render: () => string;
-  init?: (root: HTMLElement, navigate: (path: string, options?: NavigateOptions) => void) => void;
+  init?: (root: HTMLElement, navigate: Navigate) => void;
   layout?: Layout;
 };
 
-const routes: Record<string, Route> = {
-  '/': { render: renderHome, init: initHome },
-  '/login': { render: renderLogin, init: initLogin },
-  '/register': { render: renderRegister, init: initRegister },
-  '/profile': { render: renderProfile, init: initProfile, layout: 'sidebar' },
+const routes: Record<RoutePath, Route> = {
+  [ROUTES.home]: { render: renderHome, init: initHome },
+  [ROUTES.login]: { render: renderLogin, init: initLogin },
+  [ROUTES.register]: { render: renderRegister, init: initRegister },
+  [ROUTES.profile]: { render: renderProfile, init: initProfile, layout: 'sidebar' },
 };
 
 const notFoundRoute: Route = { render: renderNotFound };
@@ -47,7 +45,7 @@ function updateLayout(layout: Layout): void {
 
 function renderCurrentRoute(): void {
   const path = window.location.pathname;
-  const route = routes[path] || notFoundRoute;
+  const route = isRoutePath(path) ? routes[path] : notFoundRoute;
   const root = requireElement<HTMLElement>(document, '#app');
 
   closeSidebarMenu();
@@ -57,7 +55,7 @@ function renderCurrentRoute(): void {
   route.init?.(root, navigate);
 }
 
-export function navigate(path: string, { replace = false }: NavigateOptions = {}): void {
+export function navigate(path: RoutePath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
   if (url.pathname + url.search === window.location.pathname + window.location.search) return;
   if (replace) history.replaceState({}, '', path);
