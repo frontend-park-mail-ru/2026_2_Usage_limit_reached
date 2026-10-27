@@ -1,10 +1,10 @@
-import { render } from '../../app/view.js';
-import { getProfile, getProfilePosts } from '../../modules/api/profile.js';
-import type { Profile, ProfilePosts } from '../../modules/api/profile.types.js';
-import { ApiError } from '../../modules/api/request.js';
-import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
+import { render } from '../../app/view.ts';
+import { getProfile, getProfilePosts } from '../../modules/api/profile.ts';
+import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 /**
  * @param profileResponse

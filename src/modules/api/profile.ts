@@ -1,5 +1,5 @@
-import { request } from './request.js';
-import type { Profile, ProfilePosts } from './profile.types.js';
+import { request } from './request.ts';
+import type { Profile, ProfilePosts } from './profile.types.ts';
 
 /**
  * @throws {ApiError}

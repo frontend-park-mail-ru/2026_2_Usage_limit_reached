@@ -1,4 +1,4 @@
-import type { FormValues, Schema, ValidationResult } from './validation.types.js';
+import type { FormValues, Schema, ValidationResult } from './validation.types.ts';
 
 /**
  * @param field

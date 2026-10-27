@@ -1,4 +1,4 @@
-import type { Navigate } from './paths.js';
+import type { Navigate } from './paths.ts';
 
 export type Layout = 'plain' | 'sidebar';
 

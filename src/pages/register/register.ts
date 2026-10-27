@@ -1,15 +1,15 @@
-import { render } from '../../app/view.js';
-import { bindLinks } from '../../utils/helpers/bindLinks.js';
-import { requireElement } from '../../utils/helpers/dom.js';
-import { initPasswordToggles } from '../../components/formField/formField.js';
-import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
-import { registerSchema } from '../../modules/validation/schemas.js';
-import { signup } from '../../modules/api/auth.js';
-import type { SignupData } from '../../modules/api/auth.types.js';
-import { ApiError } from '../../modules/api/request.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
-import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.js';
+import { render } from '../../app/view.ts';
+import { bindLinks } from '../../utils/helpers/bindLinks.ts';
+import { requireElement } from '../../utils/helpers/dom.ts';
+import { initPasswordToggles } from '../../components/formField/formField.ts';
+import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
+import { registerSchema } from '../../modules/validation/schemas.ts';
+import { signup } from '../../modules/api/auth.ts';
+import type { SignupData } from '../../modules/api/auth.types.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
+import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
 export function renderRegister(): string {
   return render('pages/register/register');

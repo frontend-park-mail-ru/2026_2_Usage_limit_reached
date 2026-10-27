@@ -1,8 +1,8 @@
-import { render } from '../../app/view.js';
-import { initProfileMenu } from '../profileMenu/profileMenu.js';
-import type { ProfileMenu } from '../profileMenu/profileMenu.types.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
+import { render } from '../../app/view.ts';
+import { initProfileMenu } from '../profileMenu/profileMenu.ts';
+import type { ProfileMenu } from '../profileMenu/profileMenu.types.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 let profileMenu: ProfileMenu | null = null;
 

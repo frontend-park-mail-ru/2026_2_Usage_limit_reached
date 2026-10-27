@@ -1,10 +1,10 @@
-import { logout } from '../../modules/api/auth.js';
-import { ApiError } from '../../modules/api/request.js';
-import { bindLinks } from '../../utils/helpers/bindLinks.js';
-import { requireElement } from '../../utils/helpers/dom.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
-import type { ProfileMenu } from './profileMenu.types.js';
+import { logout } from '../../modules/api/auth.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { bindLinks } from '../../utils/helpers/bindLinks.ts';
+import { requireElement } from '../../utils/helpers/dom.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
+import type { ProfileMenu } from './profileMenu.types.ts';
 
 /**
  * @param menu

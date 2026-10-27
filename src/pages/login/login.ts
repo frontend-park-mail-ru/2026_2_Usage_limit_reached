@@ -1,15 +1,15 @@
-import { render } from '../../app/view.js';
-import { bindLinks } from '../../utils/helpers/bindLinks.js';
-import { requireElement } from '../../utils/helpers/dom.js';
-import { initPasswordToggles } from '../../components/formField/formField.js';
-import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
-import { loginSchema } from '../../modules/validation/schemas.js';
-import { login } from '../../modules/api/auth.js';
-import type { LoginData } from '../../modules/api/auth.types.js';
-import { ApiError } from '../../modules/api/request.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
-import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.js';
+import { render } from '../../app/view.ts';
+import { bindLinks } from '../../utils/helpers/bindLinks.ts';
+import { requireElement } from '../../utils/helpers/dom.ts';
+import { initPasswordToggles } from '../../components/formField/formField.ts';
+import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
+import { loginSchema } from '../../modules/validation/schemas.ts';
+import { login } from '../../modules/api/auth.ts';
+import type { LoginData } from '../../modules/api/auth.types.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
+import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.ts';
 
 export function renderLogin(): string {
   return render('pages/login/login');

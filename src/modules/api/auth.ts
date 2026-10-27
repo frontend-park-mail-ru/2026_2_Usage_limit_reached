@@ -1,5 +1,5 @@
-import { request } from './request.js';
-import type { AuthUser, LoginData, SignupData } from './auth.types.js';
+import { request } from './request.ts';
+import type { AuthUser, LoginData, SignupData } from './auth.types.ts';
 
 /**
  * @param data

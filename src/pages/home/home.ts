@@ -1,8 +1,8 @@
-import { render } from '../../app/view.js';
-import { getProfile } from '../../modules/api/profile.js';
-import { ApiError } from '../../modules/api/request.js';
-import { ROUTES } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
+import { render } from '../../app/view.ts';
+import { getProfile } from '../../modules/api/profile.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 export function renderHome(): string {
   return render('pages/home/home', { message: 'Проверка авторизации...' });

@@ -1,13 +1,13 @@
-import { renderLogin, initLogin } from '../pages/login/login.js';
-import { renderHome, initHome } from '../pages/home/home.js';
-import { renderRegister, initRegister } from '../pages/register/register.js';
-import { renderProfile, initProfile } from '../pages/profile/profile.js';
-import { renderNotFound } from '../pages/notFound/notFound.js';
-import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
-import { requireElement } from '../utils/helpers/dom.js';
-import { ROUTES, isRoutePath } from './paths.js';
-import type { NavigateOptions, RoutePath } from './paths.js';
-import type { Layout, Route } from './router.types.js';
+import { renderLogin, initLogin } from '../pages/login/login.ts';
+import { renderHome, initHome } from '../pages/home/home.ts';
+import { renderRegister, initRegister } from '../pages/register/register.ts';
+import { renderProfile, initProfile } from '../pages/profile/profile.ts';
+import { renderNotFound } from '../pages/notFound/notFound.ts';
+import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.ts';
+import { requireElement } from '../utils/helpers/dom.ts';
+import { ROUTES, isRoutePath } from './paths.ts';
+import type { NavigateOptions, RoutePath } from './paths.ts';
+import type { Layout, Route } from './router.types.ts';
 
 const routes: Record<RoutePath, Route> = {
   [ROUTES.home]: { render: renderHome, init: initHome },

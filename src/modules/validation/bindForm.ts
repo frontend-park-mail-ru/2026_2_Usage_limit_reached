@@ -1,6 +1,6 @@
-import { validate, validateField } from './validate.js';
-import type { FormValues, Schema } from './validation.types.js';
-import { INVALID_CLASS } from './bindForm.constants.js';
+import { validate, validateField } from './validate.ts';
+import type { FormValues, Schema } from './validation.types.ts';
+import { INVALID_CLASS } from './bindForm.constants.ts';
 
 /**
  * @param form

@@ -1,4 +1,4 @@
-import type { Rule } from './validation.types.js';
+import type { Rule } from './validation.types.ts';
 
 /**
  * @param message

@@ -1,5 +1,5 @@
-import { isRoutePath } from '../../app/paths.js';
-import type { Navigate } from '../../app/paths.js';
+import { isRoutePath } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 /**
  * @param container
