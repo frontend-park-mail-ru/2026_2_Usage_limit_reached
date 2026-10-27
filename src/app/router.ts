@@ -58,8 +58,11 @@ function renderCurrentRoute(): void {
 export function navigate(path: RoutePath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
   if (url.pathname + url.search === window.location.pathname + window.location.search) return;
-  if (replace) history.replaceState({}, '', path);
-  else history.pushState({}, '', path);
+  if (replace) {
+    history.replaceState({}, '', path);
+  } else {
+    history.pushState({}, '', path);
+  }
   renderCurrentRoute();
 }
 

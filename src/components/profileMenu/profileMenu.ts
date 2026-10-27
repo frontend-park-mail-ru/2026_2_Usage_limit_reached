@@ -37,8 +37,11 @@ export function initProfileMenu(
   }
 
   function toggle(): void {
-    if (menu.hidden) open();
-    else close();
+    if (menu.hidden) {
+      open();
+    } else {
+      close();
+    }
   }
 
   function handleOutsideClick(event: MouseEvent): void {
