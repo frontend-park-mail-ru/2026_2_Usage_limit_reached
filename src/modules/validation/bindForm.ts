@@ -1,7 +1,6 @@
 import { validate, validateField } from './validate.js';
 import type { FormValues, Schema } from './validation.types.js';
-
-const INVALID_CLASS = 'form-field__input--invalid';
+import { INVALID_CLASS } from './bindForm.constants.js';
 
 const getValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as FormValues;
 

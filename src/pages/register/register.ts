@@ -9,14 +9,7 @@ import type { SignupData } from '../../modules/api/auth.types.js';
 import { ApiError } from '../../modules/api/request.js';
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
-
-const FORM_ERRORS: Record<number, string> = {
-  0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
-  400: 'Проверьте введённые данные',
-  409: 'Эта почта или имя пользователя уже заняты',
-};
-
-const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
+import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.js';
 
 export function renderRegister(): string {
   return render('pages/register/register');

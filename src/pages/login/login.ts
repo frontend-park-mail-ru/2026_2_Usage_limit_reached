@@ -9,14 +9,7 @@ import type { LoginData } from '../../modules/api/auth.types.js';
 import { ApiError } from '../../modules/api/request.js';
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
-
-const FORM_ERRORS: Record<number, string> = {
-  0: 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз',
-  400: 'Проверьте введённые данные',
-  401: 'Неверные данные для входа!',
-};
-
-const UNKNOWN_ERROR = 'Что-то пошло не так. Попробуйте позже';
+import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.js';
 
 export function renderLogin(): string {
   return render('pages/login/login');

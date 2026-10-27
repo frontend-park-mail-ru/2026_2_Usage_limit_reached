@@ -1,4 +1,4 @@
-const COMPONENTS_PREFIX = 'components/';
+import { COMPONENTS_PREFIX } from './view.constants.js';
 
 function registerPartials(): void {
   for (const [name, template] of Object.entries(Handlebars.templates)) {
