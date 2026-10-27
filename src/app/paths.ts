@@ -7,9 +7,9 @@ export const ROUTES = {
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
 
-export type NavigateOptions = {
+export interface NavigateOptions {
   replace?: boolean;
-};
+}
 
 export type Navigate = (path: RoutePath, options?: NavigateOptions) => void;
 

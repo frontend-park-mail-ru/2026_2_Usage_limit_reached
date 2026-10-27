@@ -1,25 +1,25 @@
-export type ProfileUser = {
+export interface ProfileUser {
   username: string;
   nickname: string;
-};
+}
 
-export type ProfileAuthor = {
+export interface ProfileAuthor {
   bio: string;
-};
+}
 
-export type Profile = {
+export interface Profile {
   user: ProfileUser;
   author?: ProfileAuthor;
-};
+}
 
-export type ProfilePost = {
+export interface ProfilePost {
   id: number;
   title: string;
   body: string;
   status: string;
   published_at: string | null;
-};
+}
 
-export type ProfilePosts = {
+export interface ProfilePosts {
   posts: ProfilePost[];
-};
+}

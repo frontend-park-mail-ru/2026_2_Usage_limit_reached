@@ -10,10 +10,10 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = {
+interface RequestOptions {
   method?: string;
   data?: object;
-};
+}
 
 export const request = async <T>(path: string, { method = 'GET', data }: RequestOptions = {}): Promise<T> => {
   let response: Response;

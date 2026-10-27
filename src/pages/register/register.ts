@@ -43,6 +43,7 @@ export function initRegister(root: HTMLElement, navigate: Navigate): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 
   initPasswordToggles(form);
-  bindValidation(form, registerSchema, (data) => submitRegister(form, data as SignupData, navigate));
+  bindValidation(form, registerSchema, ({ email, username, nickname, password }) =>
+    submitRegister(form, { email, username, nickname, password }, navigate));
   bindLinks(root, navigate);
 }

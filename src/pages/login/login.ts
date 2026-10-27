@@ -43,6 +43,6 @@ export function initLogin(root: HTMLElement, navigate: Navigate): void {
   const form = requireElement<HTMLFormElement>(root, '#login-form');
 
   initPasswordToggles(form);
-  bindValidation(form, loginSchema, (data) => submitLogin(form, data as LoginData, navigate));
+  bindValidation(form, loginSchema, ({ login, password }) => submitLogin(form, { login, password }, navigate));
   bindLinks(root, navigate);
 }
