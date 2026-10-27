@@ -1,6 +1,4 @@
-export type FormValues = Record<string, string>;
-
-export type Rule = (value: string, values?: FormValues) => string | null;
+import type { Rule } from './validation.types.js';
 
 export const required = (message = 'Обязательное поле'): Rule =>
   (value) => (value.trim() !== '' ? null : message);

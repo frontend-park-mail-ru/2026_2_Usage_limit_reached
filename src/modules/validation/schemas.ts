@@ -1,5 +1,5 @@
 import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.js';
-import type { Schema } from './validate.js';
+import type { Schema } from './validation.types.js';
 
 const EMAIL_MAX = 254;
 const USERNAME_MIN = 3;

@@ -1,6 +1,6 @@
 import { render } from '../../app/view.js';
 import { initProfileMenu } from '../profileMenu/profileMenu.js';
-import type { ProfileMenu } from '../profileMenu/profileMenu.js';
+import type { ProfileMenu } from '../profileMenu/profileMenu.types.js';
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
 

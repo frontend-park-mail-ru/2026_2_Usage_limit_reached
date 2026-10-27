@@ -1,6 +1,5 @@
 import { validate, validateField } from './validate.js';
-import type { Schema } from './validate.js';
-import type { FormValues } from './rules.js';
+import type { FormValues, Schema } from './validation.types.js';
 
 const INVALID_CLASS = 'form-field__input--invalid';
 

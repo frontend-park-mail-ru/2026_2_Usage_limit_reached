@@ -5,7 +5,7 @@ import { initPasswordToggles } from '../../components/formField/formField.js';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.js';
 import { registerSchema } from '../../modules/validation/schemas.js';
 import { signup } from '../../modules/api/auth.js';
-import type { SignupData } from '../../modules/api/auth.js';
+import type { SignupData } from '../../modules/api/auth.types.js';
 import { ApiError } from '../../modules/api/request.js';
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';

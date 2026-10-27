@@ -1,6 +1,6 @@
 import { render } from '../../app/view.js';
 import { getProfile, getProfilePosts } from '../../modules/api/profile.js';
-import type { Profile, ProfilePosts } from '../../modules/api/profile.js';
+import type { Profile, ProfilePosts } from '../../modules/api/profile.types.js';
 import { ApiError } from '../../modules/api/request.js';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.js';
 import { ROUTES } from '../../app/paths.js';

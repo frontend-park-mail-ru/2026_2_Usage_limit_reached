@@ -1,11 +1,4 @@
-import type { FormValues, Rule } from './rules.js';
-
-export type Schema = Record<string, Rule[]>;
-
-export type ValidationResult = {
-  isValid: boolean;
-  errors: Record<string, string>;
-};
+import type { FormValues, Schema, ValidationResult } from './validation.types.js';
 
 export const validateField = (field: string, values: FormValues, schema: Schema): string | null => {
   const rules = schema[field] ?? [];

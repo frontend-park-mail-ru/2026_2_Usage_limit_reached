@@ -6,15 +6,8 @@ import { renderNotFound } from '../pages/notFound/notFound.js';
 import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.js';
 import { requireElement } from '../utils/helpers/dom.js';
 import { ROUTES, isRoutePath } from './paths.js';
-import type { Navigate, NavigateOptions, RoutePath } from './paths.js';
-
-type Layout = 'plain' | 'sidebar';
-
-type Route = {
-  render: () => string;
-  init?: (root: HTMLElement, navigate: Navigate) => void;
-  layout?: Layout;
-};
+import type { NavigateOptions, RoutePath } from './paths.js';
+import type { Layout, Route } from './router.types.js';
 
 const routes: Record<RoutePath, Route> = {
   [ROUTES.home]: { render: renderHome, init: initHome },

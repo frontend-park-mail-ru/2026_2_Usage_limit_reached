@@ -4,11 +4,7 @@ import { bindLinks } from '../../utils/helpers/bindLinks.js';
 import { requireElement } from '../../utils/helpers/dom.js';
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
-
-export type ProfileMenu = {
-  close: () => void;
-  destroy: () => void;
-};
+import type { ProfileMenu } from './profileMenu.types.js';
 
 export function initProfileMenu(
   menu: HTMLElement,

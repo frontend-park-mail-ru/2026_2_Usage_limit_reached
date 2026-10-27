@@ -1,22 +1,5 @@
 import { request } from './request.js';
-
-export type SignupData = {
-  email: string;
-  username: string;
-  nickname: string;
-  password: string;
-};
-
-export type LoginData = {
-  login: string;
-  password: string;
-};
-
-export type AuthUser = {
-  email: string;
-  username: string;
-  nickname: string;
-};
+import type { AuthUser, LoginData, SignupData } from './auth.types.js';
 
 export const signup = ({ email, username, nickname, password }: SignupData) =>
   request<AuthUser>('/signup', { method: 'POST', data: { email, username, nickname, password } });
