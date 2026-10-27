@@ -1,3 +1,6 @@
+/**
+ * @param root
+ */
 export function initPasswordToggles(root: HTMLElement): void {
   root.addEventListener('click', (e) => {
     if (!(e.target instanceof Element)) {

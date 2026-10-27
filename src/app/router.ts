@@ -20,6 +20,9 @@ const notFoundRoute: Route = { render: renderNotFound };
 
 let currentLayout: Layout | undefined;
 
+/**
+ * @param layout
+ */
 function updateLayout(layout: Layout): void {
   if (currentLayout === layout) {
     return;
@@ -50,6 +53,10 @@ function renderCurrentRoute(): void {
   route.init?.(root, navigate);
 }
 
+/**
+ * @param path
+ * @param options
+ */
 export function navigate(path: RoutePath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
   if (url.pathname + url.search === window.location.pathname + window.location.search) {

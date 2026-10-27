@@ -1,3 +1,6 @@
+/**
+ * @param count
+ */
 export function formatPostCount(count: number): string {
   const lastTwo = count % 100;
   const last = count % 10;
@@ -8,6 +11,10 @@ export function formatPostCount(count: number): string {
   return `${count} ${word}`;
 }
 
+/**
+ * @param publishedAt
+ * @param referenceTime
+ */
 export function formatPublishedAt(publishedAt: string, referenceTime: Date): string {
   if (!publishedAt) {
     return '';

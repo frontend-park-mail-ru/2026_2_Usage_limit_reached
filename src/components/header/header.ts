@@ -6,6 +6,9 @@ export function renderHeader(): string {
   return render('components/header/header');
 }
 
+/**
+ * @param navigate
+ */
 export function bindHeaderLinks(navigate: Navigate): void {
   document.querySelectorAll('#header a[data-link]').forEach((link) => {
     link.addEventListener('click', (e) => {

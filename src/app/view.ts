@@ -10,6 +10,11 @@ function registerPartials(): void {
 
 registerPartials();
 
+/**
+ * @param name
+ * @param data
+ * @throws {Error}
+ */
 export function render(name: string, data: object = {}): string {
   const template = Handlebars.templates[name];
   if (!template) {

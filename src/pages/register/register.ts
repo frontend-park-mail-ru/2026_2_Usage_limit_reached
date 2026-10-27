@@ -15,6 +15,11 @@ export function renderRegister(): string {
   return render('pages/register/register');
 }
 
+/**
+ * @param form
+ * @param data
+ * @param navigate
+ */
 async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: Navigate): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   button.disabled = true;
@@ -34,6 +39,10 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
   }
 }
 
+/**
+ * @param root
+ * @param navigate
+ */
 export function initRegister(root: HTMLElement, navigate: Navigate): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 

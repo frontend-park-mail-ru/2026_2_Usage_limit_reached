@@ -15,6 +15,11 @@ export function renderLogin(): string {
   return render('pages/login/login');
 }
 
+/**
+ * @param form
+ * @param data
+ * @param navigate
+ */
 async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Navigate): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   button.disabled = true;
@@ -34,6 +39,10 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Nav
   }
 }
 
+/**
+ * @param root
+ * @param navigate
+ */
 export function initLogin(root: HTMLElement, navigate: Navigate): void {
   const form = requireElement<HTMLFormElement>(root, '#login-form');
 

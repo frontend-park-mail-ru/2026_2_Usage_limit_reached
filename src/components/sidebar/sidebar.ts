@@ -10,6 +10,9 @@ export function renderSidebar(): string {
   return render('components/sidebar/sidebar');
 }
 
+/**
+ * @param navigate
+ */
 export function bindSidebarLinks(navigate: Navigate): void {
   const container = document.getElementById('sidebar');
   const menu = container?.querySelector<HTMLElement>('.profile-menu');
@@ -29,6 +32,9 @@ export function destroySidebar(): void {
   profileMenu = null;
 }
 
+/**
+ * @param path
+ */
 export function setActiveSidebarLink(path: string): void {
   const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
   if (!profileButton) {

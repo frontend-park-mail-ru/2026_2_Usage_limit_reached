@@ -15,6 +15,11 @@ interface RequestOptions {
   data?: object;
 }
 
+/**
+ * @param path
+ * @param options
+ * @throws {ApiError}
+ */
 export const request = async <T>(path: string, { method = 'GET', data }: RequestOptions = {}): Promise<T> => {
   let response: Response;
   try {

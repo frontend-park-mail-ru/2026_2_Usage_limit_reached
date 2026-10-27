@@ -1,5 +1,10 @@
 import type { FormValues, Schema, ValidationResult } from './validation.types.js';
 
+/**
+ * @param field
+ * @param values
+ * @param schema
+ */
 export const validateField = (field: string, values: FormValues, schema: Schema): string | null => {
   const rules = schema[field] ?? [];
   const value = values[field] ?? '';
@@ -14,6 +19,10 @@ export const validateField = (field: string, values: FormValues, schema: Schema)
   return null;
 };
 
+/**
+ * @param values
+ * @param schema
+ */
 export const validate = (values: FormValues, schema: Schema): ValidationResult => {
   const errors: Record<string, string> = {};
 

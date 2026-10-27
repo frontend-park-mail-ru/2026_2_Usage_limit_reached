@@ -6,6 +6,11 @@ import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
 import type { ProfileMenu } from './profileMenu.types.js';
 
+/**
+ * @param menu
+ * @param button
+ * @param navigate
+ */
 export function initProfileMenu(
   menu: HTMLElement,
   button: HTMLButtonElement,
@@ -16,6 +21,9 @@ export function initProfileMenu(
   let pending = false;
   let destroyed = false;
 
+  /**
+   * @param restoreFocus
+   */
   function close(restoreFocus = false): void {
     menu.hidden = true;
     button.setAttribute('aria-expanded', 'false');
@@ -42,6 +50,9 @@ export function initProfileMenu(
     }
   }
 
+  /**
+   * @param event
+   */
   function handleOutsideClick(event: MouseEvent): void {
     if (!(event.target instanceof Node)) {
       return;
@@ -51,6 +62,9 @@ export function initProfileMenu(
     }
   }
 
+  /**
+   * @param event
+   */
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();

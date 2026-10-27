@@ -8,6 +8,10 @@ export function renderHome(): string {
   return render('pages/home/home', { message: 'Проверка авторизации...' });
 }
 
+/**
+ * @param root
+ * @param navigate
+ */
 export async function initHome(
   root: HTMLElement,
   navigate: Navigate,

@@ -6,6 +6,10 @@ import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.js
 import { ROUTES } from '../../app/paths.js';
 import type { Navigate } from '../../app/paths.js';
 
+/**
+ * @param profileResponse
+ * @param postsResponse
+ */
 export function buildProfileViewModel(profileResponse: Profile, postsResponse: ProfilePosts) {
   const referenceTime = new Date();
   const posts = postsResponse.posts.filter((post) => post.status === 'published').map((post) => {
@@ -34,6 +38,10 @@ export function renderProfile(): string {
   return render('pages/profile/profile', { message: 'Загрузка профиля...' });
 }
 
+/**
+ * @param root
+ * @param navigate
+ */
 export async function initProfile(root: HTMLElement, navigate: Navigate): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {

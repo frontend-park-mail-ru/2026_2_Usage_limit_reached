@@ -2,8 +2,16 @@ import { validate, validateField } from './validate.js';
 import type { FormValues, Schema } from './validation.types.js';
 import { INVALID_CLASS } from './bindForm.constants.js';
 
+/**
+ * @param form
+ */
 const getValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as FormValues;
 
+/**
+ * @param form
+ * @param name
+ * @param error
+ */
 export const setFieldError = (form: HTMLFormElement, name: string, error: string | null) => {
   const input = form.elements.namedItem(name);
   const errorEl = form.querySelector(`[data-error-for="${name}"]`);
@@ -16,12 +24,20 @@ export const setFieldError = (form: HTMLFormElement, name: string, error: string
   errorEl.textContent = error ?? '';
 };
 
+/**
+ * @param form
+ * @param errors
+ */
 export const showErrors = (form: HTMLFormElement, errors: Record<string, string>) => {
   for (const [name, error] of Object.entries(errors)) {
     setFieldError(form, name, error);
   }
 };
 
+/**
+ * @param form
+ * @param error
+ */
 export const setFormError = (form: HTMLFormElement, error: string | null) => {
   const errorEl = form.querySelector('[data-form-error]');
   if (!errorEl) {
@@ -31,6 +47,11 @@ export const setFormError = (form: HTMLFormElement, error: string | null) => {
   errorEl.textContent = error ?? '';
 };
 
+/**
+ * @param form
+ * @param schema
+ * @param onSubmit
+ */
 export const bindValidation = (form: HTMLFormElement, schema: Schema, onSubmit: (values: FormValues) => void) => {
   form.addEventListener('input', () => {
     const values = getValues(form);
