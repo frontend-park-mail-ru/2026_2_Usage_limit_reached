@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
-  { ignores: ['dist/', 'src/templates.js'] },
+  { ignores: ['dist/'] },
   js.configs.recommended,
   {
     files: ['**/*.ts'],
@@ -27,7 +27,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.js'],
+    files: ['server/**/*.js', 'webpack.*.js'],
     languageOptions: {
       globals: globals.node,
     },
