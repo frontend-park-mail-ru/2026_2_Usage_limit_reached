@@ -1,4 +1,4 @@
-import { render } from '../../app/view.ts';
+import sidebarTemplate from './sidebar.hbs';
 import { initProfileMenu } from '../profileMenu/profileMenu.ts';
 import type { ProfileMenu } from '../profileMenu/profileMenu.types.ts';
 import { ROUTES } from '../../app/paths.ts';
@@ -7,7 +7,7 @@ import type { Navigate } from '../../app/paths.ts';
 let profileMenu: ProfileMenu | null = null;
 
 export function renderSidebar(): string {
-  return render('components/sidebar/sidebar');
+  return sidebarTemplate();
 }
 
 /**

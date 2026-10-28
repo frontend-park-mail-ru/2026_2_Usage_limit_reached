@@ -1,5 +1,5 @@
-import { render } from '../../app/view.ts';
+import notFoundTemplate from './notFound.hbs';
 
 export function renderNotFound(): string {
-  return render('pages/notFound/notFound');
+  return notFoundTemplate();
 }
