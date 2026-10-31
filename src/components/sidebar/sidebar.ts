@@ -1,6 +1,5 @@
 import { render } from '../../app/view.ts';
-import { initProfileMenu } from '../profileMenu/profileMenu.ts';
-import type { ProfileMenu } from '../profileMenu/profileMenu.types.ts';
+import { ProfileMenu } from '../profileMenu/profileMenu.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
@@ -15,23 +14,17 @@ export function renderSidebar(): string {
  * Подключает меню профиля в сайдбаре.
  * @param navigate
  */
-export function bindSidebarLinks(navigate: Navigate): void {
-  const container = document.getElementById('sidebar');
-  const menu = container?.querySelector<HTMLElement>('.profile-menu');
-  const button = container?.querySelector<HTMLButtonElement>('.sidebar__item--profile');
-  if (!menu || !button) {
-    return;
-  }
-  profileMenu = initProfileMenu(menu, button, navigate);
+export function initSidebarProfileMenu(navigate: Navigate): void {
+  profileMenu = new ProfileMenu(navigate);
 }
 
 /** Закрывает меню профиля. */
-export function closeSidebarMenu(): void {
+export function closeSidebarProfileMenu(): void {
   profileMenu?.close();
 }
 
 /** Снимает обработчики меню профиля и удаляет ссылку на него. */
-export function destroySidebar(): void {
+export function destroySidebarProfileMenu(): void {
   profileMenu?.destroy();
   profileMenu = null;
 }
@@ -40,7 +33,7 @@ export function destroySidebar(): void {
  * Отмечает кнопку профиля, если открыта страница профиля.
  * @param path
  */
-export function setActiveSidebarLink(path: string): void {
+export function updateSidebarProfileState(path: string): void {
   const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
   if (!profileButton) {
     return;

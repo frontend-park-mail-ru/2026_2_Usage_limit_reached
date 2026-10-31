@@ -3,7 +3,13 @@ import { renderHome, initHome } from '../pages/home/home.ts';
 import { renderRegister, initRegister } from '../pages/register/register.ts';
 import { renderProfile, initProfile } from '../pages/profile/profile.ts';
 import { renderNotFound } from '../pages/notFound/notFound.ts';
-import { renderSidebar, bindSidebarLinks, setActiveSidebarLink, closeSidebarMenu, destroySidebar } from '../components/sidebar/sidebar.ts';
+import {
+  renderSidebar,
+  initSidebarProfileMenu,
+  updateSidebarProfileState,
+  closeSidebarProfileMenu,
+  destroySidebarProfileMenu,
+} from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { ROUTES, isRoutePath } from './paths.ts';
 import type { NavigateOptions, RoutePath } from './paths.ts';
@@ -28,12 +34,12 @@ function updateLayout(layout: Layout): void {
   if (currentLayout === layout) {
     return;
   }
-  destroySidebar();
+  destroySidebarProfileMenu();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
-    bindSidebarLinks(navigate);
+    initSidebarProfileMenu(navigate);
   } else {
     sidebar.innerHTML = '';
   }
@@ -48,9 +54,9 @@ function renderCurrentRoute(): void {
   const route = isRoutePath(path) ? routes[path] : notFoundRoute;
   const root = requireElement<HTMLElement>(document, '#app');
 
-  closeSidebarMenu();
+  closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain');
-  setActiveSidebarLink(path);
+  updateSidebarProfileState(path);
   root.innerHTML = route.render();
   route.init?.(root, navigate);
 }
