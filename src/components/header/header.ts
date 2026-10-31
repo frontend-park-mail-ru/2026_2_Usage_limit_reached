@@ -7,6 +7,7 @@ export function renderHeader(): string {
 }
 
 /**
+ * Подключает переходы по ссылкам шапки через роутер.
  * @param navigate
  */
 export function bindHeaderLinks(navigate: Navigate): void {

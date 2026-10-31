@@ -21,6 +21,7 @@ const notFoundRoute: Route = { render: renderNotFound };
 let currentLayout: Layout | undefined;
 
 /**
+ * Обновляет сайдбар при смене layout.
  * @param layout
  */
 function updateLayout(layout: Layout): void {
@@ -41,6 +42,7 @@ function updateLayout(layout: Layout): void {
   currentLayout = layout;
 }
 
+/** Показывает страницу по текущему адресу. */
 function renderCurrentRoute(): void {
   const path = window.location.pathname;
   const route = isRoutePath(path) ? routes[path] : notFoundRoute;
@@ -54,6 +56,7 @@ function renderCurrentRoute(): void {
 }
 
 /**
+ * Открывает страницу по указанному пути.
  * @param path
  * @param options
  */
@@ -70,6 +73,7 @@ export function navigate(path: RoutePath, { replace = false }: NavigateOptions =
   renderCurrentRoute();
 }
 
+/** Запускает роутер и подключает кнопки истории браузера. */
 export function initRouter(): void {
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();

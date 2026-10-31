@@ -4,11 +4,13 @@ import { ApiError } from '../../modules/api/request.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
+/** Возвращает текст проверки авторизации. */
 export function renderHome(): string {
   return render('pages/home/home', { message: 'Проверка авторизации...' });
 }
 
 /**
+ * Проверяет сессию и открывает профиль или страницу входа.
  * @param root
  * @param navigate
  */

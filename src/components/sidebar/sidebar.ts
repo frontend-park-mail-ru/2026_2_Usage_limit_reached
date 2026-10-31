@@ -6,11 +6,13 @@ import type { Navigate } from '../../app/paths.ts';
 
 let profileMenu: ProfileMenu | null = null;
 
+/** Возвращает HTML сайдбара. */
 export function renderSidebar(): string {
   return render('components/sidebar/sidebar');
 }
 
 /**
+ * Подключает меню профиля в сайдбаре.
  * @param navigate
  */
 export function bindSidebarLinks(navigate: Navigate): void {
@@ -23,16 +25,19 @@ export function bindSidebarLinks(navigate: Navigate): void {
   profileMenu = initProfileMenu(menu, button, navigate);
 }
 
+/** Закрывает меню профиля. */
 export function closeSidebarMenu(): void {
   profileMenu?.close();
 }
 
+/** Снимает обработчики меню профиля и удаляет ссылку на него. */
 export function destroySidebar(): void {
   profileMenu?.destroy();
   profileMenu = null;
 }
 
 /**
+ * Отмечает кнопку профиля, если открыта страница профиля.
  * @param path
  */
 export function setActiveSidebarLink(path: string): void {

@@ -11,11 +11,13 @@ import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.ts';
 
+/** Возвращает HTML страницы входа. */
 export function renderLogin(): string {
   return render('pages/login/login');
 }
 
 /**
+ * Отправляет форму входа.
  * @param form
  * @param data
  * @param navigate

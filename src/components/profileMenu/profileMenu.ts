@@ -7,6 +7,7 @@ import type { Navigate } from '../../app/paths.ts';
 import type { ProfileMenu } from './profileMenu.types.ts';
 
 /**
+ * Подключает меню профиля и выход из аккаунта.
  * @param menu
  * @param button
  * @param navigate
@@ -22,6 +23,7 @@ export function initProfileMenu(
   let destroyed = false;
 
   /**
+   * Закрывает меню и снимает временные обработчики.
    * @param restoreFocus
    */
   function close(restoreFocus = false): void {
@@ -34,6 +36,7 @@ export function initProfileMenu(
     }
   }
 
+  /** Открывает меню и переводит фокус на первый пункт. */
   function open(): void {
     menu.hidden = false;
     button.setAttribute('aria-expanded', 'true');
@@ -42,6 +45,7 @@ export function initProfileMenu(
     menu.querySelector<HTMLElement>('a[data-link]')?.focus();
   }
 
+  /** Переключает видимость меню. */
   function toggle(): void {
     if (menu.hidden) {
       open();
@@ -51,6 +55,7 @@ export function initProfileMenu(
   }
 
   /**
+   * Закрывает меню при клике снаружи.
    * @param event
    */
   function handleOutsideClick(event: MouseEvent): void {
@@ -63,6 +68,7 @@ export function initProfileMenu(
   }
 
   /**
+   * Обрабатывает Escape и переходы по пунктам меню.
    * @param event
    */
   function handleKeydown(event: KeyboardEvent): void {
@@ -91,6 +97,7 @@ export function initProfileMenu(
     items[(next + items.length) % items.length].focus();
   }
 
+  /** Завершает сессию или показывает ошибку выхода. */
   async function handleLogout(): Promise<void> {
     if (pending) {
       return;
@@ -126,6 +133,7 @@ export function initProfileMenu(
     }
   }
 
+  /** Снимает обработчики перед удалением сайдбара. */
   function destroy(): void {
     destroyed = true;
     close();

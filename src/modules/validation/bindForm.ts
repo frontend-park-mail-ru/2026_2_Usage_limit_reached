@@ -3,6 +3,7 @@ import type { FormValues, Schema } from './validation.types.ts';
 import { INVALID_CLASS } from './bindForm.constants.ts';
 
 /**
+ * Собирает значения всех полей формы.
  * @param form
  */
 const getValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as FormValues;
@@ -26,6 +27,7 @@ export const setFieldError = (form: HTMLFormElement, name: string, error: string
 };
 
 /**
+ * Показывает ошибки под несколькими полями.
  * @param form
  * @param errors
  */

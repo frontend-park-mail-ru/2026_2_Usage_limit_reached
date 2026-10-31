@@ -1,5 +1,6 @@
 import { COMPONENTS_PREFIX } from './view.constants.ts';
 
+/** Регистрирует шаблоны компонентов для использования внутри других шаблонов. */
 function registerPartials(): void {
   for (const [name, template] of Object.entries(Handlebars.templates)) {
     if (name.startsWith(COMPONENTS_PREFIX)) {
@@ -11,6 +12,7 @@ function registerPartials(): void {
 registerPartials();
 
 /**
+ * Находит шаблон по имени и подставляет в него данные.
  * @param name
  * @param data
  * @throws {Error}

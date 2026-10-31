@@ -11,11 +11,13 @@ import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
+/** Возвращает HTML страницы регистрации. */
 export function renderRegister(): string {
   return render('pages/register/register');
 }
 
 /**
+ * Отправляет форму регистрации.
  * @param form
  * @param data
  * @param navigate
