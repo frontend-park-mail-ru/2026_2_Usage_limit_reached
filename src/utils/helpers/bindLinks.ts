@@ -1,5 +1,12 @@
-/** Подключает переходы по ссылкам контейнера. */
-export function bindLinks(container: HTMLElement, navigate: (path: string) => void): void {
+import { isRoutePath } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
+
+/**
+ * Подключает переходы по ссылкам контейнера.
+ * @param container
+ * @param navigate
+ */
+export function bindLinks(container: HTMLElement, navigate: Navigate): void {
   container.querySelectorAll<HTMLAnchorElement>('a[data-link]').forEach((link) => {
     link.addEventListener('click', (event) => {
       if (
@@ -10,7 +17,9 @@ export function bindLinks(container: HTMLElement, navigate: (path: string) => vo
       }
 
       const href = link.getAttribute('href');
-      if (!href) return;
+      if (!href || !isRoutePath(href)) {
+        return;
+      }
 
       event.preventDefault();
       navigate(href);

@@ -1,11 +1,20 @@
+/**
+ * @param root
+ */
 export function initPasswordToggles(root: HTMLElement): void {
   root.addEventListener('click', (e) => {
-    if (!(e.target instanceof Element)) return;
+    if (!(e.target instanceof Element)) {
+      return;
+    }
     const toggle = e.target.closest<HTMLElement>('[data-password-toggle]');
-    if (!toggle) return;
+    if (!toggle) {
+      return;
+    }
 
     const input = root.querySelector<HTMLInputElement>(`#${toggle.dataset.passwordToggle}`);
-    if (!input) return;
+    if (!input) {
+      return;
+    }
     const isHidden = input.type === 'password';
 
     input.type = isHidden ? 'text' : 'password';

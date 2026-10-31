@@ -1,4 +1,4 @@
-const COMPONENTS_PREFIX = 'components/';
+import { COMPONENTS_PREFIX } from './view.constants.ts';
 
 function registerPartials(): void {
   for (const [name, template] of Object.entries(Handlebars.templates)) {
@@ -10,6 +10,11 @@ function registerPartials(): void {
 
 registerPartials();
 
+/**
+ * @param name
+ * @param data
+ * @throws {Error}
+ */
 export function render(name: string, data: object = {}): string {
   const template = Handlebars.templates[name];
   if (!template) {

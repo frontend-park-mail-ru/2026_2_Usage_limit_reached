@@ -1,28 +1,22 @@
-import { request } from './request.js';
+import { request } from './request.ts';
+import type { AuthUser, LoginData, SignupData } from './auth.types.ts';
 
-export type SignupData = {
-  email: string;
-  username: string;
-  nickname: string;
-  password: string;
-};
-
-export type LoginData = {
-  login: string;
-  password: string;
-};
-
-export type AuthUser = {
-  email: string;
-  username: string;
-  nickname: string;
-};
-
+/**
+ * @param data
+ * @throws {ApiError}
+ */
 export const signup = ({ email, username, nickname, password }: SignupData) =>
   request<AuthUser>('/signup', { method: 'POST', data: { email, username, nickname, password } });
 
+/**
+ * @param data
+ * @throws {ApiError}
+ */
 export const login = ({ login, password }: LoginData) =>
   request<AuthUser>('/login', { method: 'POST', data: { login, password } });
 
-/** Завершает сессию пользователя. Успешный ответ не содержит тела. */
+/**
+ * Завершает сессию пользователя. Успешный ответ не содержит тела.
+ * @throws {ApiError}
+ */
 export const logout = () => request<void>('/logout', { method: 'POST', responseType: 'empty' });

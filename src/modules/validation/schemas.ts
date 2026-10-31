@@ -1,13 +1,6 @@
-import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.js';
-import type { Schema } from './validate.js';
-
-const EMAIL_MAX = 254;
-const USERNAME_MIN = 3;
-const USERNAME_MAX = 32;
-const NICKNAME_MAX = 64;
-const PASSWORD_MIN = 8;
-const PASSWORD_MAX = 64;
-const PASSWORD_MAX_BYTES = 72;
+import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.ts';
+import type { Schema } from './validation.types.ts';
+import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES } from './schemas.constants.ts';
 
 export const loginSchema: Schema = {
   login: [required('Введите адрес электронной почты или имя пользователя')],

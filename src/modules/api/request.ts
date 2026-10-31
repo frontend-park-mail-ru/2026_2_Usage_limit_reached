@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config.js';
+import { API_BASE_URL } from './config.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -13,15 +13,17 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = {
+interface RequestOptions {
   method?: string;
   data?: object;
   responseType?: 'json' | 'empty';
-};
+}
 
 /**
  * Выполняет запрос к backend с cookie.
  * По умолчанию ожидает JSON; при responseType="empty" возвращает undefined.
+ * @param path
+ * @param options
  * @throws {ApiError} При ошибке сети, HTTP или разбора JSON.
  */
 export const request = async <T>(path: string, { method = 'GET', data, responseType = 'json' }: RequestOptions = {}): Promise<T> => {
@@ -37,7 +39,9 @@ export const request = async <T>(path: string, { method = 'GET', data, responseT
     throw new ApiError(0, 'network error');
   }
 
-  if (response.ok && responseType === 'empty') return undefined as T;
+  if (response.ok && responseType === 'empty') {
+    return undefined as T;
+  }
 
   let json: unknown;
   try {

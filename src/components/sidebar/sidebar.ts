@@ -1,6 +1,8 @@
-import { render } from '../../app/view.js';
-import { initProfileMenu } from '../profileMenu/profileMenu.js';
-import type { ProfileMenu } from '../profileMenu/profileMenu.js';
+import { render } from '../../app/view.ts';
+import { initProfileMenu } from '../profileMenu/profileMenu.ts';
+import type { ProfileMenu } from '../profileMenu/profileMenu.types.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 let profileMenu: ProfileMenu | null = null;
 
@@ -8,11 +10,16 @@ export function renderSidebar(): string {
   return render('components/sidebar/sidebar');
 }
 
-export function bindSidebarLinks(navigate: (path: string) => void): void {
+/**
+ * @param navigate
+ */
+export function bindSidebarLinks(navigate: Navigate): void {
   const container = document.getElementById('sidebar');
   const menu = container?.querySelector<HTMLElement>('.profile-menu');
   const button = container?.querySelector<HTMLButtonElement>('.sidebar__item--profile');
-  if (!menu || !button) return;
+  if (!menu || !button) {
+    return;
+  }
   profileMenu = initProfileMenu(menu, button, navigate);
 }
 
@@ -25,10 +32,15 @@ export function destroySidebar(): void {
   profileMenu = null;
 }
 
+/**
+ * @param path
+ */
 export function setActiveSidebarLink(path: string): void {
   const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
-  if (!profileButton) return;
-  if (path === '/profile') {
+  if (!profileButton) {
+    return;
+  }
+  if (path === ROUTES.profile) {
     profileButton.setAttribute('aria-current', 'page');
   } else {
     profileButton.removeAttribute('aria-current');

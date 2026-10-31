@@ -1,24 +1,34 @@
-import { render } from '../../app/view.js';
-import { getProfile } from '../../modules/api/profile.js';
-import { ApiError } from '../../modules/api/request.js';
+import { render } from '../../app/view.ts';
+import { getProfile } from '../../modules/api/profile.ts';
+import { ApiError } from '../../modules/api/request.ts';
+import { ROUTES } from '../../app/paths.ts';
+import type { Navigate } from '../../app/paths.ts';
 
 export function renderHome(): string {
   return render('pages/home/home', { message: 'Проверка авторизации...' });
 }
 
+/**
+ * @param root
+ * @param navigate
+ */
 export async function initHome(
   root: HTMLElement,
-  navigate: (path: string, options?: { replace?: boolean }) => void,
+  navigate: Navigate,
 ): Promise<void> {
   const page = root.firstElementChild;
   try {
     await getProfile();
-    if (root.firstElementChild !== page) return;
-    navigate('/profile', { replace: true });
+    if (root.firstElementChild !== page) {
+      return;
+    }
+    navigate(ROUTES.profile, { replace: true });
   } catch (err) {
-    if (root.firstElementChild !== page) return;
+    if (root.firstElementChild !== page) {
+      return;
+    }
     if (err instanceof ApiError && err.status === 401) {
-      navigate('/login', { replace: true });
+      navigate(ROUTES.login, { replace: true });
       return;
     }
     const message = err instanceof ApiError && err.status === 0

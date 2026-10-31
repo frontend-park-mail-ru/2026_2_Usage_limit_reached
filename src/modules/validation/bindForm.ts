@@ -1,35 +1,51 @@
-import { validate } from './validate.js';
-import type { Schema } from './validate.js';
-import type { FormValues } from './rules.js';
+import { validate } from './validate.ts';
+import type { FormValues, Schema } from './validation.types.ts';
+import { INVALID_CLASS } from './bindForm.constants.ts';
 
-const INVALID_CLASS = 'form-field__input--invalid';
-
+/**
+ * @param form
+ */
 const getValues = (form: HTMLFormElement) => Object.fromEntries(new FormData(form)) as FormValues;
 
 /**
  * Показывает ошибку под полем или убирает её.
+ * @param form
+ * @param name
  * @param error - null убирает сообщение.
  */
 export const setFieldError = (form: HTMLFormElement, name: string, error: string | null) => {
   const input = form.elements.namedItem(name);
   const errorEl = form.querySelector(`[data-error-for="${name}"]`);
-  if (!(input instanceof HTMLElement) || !errorEl) return;
+  if (!(input instanceof HTMLElement) || !errorEl) {
+    return;
+  }
 
   input.classList.toggle(INVALID_CLASS, !!error);
   input.setAttribute('aria-invalid', String(!!error));
   errorEl.textContent = error ?? '';
 };
 
+/**
+ * @param form
+ * @param errors
+ */
 export const showErrors = (form: HTMLFormElement, errors: Record<string, string>) => {
   for (const [name, error] of Object.entries(errors)) {
     setFieldError(form, name, error);
   }
 };
 
-/** Показывает общую ошибку формы; null убирает сообщение. */
+/**
+ * Показывает общую ошибку формы.
+ * @param form
+ * @param error - null убирает сообщение.
+ * @param kind - категория ошибки для обработки при вводе.
+ */
 export const setFormError = (form: HTMLFormElement, error: string | null, kind: 'data' | 'server' = 'server'): void => {
   const errorEl = form.querySelector<HTMLElement>('[data-form-error]');
-  if (!errorEl) return;
+  if (!errorEl) {
+    return;
+  }
 
   errorEl.textContent = error ?? '';
   if (error) {
@@ -43,6 +59,9 @@ export const setFormError = (form: HTMLFormElement, error: string | null, kind: 
  * Подключает проверку формы. После первой попытки отправки
  * ошибки обновляются при вводе.
  * Общие ошибки категории "data" сбрасываются при вводе.
+ * @param form
+ * @param schema
+ * @param onSubmit
  */
 export const bindValidation = (form: HTMLFormElement, schema: Schema, onSubmit: (values: FormValues) => void): void => {
   let hasSubmitted = false;

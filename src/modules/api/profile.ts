@@ -1,31 +1,12 @@
-import { request } from './request.js';
+import { request } from './request.ts';
+import type { Profile, ProfilePosts } from './profile.types.ts';
 
-export type ProfileUser = {
-  username: string;
-  nickname: string;
-};
-
-export type ProfileAuthor = {
-  bio: string;
-};
-
-export type Profile = {
-  user: ProfileUser;
-  author?: ProfileAuthor;
-};
-
-export type ProfilePost = {
-  id: number;
-  title: string;
-  body: string;
-  status: string;
-  published_at: string | null;
-};
-
-export type ProfilePosts = {
-  posts: ProfilePost[];
-};
-
+/**
+ * @throws {ApiError}
+ */
 export const getProfile = () => request<Profile>('/profile/me');
 
+/**
+ * @throws {ApiError}
+ */
 export const getProfilePosts = () => request<ProfilePosts>('/profile/me/posts');
