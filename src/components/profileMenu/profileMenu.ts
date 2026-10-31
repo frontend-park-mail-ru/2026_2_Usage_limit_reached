@@ -113,9 +113,11 @@ export function initProfileMenu(
         navigate(ROUTES.login);
         return;
       }
-      error.textContent = err instanceof ApiError && err.status === 0
-        ? 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз'
-        : 'Не удалось выйти. Попробуйте позже';
+      if (err instanceof ApiError) {
+        error.textContent = err.text;
+      } else {
+        error.textContent = 'Не удалось выйти. Попробуйте позже';
+      }
       error.hidden = false;
       open();
     } finally {

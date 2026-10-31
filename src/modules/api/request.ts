@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config.ts';
+import { API_ERROR_MESSAGES, UNKNOWN_API_ERROR } from './request.constants.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -10,6 +11,11 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+  }
+
+  /** Сообщение для показа пользователю. */
+  get text(): string {
+    return API_ERROR_MESSAGES[this.status] ?? UNKNOWN_API_ERROR;
   }
 }
 
