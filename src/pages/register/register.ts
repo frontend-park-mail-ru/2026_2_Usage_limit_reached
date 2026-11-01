@@ -1,5 +1,4 @@
 import { render } from '../../app/view.ts';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
@@ -63,7 +62,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
 }
 
 /**
- * Подключает форму и ссылки страницы регистрации.
+ * Подключает форму страницы регистрации.
  * @param root
  * @param navigate
  */
@@ -73,5 +72,4 @@ export function initRegister(root: HTMLElement, navigate: Navigate): void {
   initPasswordToggles(form);
   bindValidation(form, registerSchema, ({ email, username, nickname, password }) =>
     submitRegister(form, { email, username, nickname, password }, navigate));
-  bindLinks(root, navigate);
 }

@@ -1,5 +1,4 @@
 import { render } from '../../app/view.ts';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
@@ -63,7 +62,7 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Nav
 }
 
 /**
- * Подключает форму и ссылки страницы входа.
+ * Подключает форму страницы входа.
  * @param root
  * @param navigate
  */
@@ -72,5 +71,4 @@ export function initLogin(root: HTMLElement, navigate: Navigate): void {
 
   initPasswordToggles(form);
   bindValidation(form, loginSchema, ({ login, password }) => submitLogin(form, { login, password }, navigate));
-  bindLinks(root, navigate);
 }

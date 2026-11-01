@@ -11,8 +11,9 @@ import {
   destroySidebarProfileMenu,
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
+import { bindLinks } from '../utils/helpers/bindLinks.ts';
 import { ROUTES, isRoutePath } from './paths.ts';
-import type { NavigateOptions, RoutePath } from './paths.ts';
+import type { NavigateOptions, NavigationPath, RoutePath } from './paths.ts';
 import type { Layout, Route } from './router.types.ts';
 
 const routes: Record<RoutePath, Route> = {
@@ -62,25 +63,27 @@ function renderCurrentRoute(): void {
 }
 
 /**
- * Открывает страницу по указанному пути.
+ * Открывает страницу и сохраняет путь с параметрами в истории.
  * @param path
  * @param options
  */
-export function navigate(path: RoutePath, { replace = false }: NavigateOptions = {}): void {
+export function navigate(path: NavigationPath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
-  if (url.pathname + url.search === window.location.pathname + window.location.search) {
+  const nextPath = url.pathname + url.search;
+  if (nextPath === window.location.pathname + window.location.search) {
     return;
   }
   if (replace) {
-    history.replaceState({}, '', path);
+    history.replaceState({}, '', nextPath);
   } else {
-    history.pushState({}, '', path);
+    history.pushState({}, '', nextPath);
   }
   renderCurrentRoute();
 }
 
 /** Запускает роутер и подключает кнопки истории браузера. */
 export function initRouter(): void {
+  bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
 }

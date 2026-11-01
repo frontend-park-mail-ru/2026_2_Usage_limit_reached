@@ -15,6 +15,7 @@ export class ProfileMenu {
   private readonly onOutsideClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
   private readonly onLogout: () => Promise<void>;
+  private readonly unbindLinks: () => void;
   private pending = false;
   private destroyed = false;
 
@@ -39,7 +40,7 @@ export class ProfileMenu {
     this.onKeydown = this.handleKeydown.bind(this);
     this.onLogout = this.handleLogout.bind(this, navigate);
 
-    bindLinks(this.menu, (path) => {
+    this.unbindLinks = bindLinks(this.menu, (path) => {
       this.close();
       navigate(path);
     });
@@ -181,6 +182,7 @@ export class ProfileMenu {
   destroy(): void {
     this.destroyed = true;
     this.close();
+    this.unbindLinks();
     this.button.removeEventListener('click', this.onToggle);
     this.logoutButton.removeEventListener('click', this.onLogout);
   }
