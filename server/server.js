@@ -3,13 +3,7 @@ import path from 'node:path';
 
 const PORT = Number(process.env.PORT || 3000);
 
-const ROOT_DIR = path.join(import.meta.dirname, '..');
-
-const SRC_DIR = path.join(ROOT_DIR, 'src');
-
-const DIST_DIR = path.join(ROOT_DIR, 'dist');
-
-const HANDLEBARS_RUNTIME = path.join(ROOT_DIR, 'node_modules', 'handlebars', 'dist', 'handlebars.runtime.min.js');
+const DIST_DIR = path.join(import.meta.dirname, '..', 'dist');
 
 const app = express();
 
@@ -19,11 +13,6 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(DIST_DIR));
-app.use(express.static(SRC_DIR));
-
-app.get('/vendor/handlebars.runtime.min.js', (req, res) => {
-  res.sendFile(HANDLEBARS_RUNTIME);
-});
 
 app.use((req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -39,7 +28,7 @@ app.use((req, res) => {
     return;
   }
 
-  res.sendFile(path.join(SRC_DIR, 'index.html'));
+  res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
 
 app.listen(PORT, () => {
