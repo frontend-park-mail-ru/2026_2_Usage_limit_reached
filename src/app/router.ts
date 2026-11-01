@@ -19,13 +19,13 @@ import type { NavigateOptions, NavigationPath, RoutePath } from './paths.ts';
 import type { Layout, Route } from './router.types.ts';
 
 const routes: Record<RoutePath, Route> = {
-  [ROUTES.home]: { render: renderHome, init: initHome },
-  [ROUTES.login]: { render: renderLogin, init: initLogin },
-  [ROUTES.register]: { render: renderRegister, init: initRegister },
-  [ROUTES.profile]: { render: renderProfile, init: initProfile, layout: 'sidebar' },
+  [ROUTES.home]: { title: 'Главная', render: renderHome, init: initHome },
+  [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
+  [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
+  [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
 };
 
-const notFoundRoute: Route = { render: renderNotFound };
+const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
 let currentLayout: Layout | undefined;
 
@@ -85,6 +85,7 @@ function renderCurrentRoute(): void {
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain');
   updateSidebarProfileState(path);
+  document.title = route.title;
   root.innerHTML = route.render();
   route.init?.(root);
 }
