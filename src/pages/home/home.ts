@@ -1,34 +1,25 @@
 import homeTemplate from './home.hbs';
-import { getProfile } from '../../modules/api/profile.ts';
+import { checkSession } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
 
+/** Возвращает текст проверки авторизации. */
 export function renderHome(): string {
   return homeTemplate({ message: 'Проверка авторизации...' });
 }
 
 /**
+ * Проверяет сессию, переход по её состоянию выполняет роутер.
  * @param root
- * @param navigate
  */
-export async function initHome(
-  root: HTMLElement,
-  navigate: Navigate,
-): Promise<void> {
+export async function initHome(root: HTMLElement): Promise<void> {
   const page = root.firstElementChild;
   try {
-    await getProfile();
-    if (root.firstElementChild !== page) {
-      return;
-    }
-    navigate(ROUTES.profile, { replace: true });
+    await checkSession();
   } catch (err) {
     if (root.firstElementChild !== page) {
       return;
     }
     if (err instanceof ApiError && err.status === 401) {
-      navigate(ROUTES.login, { replace: true });
       return;
     }
     const message = err instanceof ApiError && err.status === 0

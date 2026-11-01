@@ -1,4 +1,5 @@
 /**
+ * Добавляет к количеству постов нужную форму слова "пост".
  * @param count
  */
 export function formatPostCount(count: number): string {
@@ -12,6 +13,7 @@ export function formatPostCount(count: number): string {
 }
 
 /**
+ * Показывает, сколько времени прошло с публикации.
  * @param publishedAt
  * @param referenceTime
  */
