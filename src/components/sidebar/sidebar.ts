@@ -1,4 +1,4 @@
-import { render } from '../../app/view.ts';
+import sidebarTemplate from './sidebar.hbs';
 import { ProfileMenu } from '../profileMenu/profileMenu.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
@@ -7,7 +7,7 @@ let profileMenu: ProfileMenu | null = null;
 
 /** Возвращает HTML сайдбара. */
 export function renderSidebar(): string {
-  return render('components/sidebar/sidebar');
+  return sidebarTemplate();
 }
 
 /**
