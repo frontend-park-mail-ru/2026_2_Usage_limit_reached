@@ -1,4 +1,4 @@
-import { render } from '../../app/view.ts';
+import profileTemplate from './profile.hbs';
 import { getProfile, getProfilePosts } from '../../modules/api/profile.ts';
 import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
@@ -37,7 +37,7 @@ export function buildProfileViewModel(profileResponse: Profile, postsResponse: P
 
 /** Возвращает каркас профиля с текстом загрузки. */
 export function renderProfile(): string {
-  return render('pages/profile/profile', { message: 'Загрузка профиля...' });
+  return profileTemplate({ message: 'Загрузка профиля...' });
 }
 
 /**
@@ -53,7 +53,7 @@ export async function initProfile(root: HTMLElement, navigate: Navigate): Promis
       return;
     }
     const data = buildProfileViewModel(profileResponse, postsResponse);
-    root.innerHTML = render('pages/profile/profile', data);
+    root.innerHTML = profileTemplate(data);
   } catch (err) {
     if (root.firstElementChild !== loadingPage) {
       return;
@@ -65,6 +65,6 @@ export async function initProfile(root: HTMLElement, navigate: Navigate): Promis
     const message = err instanceof ApiError && err.status === 0
       ? 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз'
       : 'Что-то пошло не так. Попробуйте позже';
-    root.innerHTML = render('pages/profile/profile', { message, isError: true });
+    root.innerHTML = profileTemplate({ message, isError: true });
   }
 }

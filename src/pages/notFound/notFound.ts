@@ -1,6 +1,6 @@
-import { render } from '../../app/view.ts';
+import notFoundTemplate from './notFound.hbs';
 
 /** Возвращает HTML страницы 404. */
 export function renderNotFound(): string {
-  return render('pages/notFound/notFound');
+  return notFoundTemplate();
 }

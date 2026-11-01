@@ -1,9 +1,9 @@
-import { render } from '../../app/view.ts';
+import headerTemplate from './header.hbs';
 import { isRoutePath } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 export function renderHeader(): string {
-  return render('components/header/header');
+  return headerTemplate();
 }
 
 /**

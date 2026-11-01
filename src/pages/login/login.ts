@@ -1,4 +1,4 @@
-import { render } from '../../app/view.ts';
+import loginTemplate from './login.hbs';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
@@ -13,7 +13,7 @@ import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.ts';
 
 /** Возвращает HTML страницы входа. */
 export function renderLogin(): string {
-  return render('pages/login/login');
+  return loginTemplate();
 }
 
 /**
