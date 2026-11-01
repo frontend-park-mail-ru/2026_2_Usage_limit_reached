@@ -3,8 +3,6 @@ import { checkSession, loadProfilePosts } from '../../modules/auth/auth.actions.
 import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
 
 /**
  * Готовит профиль и опубликованные посты для шаблона.
@@ -43,9 +41,8 @@ export function renderProfile(): string {
 /**
  * Загружает профиль и показывает данные или ошибку.
  * @param root
- * @param navigate
  */
-export async function initProfile(root: HTMLElement, navigate: Navigate): Promise<void> {
+export async function initProfile(root: HTMLElement): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {
     const [profileResponse, postsResponse] = await Promise.all([checkSession(), loadProfilePosts()]);
@@ -59,7 +56,6 @@ export async function initProfile(root: HTMLElement, navigate: Navigate): Promis
       return;
     }
     if (err instanceof ApiError && err.status === 401) {
-      navigate(ROUTES.login);
       return;
     }
     const message = err instanceof ApiError && err.status === 0

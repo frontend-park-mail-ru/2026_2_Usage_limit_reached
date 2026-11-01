@@ -2,7 +2,6 @@ import { logout } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 /** Управляет меню профиля и выходом из аккаунта. */
@@ -38,7 +37,7 @@ export class ProfileMenu {
     this.onToggle = this.toggle.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
     this.onKeydown = this.handleKeydown.bind(this);
-    this.onLogout = this.handleLogout.bind(this, navigate);
+    this.onLogout = this.handleLogout.bind(this);
 
     this.unbindLinks = bindLinks(this.menu, (path) => {
       this.close();
@@ -144,9 +143,8 @@ export class ProfileMenu {
 
   /**
    * Завершает сессию или показывает ошибку выхода.
-   * @param navigate
    */
-  private async handleLogout(navigate: Navigate): Promise<void> {
+  private async handleLogout(): Promise<void> {
     if (this.pending || this.destroyed) {
       return;
     }
@@ -154,15 +152,11 @@ export class ProfileMenu {
     this.close();
     try {
       await logout();
-      if (!this.destroyed) {
-        navigate(ROUTES.login);
-      }
     } catch (err) {
       if (this.destroyed) {
         return;
       }
       if (err instanceof ApiError && err.status === 401) {
-        navigate(ROUTES.login);
         return;
       }
       if (err instanceof ApiError) {

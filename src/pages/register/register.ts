@@ -6,8 +6,6 @@ import { registerSchema } from '../../modules/validation/schemas.ts';
 import { signup } from '../../modules/auth/auth.actions.ts';
 import type { SignupData } from '../../modules/api/auth.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
 /** Возвращает HTML страницы регистрации. */
@@ -19,9 +17,8 @@ export function renderRegister(): string {
  * Отправляет форму регистрации.
  * @param form
  * @param data
- * @param navigate
  */
-async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: Navigate): Promise<void> {
+async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   if (button.disabled) {
     return;
@@ -32,10 +29,6 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
 
   try {
     await signup(data);
-    if (!form.isConnected) {
-      return;
-    }
-    navigate(ROUTES.profile);
   } catch (err) {
     if (!form.isConnected) {
       return;
@@ -64,12 +57,11 @@ async function submitRegister(form: HTMLFormElement, data: SignupData, navigate:
 /**
  * Подключает форму страницы регистрации.
  * @param root
- * @param navigate
  */
-export function initRegister(root: HTMLElement, navigate: Navigate): void {
+export function initRegister(root: HTMLElement): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 
   initPasswordToggles(form);
   bindValidation(form, registerSchema, ({ email, username, nickname, password }) =>
-    submitRegister(form, { email, username, nickname, password }, navigate));
+    submitRegister(form, { email, username, nickname, password }));
 }

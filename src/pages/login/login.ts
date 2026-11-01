@@ -6,8 +6,6 @@ import { loginSchema } from '../../modules/validation/schemas.ts';
 import { login } from '../../modules/auth/auth.actions.ts';
 import type { LoginData } from '../../modules/api/auth.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.ts';
 
 /** Возвращает HTML страницы входа. */
@@ -19,9 +17,8 @@ export function renderLogin(): string {
  * Отправляет форму входа.
  * @param form
  * @param data
- * @param navigate
  */
-async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Navigate): Promise<void> {
+async function submitLogin(form: HTMLFormElement, data: LoginData): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   if (button.disabled) {
     return;
@@ -32,10 +29,6 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Nav
 
   try {
     await login(data);
-    if (!form.isConnected) {
-      return;
-    }
-    navigate(ROUTES.profile);
   } catch (err) {
     if (!form.isConnected) {
       return;
@@ -64,11 +57,10 @@ async function submitLogin(form: HTMLFormElement, data: LoginData, navigate: Nav
 /**
  * Подключает форму страницы входа.
  * @param root
- * @param navigate
  */
-export function initLogin(root: HTMLElement, navigate: Navigate): void {
+export function initLogin(root: HTMLElement): void {
   const form = requireElement<HTMLFormElement>(root, '#login-form');
 
   initPasswordToggles(form);
-  bindValidation(form, loginSchema, ({ login, password }) => submitLogin(form, { login, password }, navigate));
+  bindValidation(form, loginSchema, ({ login, password }) => submitLogin(form, { login, password }));
 }

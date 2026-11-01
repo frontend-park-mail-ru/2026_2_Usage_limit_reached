@@ -7,7 +7,7 @@ import type { SessionUser } from './auth.types.ts';
 import './auth.store.ts';
 
 let sessionVersion = 0;
-let pendingChanges = 0;
+let pendingChangeVersion: number | undefined;
 
 /** Сохраняет состояние гостя после ответа backend об отсутствии сессии. */
 export function expireSession(): void {
@@ -21,7 +21,7 @@ export function expireSession(): void {
  */
 async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) => SessionUser) {
   const version = sessionVersion;
-  const canUpdate = pendingChanges === 0;
+  const canUpdate = pendingChangeVersion === undefined;
   try {
     const result = await request();
     if (!canUpdate || version !== sessionVersion) {
@@ -58,14 +58,16 @@ export function loadProfilePosts() {
  */
 async function authenticate(request: () => ReturnType<typeof authApi.login>): Promise<void> {
   const version = ++sessionVersion;
-  pendingChanges += 1;
+  pendingChangeVersion = version;
   try {
     const user = await request();
     if (version === sessionVersion) {
       authDispatcher.dispatch({ type: 'auth/authenticated', user });
     }
   } finally {
-    pendingChanges -= 1;
+    if (pendingChangeVersion === version) {
+      pendingChangeVersion = undefined;
+    }
   }
 }
 
@@ -82,7 +84,7 @@ export function signup(data: SignupData): Promise<void> {
 /** После выхода сохраняет состояние гостя, в том числе при ответе 401. */
 export async function logout(): Promise<void> {
   const version = ++sessionVersion;
-  pendingChanges += 1;
+  pendingChangeVersion = version;
   try {
     await authApi.logout();
     if (version === sessionVersion) {
@@ -94,6 +96,8 @@ export async function logout(): Promise<void> {
     }
     throw err;
   } finally {
-    pendingChanges -= 1;
+    if (pendingChangeVersion === version) {
+      pendingChangeVersion = undefined;
+    }
   }
 }

@@ -12,6 +12,8 @@ import {
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
+import { checkSession } from '../modules/auth/auth.actions.ts';
+import { authStore } from '../modules/auth/auth.store.ts';
 import { ROUTES, isRoutePath } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath } from './paths.ts';
 import type { Layout, Route } from './router.types.ts';
@@ -26,6 +28,28 @@ const routes: Record<RoutePath, Route> = {
 const notFoundRoute: Route = { render: renderNotFound };
 
 let currentLayout: Layout | undefined;
+
+/** Выбирает адрес перенаправления по состоянию сессии. */
+function getAuthRedirect(path: string): RoutePath | undefined {
+  const { status } = authStore.getState();
+  const isAuthPage = path === ROUTES.login || path === ROUTES.register;
+  if (status === 'authenticated' && (path === ROUTES.home || isAuthPage)) {
+    return ROUTES.profile;
+  } else if (status === 'guest' && (path === ROUTES.home || path === ROUTES.profile)) {
+    return ROUTES.login;
+  }
+  return undefined;
+}
+
+/** Заменяет текущий адрес, если состояние сессии требует другую страницу. */
+function redirectByAuth(): boolean {
+  const target = getAuthRedirect(window.location.pathname);
+  if (!target) {
+    return false;
+  }
+  navigate(target, { replace: true });
+  return true;
+}
 
 /**
  * Обновляет сайдбар при смене layout.
@@ -51,6 +75,9 @@ function updateLayout(layout: Layout): void {
 
 /** Показывает страницу по текущему адресу. */
 function renderCurrentRoute(): void {
+  if (redirectByAuth()) {
+    return;
+  }
   const path = window.location.pathname;
   const route = isRoutePath(path) ? routes[path] : notFoundRoute;
   const root = requireElement<HTMLElement>(document, '#app');
@@ -59,7 +86,7 @@ function renderCurrentRoute(): void {
   updateLayout(route.layout || 'plain');
   updateSidebarProfileState(path);
   root.innerHTML = route.render();
-  route.init?.(root, navigate);
+  route.init?.(root);
 }
 
 /**
@@ -69,11 +96,12 @@ function renderCurrentRoute(): void {
  */
 export function navigate(path: NavigationPath, { replace = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
-  const nextPath = url.pathname + url.search;
+  const redirect = getAuthRedirect(url.pathname);
+  const nextPath = redirect ?? url.pathname + url.search;
   if (nextPath === window.location.pathname + window.location.search) {
     return;
   }
-  if (replace) {
+  if (replace || redirect) {
     history.replaceState({}, '', nextPath);
   } else {
     history.pushState({}, '', nextPath);
@@ -81,9 +109,33 @@ export function navigate(path: NavigationPath, { replace = false }: NavigateOpti
   renderCurrentRoute();
 }
 
-/** Запускает роутер и подключает кнопки истории браузера. */
-export function initRouter(): void {
-  bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
+/** Запускает роутер и возвращает функцию отключения его обработчиков. */
+export function initRouter(): () => void {
+  let active = true;
+  const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
+  const unsubscribeAuth = authStore.subscribe(() => {
+    // Сначала завершаем действие Flux, затем выполняем переход.
+    queueMicrotask(() => {
+      if (active) {
+        redirectByAuth();
+      }
+    });
+  });
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
+
+  const path = window.location.pathname;
+  if (authStore.getState().status === 'unknown' && (path === ROUTES.login || path === ROUTES.register)) {
+    // Если проверка недоступна, форма остаётся открытой.
+    void checkSession().catch(() => {});
+  }
+
+  return () => {
+    active = false;
+    unbindLinks();
+    unsubscribeAuth();
+    window.removeEventListener('popstate', renderCurrentRoute);
+    destroySidebarProfileMenu();
+    currentLayout = undefined;
+  };
 }
