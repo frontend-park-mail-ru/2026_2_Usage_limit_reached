@@ -1,5 +1,6 @@
 import { render } from '../../app/view.ts';
-import { getProfile } from '../../modules/api/profile.ts';
+import { checkSession } from '../../modules/auth/auth.actions.ts';
+import { authStore } from '../../modules/auth/auth.store.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
@@ -20,11 +21,13 @@ export async function initHome(
 ): Promise<void> {
   const page = root.firstElementChild;
   try {
-    await getProfile();
-    if (root.firstElementChild !== page) {
+    const profile = await checkSession();
+    if (!profile || root.firstElementChild !== page) {
       return;
     }
-    navigate(ROUTES.profile, { replace: true });
+    if (authStore.getState().status === 'authenticated') {
+      navigate(ROUTES.profile, { replace: true });
+    }
   } catch (err) {
     if (root.firstElementChild !== page) {
       return;

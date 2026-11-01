@@ -1,5 +1,5 @@
 import { render } from '../../app/view.ts';
-import { getProfile, getProfilePosts } from '../../modules/api/profile.ts';
+import { checkSession, loadProfilePosts } from '../../modules/auth/auth.actions.ts';
 import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts';
@@ -48,8 +48,8 @@ export function renderProfile(): string {
 export async function initProfile(root: HTMLElement, navigate: Navigate): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {
-    const [profileResponse, postsResponse] = await Promise.all([getProfile(), getProfilePosts()]);
-    if (root.firstElementChild !== loadingPage) {
+    const [profileResponse, postsResponse] = await Promise.all([checkSession(), loadProfilePosts()]);
+    if (!profileResponse || !postsResponse || root.firstElementChild !== loadingPage) {
       return;
     }
     const data = buildProfileViewModel(profileResponse, postsResponse);

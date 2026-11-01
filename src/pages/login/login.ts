@@ -4,7 +4,7 @@ import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
 import { loginSchema } from '../../modules/validation/schemas.ts';
-import { login } from '../../modules/api/auth.ts';
+import { login } from '../../modules/auth/auth.actions.ts';
 import type { LoginData } from '../../modules/api/auth.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { ROUTES } from '../../app/paths.ts';

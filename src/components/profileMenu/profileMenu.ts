@@ -1,4 +1,4 @@
-import { logout } from '../../modules/api/auth.ts';
+import { logout } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
