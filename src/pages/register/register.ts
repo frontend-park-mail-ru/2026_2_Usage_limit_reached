@@ -20,9 +20,6 @@ export function renderRegister(): string {
  */
 async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
-  if (button.disabled) {
-    return;
-  }
   const submittedValues = new FormData(form);
   button.disabled = true;
   setFormError(form, null);

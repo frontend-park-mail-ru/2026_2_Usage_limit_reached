@@ -9,7 +9,7 @@ export class ProfileMenu {
   private readonly menuElement: HTMLElement;
   private readonly buttonElement: HTMLButtonElement;
   private readonly logoutButton: HTMLButtonElement;
-  private readonly error: HTMLElement;
+  private readonly errorElement: HTMLElement;
   private readonly onToggle: () => void;
   private readonly onOutsideClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
@@ -32,7 +32,7 @@ export class ProfileMenu {
     this.menuElement = requireElement<HTMLElement>(document, menuSelector);
     this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);
     this.logoutButton = requireElement<HTMLButtonElement>(this.menu, '[data-logout]');
-    this.error = requireElement<HTMLElement>(this.menu, '.profile-menu__error');
+    this.errorElement = requireElement<HTMLElement>(this.menu, '.profile-menu__error');
 
     this.onToggle = this.toggle.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
@@ -137,8 +137,8 @@ export class ProfileMenu {
   private resetState(): void {
     this.pending = true;
     this.logoutButton.disabled = true;
-    this.error.hidden = true;
-    this.error.textContent = '';
+    this.errorElement.hidden = true;
+    this.errorElement.textContent = '';
   }
 
   /**
@@ -160,11 +160,11 @@ export class ProfileMenu {
         return;
       }
       if (err instanceof ApiError) {
-        this.error.textContent = err.text;
+        this.errorElement.textContent = err.text;
       } else {
-        this.error.textContent = 'Не удалось выйти. Попробуйте позже';
+        this.errorElement.textContent = 'Не удалось выйти. Попробуйте позже';
       }
-      this.error.hidden = false;
+      this.errorElement.hidden = false;
       this.open();
     } finally {
       this.pending = false;
