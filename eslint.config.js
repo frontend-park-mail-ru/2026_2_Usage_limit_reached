@@ -27,7 +27,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.js', 'webpack.*.js'],
+    files: ['webpack.*.js'],
     languageOptions: {
       globals: globals.node,
     },
