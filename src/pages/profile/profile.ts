@@ -7,6 +7,7 @@ import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 /**
+ * Готовит профиль и опубликованные посты для шаблона.
  * @param profileResponse
  * @param postsResponse
  */
@@ -34,11 +35,13 @@ export function buildProfileViewModel(profileResponse: Profile, postsResponse: P
   };
 }
 
+/** Возвращает каркас профиля с текстом загрузки. */
 export function renderProfile(): string {
   return profileTemplate({ message: 'Загрузка профиля...' });
 }
 
 /**
+ * Загружает профиль и показывает данные или ошибку.
  * @param root
  * @param navigate
  */

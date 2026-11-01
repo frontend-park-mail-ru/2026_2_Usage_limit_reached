@@ -1,4 +1,5 @@
 /**
+ * Включает кнопки "показать пароль" внутри контейнера.
  * @param root
  */
 export function initPasswordToggles(root: HTMLElement): void {
