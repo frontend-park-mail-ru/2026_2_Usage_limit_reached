@@ -1,11 +1,11 @@
-import { render } from '../../app/view.ts';
+import homeTemplate from './home.hbs';
 import { getProfile } from '../../modules/api/profile.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 export function renderHome(): string {
-  return render('pages/home/home', { message: 'Проверка авторизации...' });
+  return homeTemplate({ message: 'Проверка авторизации...' });
 }
 
 /**
@@ -34,6 +34,6 @@ export async function initHome(
     const message = err instanceof ApiError && err.status === 0
       ? 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз'
       : 'Что-то пошло не так. Попробуйте позже';
-    root.innerHTML = render('pages/home/home', { message, isError: true });
+    root.innerHTML = homeTemplate({ message, isError: true });
   }
 }

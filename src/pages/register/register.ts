@@ -1,4 +1,4 @@
-import { render } from '../../app/view.ts';
+import registerTemplate from './register.hbs';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
@@ -12,7 +12,7 @@ import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
 export function renderRegister(): string {
-  return render('pages/register/register');
+  return registerTemplate();
 }
 
 /**
