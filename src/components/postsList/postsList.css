@@ -1,8 +1,3 @@
-.posts-list {
-  --color-posts-list-button-hover: #6e9c84;
-  --color-posts-list-button-pressed: #5c876f;
-}
-
 .posts-list__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -69,27 +64,9 @@
   min-height: 36px;
   margin: 0;
   padding: 0 16px;
-  border: 0;
-  background: var(--color-secondary);
-  color: var(--color-white);
-  font-weight: 400;
   line-height: normal;
   overflow-wrap: anywhere;
   white-space: nowrap;
-  cursor: default;
-}
-
-.posts-list__add-button:hover {
-  background: var(--color-posts-list-button-hover);
-}
-
-.posts-list__add-button:active {
-  background: var(--color-posts-list-button-pressed);
-}
-
-.posts-list__add-button:focus-visible {
-  outline: 2px solid var(--color-text);
-  outline-offset: 3px;
 }
 
 .posts-list__button-icon {

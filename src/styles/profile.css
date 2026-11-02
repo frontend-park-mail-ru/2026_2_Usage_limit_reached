@@ -1,10 +1,4 @@
 :root {
-  --color-profile-primary-hover: #c96a50;
-  --color-profile-primary-pressed: #b35a45;
-  --color-profile-secondary-hover: #6e9c84;
-  --color-profile-secondary-pressed: #5c876f;
-  --color-profile-edit-hover: rgba(224, 122, 95, 0.06);
-  --color-profile-edit-pressed: rgba(224, 122, 95, 0.12);
   --color-profile-author-background: #efd3be;
 }
 
@@ -129,61 +123,20 @@
   padding: 0 16px;
   line-height: normal;
   overflow-wrap: anywhere;
-  cursor: default;
-}
-
-.profile__button:focus-visible {
-  outline: 2px solid var(--color-text);
-  outline-offset: 3px;
 }
 
 .profile__button_type_statistics {
   flex: 0 1 137px;
   max-width: 137px;
-  border: 0;
-  background: var(--color-primary);
-  color: var(--color-white);
-}
-
-.profile__button_type_statistics:hover,
-.profile__button_type_become-author:hover {
-  background: var(--color-profile-primary-hover);
-}
-
-.profile__button_type_statistics:active,
-.profile__button_type_become-author:active {
-  background: var(--color-profile-primary-pressed);
 }
 
 .profile__button_type_edit {
   flex: 0 1 228px;
   max-width: 228px;
-  background: var(--color-white);
-  color: var(--color-primary);
-}
-
-.profile__button_type_edit:hover {
-  background: var(--color-profile-edit-hover);
-}
-
-.profile__button_type_edit:active {
-  background: var(--color-profile-edit-pressed);
 }
 
 .profile__button_type_add {
-  border: 0;
-  background: var(--color-secondary);
-  color: var(--color-white);
-  font-weight: 400;
   white-space: nowrap;
-}
-
-.profile__button_type_add:hover {
-  background: var(--color-profile-secondary-hover);
-}
-
-.profile__button_type_add:active {
-  background: var(--color-profile-secondary-pressed);
 }
 
 .profile__button-icon {
@@ -294,9 +247,6 @@
 .profile__button_type_become-author {
   width: 100%;
   padding: 8px 16px;
-  border: 0;
-  background: var(--color-primary);
-  color: var(--color-white);
   line-height: 20px;
 }
 
