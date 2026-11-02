@@ -1,21 +1,23 @@
-{{#if hasPosts}}
-  <div class="profile__grid">
-    {{#each posts}}
-      {{> postCard}}
-    {{/each}}
-  </div>
-{{else}}
-  <div class="profile__empty">
-    <div class="profile__empty-icon" aria-hidden="true">
-      <img src="/assets/profile/file.svg" alt="" />
+<div class="posts-list">
+  {{#if hasPosts}}
+    <div class="posts-list__grid">
+      {{#each posts}}
+        {{> postCard}}
+      {{/each}}
     </div>
-    <div class="profile__empty-content">
-      <h3 class="profile__empty-title">Вы пока не опубликовали ни одного поста</h3>
-      <p class="profile__empty-text">Опубликуйте первый пост, чтобы ваш профиль ожил.</p>
-      <button class="button profile__button profile__button--add" type="button" aria-disabled="true" title="Будет доступно позже">
-        <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
-        Добавить пост
-      </button>
+  {{else}}
+    <div class="posts-list__empty">
+      <div class="posts-list__empty-icon" aria-hidden="true">
+        <img src="/assets/profile/file.svg" alt="" />
+      </div>
+      <div class="posts-list__empty-content">
+        <h3 class="posts-list__empty-title">Вы пока не опубликовали ни одного поста</h3>
+        <p class="posts-list__empty-text">Опубликуйте первый пост, чтобы ваш профиль ожил.</p>
+        <button class="button posts-list__add-button" type="button" aria-disabled="true" title="Будет доступно позже">
+          <span class="posts-list__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+          Добавить пост
+        </button>
+      </div>
     </div>
-  </div>
-{{/if}}
+  {{/if}}
+</div>

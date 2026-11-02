@@ -1,6 +1,7 @@
 import type { FormValues, Schema, ValidationResult } from './validation.types.ts';
 
 /**
+ * Возвращает первую ошибку поля или null, если ошибок нет.
  * @param field
  * @param values
  * @param schema
@@ -20,6 +21,7 @@ export const validateField = (field: string, values: FormValues, schema: Schema)
 };
 
 /**
+ * Проверяет все поля формы по схеме.
  * @param values
  * @param schema
  */

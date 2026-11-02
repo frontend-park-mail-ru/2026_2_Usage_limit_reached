@@ -11,35 +11,56 @@ import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
+/** Возвращает HTML страницы регистрации. */
 export function renderRegister(): string {
   return registerTemplate();
 }
 
 /**
+ * Отправляет форму регистрации.
  * @param form
  * @param data
  * @param navigate
  */
 async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: Navigate): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
+  const submittedValues = new FormData(form);
   button.disabled = true;
   setFormError(form, null);
 
   try {
     await signup(data);
+    if (!form.isConnected) {
+      return;
+    }
     navigate(ROUTES.profile);
   } catch (err) {
+    if (!form.isConnected) {
+      return;
+    }
     if (!(err instanceof ApiError)) {
       throw err;
     }
 
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
+    const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
+    const currentValues = new FormData(form);
+    const valuesChanged = [...submittedValues].some(
+      ([name, value]) => currentValues.get(name) !== value
+    );
+
+    if (kind === 'data' && valuesChanged) {
+      return;
+    }
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
-    button.disabled = false;
+    if (form.isConnected) {
+      button.disabled = false;
+    }
   }
 }
 
 /**
+ * Подключает форму и ссылки страницы регистрации.
  * @param root
  * @param navigate
  */
