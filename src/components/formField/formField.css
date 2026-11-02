@@ -75,23 +75,23 @@
   outline-offset: 3px;
 }
 
-.form-field__icon--visible,
-.form-field__toggle--visible .form-field__icon--hidden {
+.form-field__icon_type_visible,
+.form-field__toggle_visible .form-field__icon_type_hidden {
   display: none;
 }
 
-.form-field__toggle--visible .form-field__icon--visible {
+.form-field__toggle_visible .form-field__icon_type_visible {
   display: block;
 }
 
-.form-field__input--invalid,
-.form-field__input--invalid:hover,
-.form-field__input--invalid:focus {
+.form-field__input_invalid,
+.form-field__input_invalid:hover,
+.form-field__input_invalid:focus {
   border-color: var(--color-error);
   color: var(--color-error);
 }
 
-.form-field__control:has(.form-field__input--invalid) .form-field__toggle {
+.form-field__control:has(.form-field__input_invalid) .form-field__toggle {
   color: var(--color-error);
 }
 

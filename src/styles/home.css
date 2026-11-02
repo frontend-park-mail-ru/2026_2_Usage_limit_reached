@@ -1,0 +1,11 @@
+.home__error {
+  margin: 0 0 -7px;
+  padding: 0 3px;
+  color: var(--color-error);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.home__error:empty {
+  display: none;
+}

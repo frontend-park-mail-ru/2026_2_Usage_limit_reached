@@ -1,7 +1,7 @@
 {{#if message}}
   <section class="profile" aria-label="Профиль">
     <div class="profile__summary">
-      <p class="{{#if isError}}form-field__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+      <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
     </div>
   </section>
 {{else}}
@@ -23,9 +23,9 @@
     </div>
     <div class="profile__actions">
       {{#if hasAuthor}}
-        <button class="button profile__button profile__button--statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+        <button class="button button_view_primary button_borderless profile__button profile__button_type_statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
       {{/if}}
-      <button class="button profile__button profile__button--edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
+      <button class="button button_view_secondary profile__button profile__button_type_edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
     </div>
   </div>
 
@@ -35,7 +35,7 @@
       <h2 class="profile__title" id="profile-posts-title">Посты</h2>
       {{#if hasPosts}}
         <div class="profile__controls">
-          <button class="button profile__button profile__button--add" type="button" aria-disabled="true" title="Будет доступно позже">
+          <button class="button button_view_accent button_borderless profile__button profile__button_type_add" type="button" aria-disabled="true" title="Будет доступно позже">
             <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
             Добавить пост
           </button>
@@ -54,7 +54,7 @@
       <div class="profile__author-content">
         <h2 class="profile__author-title" id="profile-author-title">Станьте автором, чтобы начать публиковать контент</h2>
         <p class="profile__author-text">Делитесь своими идеями, историями и знаниями с аудиторией. Авторский профиль даёт доступ к публикации постов, статистике и другим возможностям.</p>
-        <button class="button profile__button profile__button--become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
+        <button class="button button_view_primary button_borderless profile__button profile__button_type_become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
       </div>
       <img class="profile__author-image" src="/assets/profile/img-author.svg" alt="" />
     </section>

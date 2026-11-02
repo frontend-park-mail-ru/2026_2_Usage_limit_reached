@@ -1,53 +1,64 @@
 import registerTemplate from './register.hbs';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { initPasswordToggles } from '../../components/formField/formField.ts';
 import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
 import { registerSchema } from '../../modules/validation/schemas.ts';
-import { signup } from '../../modules/api/auth.ts';
+import { signup } from '../../modules/auth/auth.actions.ts';
 import type { SignupData } from '../../modules/api/auth.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
+/** Возвращает HTML страницы регистрации. */
 export function renderRegister(): string {
   return registerTemplate();
 }
 
 /**
+ * Отправляет форму регистрации.
  * @param form
  * @param data
- * @param navigate
  */
-async function submitRegister(form: HTMLFormElement, data: SignupData, navigate: Navigate): Promise<void> {
+async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<void> {
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
+  const submittedValues = new FormData(form);
   button.disabled = true;
   setFormError(form, null);
 
   try {
     await signup(data);
-    navigate(ROUTES.profile);
   } catch (err) {
+    if (!form.isConnected) {
+      return;
+    }
     if (!(err instanceof ApiError)) {
       throw err;
     }
 
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR);
+    const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
+    const currentValues = new FormData(form);
+    const valuesChanged = [...submittedValues].some(
+      ([name, value]) => currentValues.get(name) !== value
+    );
+
+    if (kind === 'data' && valuesChanged) {
+      return;
+    }
+    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
-    button.disabled = false;
+    if (form.isConnected) {
+      button.disabled = false;
+    }
   }
 }
 
 /**
+ * Подключает форму страницы регистрации.
  * @param root
- * @param navigate
  */
-export function initRegister(root: HTMLElement, navigate: Navigate): void {
+export function initRegister(root: HTMLElement): void {
   const form = requireElement<HTMLFormElement>(root, '#register-form');
 
   initPasswordToggles(form);
   bindValidation(form, registerSchema, ({ email, username, nickname, password }) =>
-    submitRegister(form, { email, username, nickname, password }, navigate));
-  bindLinks(root, navigate);
+    submitRegister(form, { email, username, nickname, password }));
 }

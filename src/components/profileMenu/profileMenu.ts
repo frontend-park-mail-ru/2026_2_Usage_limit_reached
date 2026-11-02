@@ -1,84 +1,126 @@
-import { logout } from '../../modules/api/auth.ts';
+import { logout } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
-import type { ProfileMenu } from './profileMenu.types.ts';
 
-/**
- * @param menu
- * @param button
- * @param navigate
- */
-export function initProfileMenu(
-  menu: HTMLElement,
-  button: HTMLButtonElement,
-  navigate: Navigate,
-): ProfileMenu {
-  const logoutButton = requireElement<HTMLButtonElement>(menu, '[data-logout]');
-  const error = requireElement<HTMLElement>(menu, '.profile-menu__error');
-  let pending = false;
-  let destroyed = false;
+/** Управляет меню профиля и выходом из аккаунта. */
+export class ProfileMenu {
+  private readonly menuElement: HTMLElement;
+  private readonly buttonElement: HTMLButtonElement;
+  private readonly logoutButton: HTMLButtonElement;
+  private readonly errorElement: HTMLElement;
+  private readonly onToggle: () => void;
+  private readonly onOutsideClick: (event: MouseEvent) => void;
+  private readonly onKeydown: (event: KeyboardEvent) => void;
+  private readonly onLogout: () => Promise<void>;
+  private readonly unbindLinks: () => void;
+  private pending = false;
+  private destroyed = false;
 
   /**
+   * Подключает обработчики меню по указанным селекторам.
+   * @param navigate
+   * @param menuSelector
+   * @param buttonSelector
+   */
+  constructor(
+    navigate: Navigate,
+    menuSelector = '#sidebar .profile-menu',
+    buttonSelector = '#sidebar .sidebar__item_type_profile',
+  ) {
+    this.menuElement = requireElement<HTMLElement>(document, menuSelector);
+    this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);
+    this.logoutButton = requireElement<HTMLButtonElement>(this.menu, '[data-logout]');
+    this.errorElement = requireElement<HTMLElement>(this.menu, '.profile-menu__error');
+
+    this.onToggle = this.toggle.bind(this);
+    this.onOutsideClick = this.handleOutsideClick.bind(this);
+    this.onKeydown = this.handleKeydown.bind(this);
+    this.onLogout = this.handleLogout.bind(this);
+
+    this.unbindLinks = bindLinks(this.menu, (path) => {
+      this.close();
+      navigate(path);
+    });
+    this.button.addEventListener('click', this.onToggle);
+    this.logoutButton.addEventListener('click', this.onLogout);
+  }
+
+  get button(): HTMLButtonElement {
+    return this.buttonElement;
+  }
+
+  get menu(): HTMLElement {
+    return this.menuElement;
+  }
+
+  /**
+   * Закрывает меню и снимает временные обработчики.
    * @param restoreFocus
    */
-  function close(restoreFocus = false): void {
-    menu.hidden = true;
-    button.setAttribute('aria-expanded', 'false');
-    document.removeEventListener('click', handleOutsideClick);
-    document.removeEventListener('keydown', handleKeydown);
-    if (restoreFocus && button.isConnected) {
-      button.focus();
+  close(restoreFocus = false): void {
+    this.menu.hidden = true;
+    this.button.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', this.onOutsideClick);
+    document.removeEventListener('keydown', this.onKeydown);
+    if (restoreFocus && this.button.isConnected) {
+      this.button.focus();
     }
   }
 
-  function open(): void {
-    menu.hidden = false;
-    button.setAttribute('aria-expanded', 'true');
-    document.addEventListener('click', handleOutsideClick);
-    document.addEventListener('keydown', handleKeydown);
-    menu.querySelector<HTMLElement>('a[data-link]')?.focus();
+  /** Открывает меню и переводит фокус на первый пункт. */
+  private open(): void {
+    if (this.destroyed) {
+      return;
+    }
+    this.menu.hidden = false;
+    this.button.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', this.onOutsideClick);
+    document.addEventListener('keydown', this.onKeydown);
+    this.menu.querySelector<HTMLElement>('a[data-link]')?.focus();
   }
 
-  function toggle(): void {
-    if (menu.hidden) {
-      open();
+  /** Переключает видимость меню. */
+  private toggle(): void {
+    if (this.menu.hidden) {
+      this.open();
     } else {
-      close();
+      this.close();
     }
   }
 
   /**
+   * Закрывает меню при клике снаружи.
    * @param event
    */
-  function handleOutsideClick(event: MouseEvent): void {
+  private handleOutsideClick(event: MouseEvent): void {
     if (!(event.target instanceof Node)) {
       return;
     }
-    if (!menu.contains(event.target) && !button.contains(event.target)) {
-      close();
+    if (!this.menu.contains(event.target) && !this.button.contains(event.target)) {
+      this.close();
     }
   }
 
   /**
+   * Обрабатывает Escape и переходы по пунктам меню.
    * @param event
    */
-  function handleKeydown(event: KeyboardEvent): void {
+  private handleKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
-      close(true);
+      this.close(true);
       return;
     }
-    if (!menu.contains(document.activeElement)) {
+    if (!this.menu.contains(document.activeElement)) {
       return;
     }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
       return;
     }
     event.preventDefault();
-    const items = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+    const items = [...this.menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
       .filter((item) => !(item instanceof HTMLButtonElement && item.disabled));
     const current = items.findIndex((item) => item === document.activeElement);
     let next = event.key === 'ArrowUp' ? current - 1 : current + 1;
@@ -91,51 +133,51 @@ export function initProfileMenu(
     items[(next + items.length) % items.length].focus();
   }
 
-  async function handleLogout(): Promise<void> {
-    if (pending) {
+  /** Блокирует повторный выход и убирает предыдущую ошибку. */
+  private resetState(): void {
+    this.pending = true;
+    this.logoutButton.disabled = true;
+    this.errorElement.hidden = true;
+    this.errorElement.textContent = '';
+  }
+
+  /**
+   * Завершает сессию или показывает ошибку выхода.
+   */
+  private async handleLogout(): Promise<void> {
+    if (this.pending || this.destroyed) {
       return;
     }
-    pending = true;
-    logoutButton.disabled = true;
-    error.hidden = true;
-    error.textContent = '';
-    close();
+    this.resetState();
+    this.close();
     try {
       await logout();
-      if (!destroyed) {
-        navigate(ROUTES.login);
-      }
     } catch (err) {
-      if (destroyed) {
+      if (this.destroyed) {
         return;
       }
       if (err instanceof ApiError && err.status === 401) {
-        navigate(ROUTES.login);
         return;
       }
-      error.textContent = err instanceof ApiError && err.status === 0
-        ? 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз'
-        : 'Не удалось выйти. Попробуйте позже';
-      error.hidden = false;
-      open();
+      if (err instanceof ApiError) {
+        this.errorElement.textContent = err.text;
+      } else {
+        this.errorElement.textContent = 'Не удалось выйти. Попробуйте позже';
+      }
+      this.errorElement.hidden = false;
+      this.open();
     } finally {
-      pending = false;
-      logoutButton.disabled = false;
+      this.pending = false;
+      this.logoutButton.disabled = false;
     }
   }
 
-  function destroy(): void {
-    destroyed = true;
-    close();
-    button.removeEventListener('click', toggle);
-    logoutButton.removeEventListener('click', handleLogout);
+  /** Снимает обработчики перед удалением сайдбара. */
+  destroy(): void {
+    this.destroyed = true;
+    this.close();
+    this.unbindLinks();
+    this.button.removeEventListener('click', this.onToggle);
+    this.logoutButton.removeEventListener('click', this.onLogout);
   }
-
-  bindLinks(menu, (path) => {
-    close();
-    navigate(path);
-  });
-  button.addEventListener('click', toggle);
-  logoutButton.addEventListener('click', handleLogout);
-  return { close, destroy };
 }
