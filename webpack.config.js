@@ -37,7 +37,14 @@ export default {
         test: /\.css$/,
         use: [
           MiniCssExtractPlugin.loader,
-          { loader: 'css-loader', options: { url: { filter: (url) => !url.startsWith('/') } } },
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              url: { filter: (url) => !url.startsWith('/') },
+            },
+          },
+          'postcss-loader',
         ],
       },
     ],
