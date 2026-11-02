@@ -1,7 +1,7 @@
 {{#if message}}
   <section class="profile" aria-label="Профиль">
     <div class="profile__summary">
-      <p class="{{#if isError}}form-field__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+      <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
     </div>
   </section>
 {{else}}

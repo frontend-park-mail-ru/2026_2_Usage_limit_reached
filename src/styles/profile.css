@@ -7,6 +7,18 @@
   box-sizing: border-box;
 }
 
+.profile__error {
+  margin: 0 0 -7px;
+  padding: 0 3px;
+  color: var(--color-error);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.profile__error:empty {
+  display: none;
+}
+
 .profile__summary {
   display: flex;
   flex-wrap: wrap;
@@ -136,6 +148,8 @@
 }
 
 .profile__button_type_add {
+  flex: 1 1 180px;
+  max-width: 180px;
   white-space: nowrap;
 }
 
@@ -169,11 +183,6 @@
   min-width: 0;
   align-items: center;
   gap: 32px;
-}
-
-.profile__controls .profile__button_type_add {
-  flex: 1 1 180px;
-  max-width: 180px;
 }
 
 .profile__sort-label {
