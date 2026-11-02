@@ -137,7 +137,7 @@
   outline-offset: 3px;
 }
 
-.profile__button--statistics {
+.profile__button_type_statistics {
   flex: 0 1 137px;
   max-width: 137px;
   border: 0;
@@ -145,32 +145,32 @@
   color: var(--color-white);
 }
 
-.profile__button--statistics:hover,
-.profile__button--become-author:hover {
+.profile__button_type_statistics:hover,
+.profile__button_type_become-author:hover {
   background: var(--color-profile-primary-hover);
 }
 
-.profile__button--statistics:active,
-.profile__button--become-author:active {
+.profile__button_type_statistics:active,
+.profile__button_type_become-author:active {
   background: var(--color-profile-primary-pressed);
 }
 
-.profile__button--edit {
+.profile__button_type_edit {
   flex: 0 1 228px;
   max-width: 228px;
   background: var(--color-white);
   color: var(--color-primary);
 }
 
-.profile__button--edit:hover {
+.profile__button_type_edit:hover {
   background: var(--color-profile-edit-hover);
 }
 
-.profile__button--edit:active {
+.profile__button_type_edit:active {
   background: var(--color-profile-edit-pressed);
 }
 
-.profile__button--add {
+.profile__button_type_add {
   border: 0;
   background: var(--color-secondary);
   color: var(--color-white);
@@ -178,11 +178,11 @@
   white-space: nowrap;
 }
 
-.profile__button--add:hover {
+.profile__button_type_add:hover {
   background: var(--color-profile-secondary-hover);
 }
 
-.profile__button--add:active {
+.profile__button_type_add:active {
   background: var(--color-profile-secondary-pressed);
 }
 
@@ -218,7 +218,7 @@
   gap: 32px;
 }
 
-.profile__controls .profile__button--add {
+.profile__controls .profile__button_type_add {
   flex: 1 1 180px;
   max-width: 180px;
 }
@@ -291,7 +291,7 @@
   overflow-wrap: anywhere;
 }
 
-.profile__button--become-author {
+.profile__button_type_become-author {
   width: 100%;
   padding: 8px 16px;
   border: 0;

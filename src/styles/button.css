@@ -15,13 +15,13 @@
   box-sizing: border-box;
 }
 
-.button--primary {
+.button_view_primary {
   margin-top: 14px;
   background: var(--color-primary);
   color: var(--color-white);
 }
 
-.button--secondary {
+.button_view_secondary {
   background: var(--color-white);
   color: var(--color-primary);
 }

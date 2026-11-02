@@ -1,4 +1,4 @@
-.page--auth {
+.page_type_auth {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -39,21 +39,21 @@
   line-height: 19px;
 }
 
-.auth-form .button--primary:not(:disabled):hover {
+.auth-form .button_view_primary:not(:disabled):hover {
   border-color: var(--color-primary-hover);
   background: var(--color-primary-hover);
 }
 
-.auth-form .button--primary:not(:disabled):active {
+.auth-form .button_view_primary:not(:disabled):active {
   border-color: var(--color-primary-pressed);
   background: var(--color-primary-pressed);
 }
 
-.auth-form .button--secondary:hover {
+.auth-form .button_view_secondary:hover {
   background: var(--color-secondary-button-hover);
 }
 
-.auth-form .button--secondary:active {
+.auth-form .button_view_secondary:active {
   background: var(--color-secondary-button-pressed);
 }
 

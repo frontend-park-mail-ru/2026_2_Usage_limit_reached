@@ -34,7 +34,7 @@ export function destroySidebarProfileMenu(): void {
  * @param path
  */
 export function updateSidebarProfileState(path: string): void {
-  const profileButton = document.querySelector('#sidebar .sidebar__item--profile');
+  const profileButton = document.querySelector('#sidebar .sidebar__item_type_profile');
   if (!profileButton) {
     return;
   }

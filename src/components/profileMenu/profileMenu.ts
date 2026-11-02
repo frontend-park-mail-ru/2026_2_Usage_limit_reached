@@ -27,7 +27,7 @@ export class ProfileMenu {
   constructor(
     navigate: Navigate,
     menuSelector = '#sidebar .profile-menu',
-    buttonSelector = '#sidebar .sidebar__item--profile',
+    buttonSelector = '#sidebar .sidebar__item_type_profile',
   ) {
     this.menuElement = requireElement<HTMLElement>(document, menuSelector);
     this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);

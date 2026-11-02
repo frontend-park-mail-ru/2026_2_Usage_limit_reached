@@ -1,4 +1,4 @@
-<section class="page page--auth">
+<section class="page page_type_auth">
   <form class="auth-form" id="register-form" novalidate>
     {{> logo}}
     <div class="auth-form__header">
@@ -11,7 +11,7 @@
     {{> formField id="register-password" name="password" type="password" label="Пароль" autocomplete="new-password" placeholder="••••••••" passwordToggle=true}}
     {{> formField id="register-password-repeat" name="passwordRepeat" type="password" label="Повторите пароль" autocomplete="new-password" placeholder="••••••••" passwordToggle=true}}
     <p class="form-field__error" data-form-error aria-live="polite"></p>
-    <button class="button button--primary" type="submit">Зарегистрироваться</button>
-    <a class="button button--secondary" href="/login" data-link>У меня уже есть аккаунт</a>
+    <button class="button button_view_primary" type="submit">Зарегистрироваться</button>
+    <a class="button button_view_secondary" href="/login" data-link>У меня уже есть аккаунт</a>
   </form>
 </section>
