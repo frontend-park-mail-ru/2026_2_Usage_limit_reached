@@ -1,0 +1,23 @@
+:root {
+  --sidebar-width: 80px;
+}
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-layout_sidebar {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  align-items: start;
+}
+
+.app-layout__content {
+  min-width: 0;
+}
+
+.app-layout__sidebar:not([hidden]) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}

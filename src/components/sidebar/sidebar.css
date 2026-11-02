@@ -1,31 +1,10 @@
 :root {
-  --sidebar-width: 80px;
   --sidebar-padding-block: 32px;
   --color-sidebar-border: rgba(61, 64, 91, 0.12);
   --color-sidebar-hover: #f4f4f5;
   --color-sidebar-pressed: #fbefeb;
   --color-sidebar-profile-hover: #f5dfd7;
   --color-sidebar-profile-pressed: #efd0c5;
-}
-
-.app-layout {
-  min-height: 100vh;
-}
-
-.app-layout_sidebar {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  align-items: start;
-}
-
-.app-layout__content {
-  min-width: 0;
-}
-
-#sidebar:not([hidden]) {
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .sidebar {
@@ -60,6 +39,15 @@
 .sidebar__bottom {
   flex-shrink: 0;
   margin-top: auto;
+}
+
+.sidebar__profile-menu {
+  position: fixed;
+  left: var(--sidebar-width);
+  bottom: var(--sidebar-padding-block);
+  z-index: 100;
+  max-width: calc(100vw - var(--sidebar-width) - 8px);
+  max-height: calc(100dvh - var(--sidebar-padding-block) - 8px);
 }
 
 .sidebar__logo {

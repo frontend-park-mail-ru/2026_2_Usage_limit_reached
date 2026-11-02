@@ -1,3 +1,4 @@
+@import url('./app-layout.css');
 @import url('../components/sidebar/sidebar.css');
 @import url('../components/profileMenu/profileMenu.css');
 @import url('../components/formField/formField.css');
