@@ -27,7 +27,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/service-worker.ts'],
+    files: ['src/worker/**/*.ts'],
     languageOptions: {
       globals: globals.serviceworker,
     },

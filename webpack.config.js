@@ -17,7 +17,7 @@ function resolvePartial(partial, callback) {
 export default (_env, argv) => ({
   entry: {
     main: path.join(SRC_DIR, 'main.ts'),
-    sw: path.join(SRC_DIR, 'service-worker.ts'),
+    sw: path.join(SRC_DIR, 'worker', 'service-worker.ts'),
   },
   output: {
     path: DIST_DIR,
