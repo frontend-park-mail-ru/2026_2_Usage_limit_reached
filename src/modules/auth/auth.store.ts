@@ -8,7 +8,11 @@ authDispatcher.register((action) => {
   if (action.type === 'auth/authenticated') {
     state = Object.freeze({
       status: 'authenticated',
-      user: Object.freeze({ username: action.user.username, nickname: action.user.nickname }),
+      user: Object.freeze({
+        username: action.user.username,
+        nickname: action.user.nickname,
+        avatar_url: action.user.avatar_url,
+      }),
     });
   } else {
     state = Object.freeze({ status: 'guest', user: null });
