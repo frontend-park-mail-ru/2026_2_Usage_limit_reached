@@ -1,8 +1,14 @@
-/** Общие поля пользователя в ответах входа и проверки сессии. */
+/** Пользователь с ID, только если он получен из собственного профиля. */
 export interface SessionUser {
+  readonly id?: string;
   readonly username: string;
   readonly nickname: string;
   readonly avatar_url?: string;
+}
+
+/** Контекст подтверждённого аккаунта, заменяется после повторного входа. */
+export interface SessionContext {
+  readonly userId: string;
 }
 
 export type AuthState =

@@ -1,5 +1,5 @@
 import profileTemplate from './profile.hbs';
-import { checkSession, loadProfilePosts } from '../../modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, isSessionCurrent, loadProfilePosts } from '../../modules/auth/auth.actions.ts';
 import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts';
@@ -46,8 +46,16 @@ export function renderProfile(): string {
 export async function initProfile(root: HTMLElement): Promise<void> {
   const loadingPage = root.firstElementChild;
   try {
-    const [profileResponse, postsResponse] = await Promise.all([checkSession(), loadProfilePosts()]);
-    if (!profileResponse || !postsResponse || root.firstElementChild !== loadingPage) {
+    const profileResponse = await checkSession();
+    if (!profileResponse || root.firstElementChild !== loadingPage) {
+      return;
+    }
+    const context = getSessionContext();
+    if (!context || context.userId !== profileResponse.user.id) {
+      return;
+    }
+    const postsResponse = await loadProfilePosts();
+    if (!postsResponse || !isSessionCurrent(context) || root.firstElementChild !== loadingPage) {
       return;
     }
     const data = buildProfileViewModel(profileResponse, postsResponse);

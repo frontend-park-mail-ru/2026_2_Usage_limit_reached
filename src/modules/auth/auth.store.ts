@@ -9,6 +9,7 @@ authDispatcher.register((action) => {
     state = Object.freeze({
       status: 'authenticated',
       user: Object.freeze({
+        id: action.user.id,
         username: action.user.username,
         nickname: action.user.nickname,
         avatar_url: action.user.avatar_url,

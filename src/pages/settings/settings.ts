@@ -1,7 +1,8 @@
 import settingsTemplate from './settings.hbs';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { checkSession } from '../../modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, isSessionCurrent } from '../../modules/auth/auth.actions.ts';
 import { saveProfile, uploadAvatar, deleteAvatar } from '../../modules/profile/profile.actions.ts';
+import type { SessionContext } from '../../modules/auth/auth.types.ts';
 import type { Profile, ProfileUpdate } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindValidation, setFieldError } from '../../modules/validation/bindForm.ts';
@@ -83,25 +84,27 @@ function buildProfileUpdate(profile: Profile, values: FormValues): ProfileUpdate
  * @param profile
  * @param values
  * @param navigate
+ * @param context
  */
-async function submitSettings(root: HTMLElement, profile: Profile, values: FormValues, navigate: Navigate): Promise<void> {
+async function submitSettings(root: HTMLElement, profile: Profile, values: FormValues, navigate: Navigate, context: SessionContext): Promise<void> {
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   const alert = requireElement<HTMLElement>(root, '[data-save-error]');
-  if (button.disabled) {
+  if (button.disabled || !isSessionCurrent(context)) {
     return;
   }
   button.disabled = true;
   setAlert(alert, null);
 
   try {
-    await saveProfile(buildProfileUpdate(profile, values));
-    showToast(SAVED_MESSAGE);
-    if (form.isConnected) {
-      navigate(ROUTES.profile);
+    const saved = await saveProfile(buildProfileUpdate(profile, values), context);
+    if (!saved || !form.isConnected || !isSessionCurrent(context)) {
+      return;
     }
+    showToast(SAVED_MESSAGE);
+    navigate(ROUTES.profile);
   } catch (err) {
-    if (!form.isConnected) {
+    if (!form.isConnected || !isSessionCurrent(context)) {
       return;
     }
     if (!(err instanceof ApiError)) {
@@ -126,8 +129,11 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
 /**
  * Подключает смену и удаление фото.
  * @param root
+ * @param context
  */
-function bindAvatar(root: HTMLElement): void {
+function bindAvatar(root: HTMLElement, context: SessionContext): void {
+  const form = requireElement<HTMLFormElement>(root, '#settings-form');
+  const isActive = () => form.isConnected && isSessionCurrent(context);
   const avatar = requireElement<HTMLImageElement>(root, '[data-avatar]');
   const deleteButton = requireElement<HTMLButtonElement>(root, '[data-avatar-delete]');
   const hint = requireElement<HTMLElement>(root, '[data-avatar-hint]');
@@ -158,7 +164,7 @@ function bindAvatar(root: HTMLElement): void {
 
   const handleFile = async () => {
     const file = fileInput.files?.[0];
-    if (!file) {
+    if (!file || !isActive()) {
       return;
     }
     const error = validateAvatar(file);
@@ -170,8 +176,14 @@ function bindAvatar(root: HTMLElement): void {
     try {
       await cropper.load(file);
     } catch {
+      if (!isActive()) {
+        return;
+      }
       fileInput.value = '';
       setAlert(pickerAlert, AVATAR_OPEN_ERROR);
+      return;
+    }
+    if (!isActive()) {
       return;
     }
     picker.close();
@@ -181,8 +193,12 @@ function bindAvatar(root: HTMLElement): void {
   const handleApply = async () => {
     applyButton.disabled = true;
     try {
-      const url = await uploadAvatar(await cropper.toBlob());
-      if (!root.isConnected) {
+      const blob = await cropper.toBlob();
+      if (!isActive()) {
+        return;
+      }
+      const url = await uploadAvatar(blob, context);
+      if (url === undefined || !isActive()) {
         return;
       }
       setAvatar(url);
@@ -190,7 +206,7 @@ function bindAvatar(root: HTMLElement): void {
       crop.close();
       showToast(AVATAR_SAVED_MESSAGE);
     } catch (err) {
-      if (!root.isConnected || (err instanceof ApiError && err.status === 401)) {
+      if (!isActive() || (err instanceof ApiError && err.status === 401)) {
         return;
       }
       const isFileError = err instanceof ApiError && [400, 413, 415].includes(err.status);
@@ -202,17 +218,20 @@ function bindAvatar(root: HTMLElement): void {
   };
 
   const handleDelete = async () => {
+    if (!isActive()) {
+      return;
+    }
     deleteButton.disabled = true;
     setHintError(null);
     try {
-      await deleteAvatar();
-      if (!root.isConnected) {
+      const deleted = await deleteAvatar(context);
+      if (!deleted || !isActive()) {
         return;
       }
       setAvatar();
       showToast(AVATAR_DELETED_MESSAGE);
     } catch (err) {
-      if (!root.isConnected || (err instanceof ApiError && err.status === 401)) {
+      if (!isActive() || (err instanceof ApiError && err.status === 401)) {
         return;
       }
       setHintError(err instanceof ApiError && err.status === 0 ? err.text : AVATAR_DELETE_ERROR);
@@ -232,16 +251,17 @@ function bindAvatar(root: HTMLElement): void {
  * @param root
  * @param profile
  * @param navigate
+ * @param context
  */
-function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate): void {
+function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, context: SessionContext): void {
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
   const category = root.querySelector<HTMLElement>('.select');
   if (category) {
     new Select(category);
   }
   const schema = profile.author ? authorSettingsSchema : userSettingsSchema;
-  bindValidation(form, schema, (values) => submitSettings(root, profile, values, navigate));
-  bindAvatar(root);
+  bindValidation(form, schema, (values) => submitSettings(root, profile, values, navigate, context));
+  bindAvatar(root, context);
 }
 
 /**
@@ -265,6 +285,10 @@ export async function initSettings(root: HTMLElement, navigate: Navigate): Promi
   if (!profile || root.firstElementChild !== loadingPage) {
     return;
   }
+  const context = getSessionContext();
+  if (!context || context.userId !== profile.user.id) {
+    return;
+  }
   root.innerHTML = settingsTemplate(buildSettingsViewModel(profile));
-  bindSettings(root, profile, navigate);
+  bindSettings(root, profile, navigate, context);
 }
