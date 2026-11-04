@@ -1,0 +1,9 @@
+export const CROP_WIDTH = 464;
+export const CROP_HEIGHT = 288;
+export const CROP_DIAMETER = 256;
+export const ZOOM_MIN = 1;
+export const ZOOM_MAX = 3;
+export const ZOOM_STEP = 0.25;
+export const OUTPUT_SIZE = 512;
+export const DIM_ALPHA = 0.5;
+export const RING_WIDTH = 2;

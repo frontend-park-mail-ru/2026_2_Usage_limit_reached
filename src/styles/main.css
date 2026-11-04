@@ -3,6 +3,7 @@
 @import url('../components/profileMenu/profileMenu.css');
 @import url('../components/formField/formField.css');
 @import url('../components/modal/modal.css');
+@import url('../components/avatarCropper/avatarCropper.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');
