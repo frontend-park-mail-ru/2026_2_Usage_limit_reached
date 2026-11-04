@@ -16,7 +16,7 @@ authDispatcher.register((action) => {
       }),
     });
   } else {
-    state = Object.freeze({ status: 'guest', user: null });
+    state = Object.freeze({ status: action.type === 'auth/guest' ? 'guest' : 'unknown', user: null });
   }
   for (const listener of listeners) {
     listener();

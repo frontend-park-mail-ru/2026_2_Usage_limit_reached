@@ -15,7 +15,8 @@ import {
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
-import { checkSession } from '../modules/auth/auth.actions.ts';
+import { checkSession, handleOfflineSessionChange } from '../modules/auth/auth.actions.ts';
+import { initOfflineSync } from '../modules/offline/offline.storage.ts';
 import { authStore } from '../modules/auth/auth.store.ts';
 import { ROUTES, isRoutePath } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath } from './paths.ts';
@@ -119,12 +120,23 @@ export function navigate(path: NavigationPath, { replace = false }: NavigateOpti
 /** Запускает роутер и возвращает функцию отключения его обработчиков. */
 export function initRouter(): () => void {
   let active = true;
+  const stopOfflineSync = initOfflineSync(() => {
+    if (active) {
+      void handleOfflineSessionChange();
+    }
+  });
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   const unsubscribeAuth = authStore.subscribe(() => {
     // Сначала завершаем действие Flux, затем выполняем переход.
     queueMicrotask(() => {
       if (active) {
-        redirectByAuth();
+        const path = window.location.pathname;
+        if (authStore.getState().status === 'unknown'
+          && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
+          renderCurrentRoute();
+        } else {
+          redirectByAuth();
+        }
       }
     });
   });
@@ -139,6 +151,7 @@ export function initRouter(): () => void {
 
   return () => {
     active = false;
+    stopOfflineSync();
     unbindLinks();
     unsubscribeAuth();
     window.removeEventListener('popstate', renderCurrentRoute);

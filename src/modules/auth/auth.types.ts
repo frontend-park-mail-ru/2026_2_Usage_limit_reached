@@ -1,3 +1,5 @@
+import type { OfflineToken } from '../offline/offline.types.ts';
+
 /** Пользователь с ID, только если он получен из собственного профиля. */
 export interface SessionUser {
   readonly id?: string;
@@ -9,6 +11,7 @@ export interface SessionUser {
 /** Контекст подтверждённого аккаунта, заменяется после повторного входа. */
 export interface SessionContext {
   readonly userId: string;
+  readonly offlineToken?: OfflineToken;
 }
 
 export type AuthState =
@@ -18,4 +21,5 @@ export type AuthState =
 
 export type AuthAction =
   | { type: 'auth/authenticated'; user: SessionUser }
-  | { type: 'auth/guest' };
+  | { type: 'auth/guest' }
+  | { type: 'auth/unknown' };
