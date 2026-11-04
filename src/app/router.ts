@@ -9,6 +9,8 @@ import {
   updateSidebarProfileState,
   closeSidebarProfileMenu,
   destroySidebarProfileMenu,
+  initSidebarAvatar,
+  destroySidebarAvatar,
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
@@ -60,11 +62,13 @@ function updateLayout(layout: Layout): void {
     return;
   }
   destroySidebarProfileMenu();
+  destroySidebarAvatar();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
     initSidebarProfileMenu(navigate);
+    initSidebarAvatar();
   } else {
     sidebar.innerHTML = '';
   }
@@ -137,6 +141,7 @@ export function initRouter(): () => void {
     unsubscribeAuth();
     window.removeEventListener('popstate', renderCurrentRoute);
     destroySidebarProfileMenu();
+    destroySidebarAvatar();
     currentLayout = undefined;
   };
 }

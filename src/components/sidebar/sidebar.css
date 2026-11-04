@@ -113,6 +113,13 @@ button.sidebar__item:not(.sidebar__item_type_profile):active {
   background: var(--color-sidebar-profile-pressed);
 }
 
+.sidebar__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .sidebar__icon {
   display: block;
   flex-shrink: 0;

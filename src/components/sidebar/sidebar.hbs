@@ -15,7 +15,8 @@
   </div>
   <div class="sidebar__bottom">
     <button class="sidebar__item sidebar__item_type_profile" type="button" aria-label="Профиль" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
-      <img src="/assets/sidebar/profile.svg" alt="" aria-hidden="true">
+      <img class="sidebar__profile-icon" src="/assets/sidebar/profile.svg" alt="" aria-hidden="true"{{#if avatarUrl}} hidden{{/if}}>
+      <img class="sidebar__avatar"{{#if avatarUrl}} src="{{avatarUrl}}"{{/if}} alt="" aria-hidden="true"{{#unless avatarUrl}} hidden{{/unless}}>
     </button>
     {{> profileMenu className="sidebar__profile-menu"}}
   </div>
