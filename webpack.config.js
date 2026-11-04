@@ -3,6 +3,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import webpack from 'webpack';
+import { ServiceWorkerAssetsPlugin } from './webpack.service-worker.js';
 import { SRC_DIR, DIST_DIR, COMPONENTS_DIR } from './webpack.constants.js';
 
 /**
@@ -58,6 +59,7 @@ export default (_env, argv) => ({
     new HtmlWebpackPlugin({ template: path.join(SRC_DIR, 'index.html'), chunks: ['main'] }),
     new MiniCssExtractPlugin({ filename: '[name].[contenthash].css' }),
     new CopyWebpackPlugin({ patterns: [{ from: path.join(SRC_DIR, 'assets'), to: 'assets' }] }),
+    new ServiceWorkerAssetsPlugin(),
   ],
   devServer: {
     port: 3000,
