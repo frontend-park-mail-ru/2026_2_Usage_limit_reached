@@ -2,6 +2,7 @@ import path from 'node:path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import webpack from 'webpack';
 import { SRC_DIR, DIST_DIR, COMPONENTS_DIR } from './webpack.constants.js';
 
 /**
@@ -12,11 +13,14 @@ function resolvePartial(partial, callback) {
   callback(null, path.join(COMPONENTS_DIR, partial, `${partial}.hbs`));
 }
 
-export default {
-  entry: path.join(SRC_DIR, 'main.ts'),
+export default (_env, argv) => ({
+  entry: {
+    main: path.join(SRC_DIR, 'main.ts'),
+    sw: path.join(SRC_DIR, 'service-worker.ts'),
+  },
   output: {
     path: DIST_DIR,
-    filename: '[name].[contenthash].js',
+    filename: ({ chunk }) => chunk.name === 'sw' ? 'sw.js' : '[name].[contenthash].js',
     publicPath: '/',
     clean: true,
   },
@@ -50,7 +54,8 @@ export default {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: path.join(SRC_DIR, 'index.html') }),
+    new webpack.DefinePlugin({ __SERVICE_WORKER_ENABLED__: JSON.stringify(argv.mode === 'production') }),
+    new HtmlWebpackPlugin({ template: path.join(SRC_DIR, 'index.html'), chunks: ['main'] }),
     new MiniCssExtractPlugin({ filename: '[name].[contenthash].css' }),
     new CopyWebpackPlugin({ patterns: [{ from: path.join(SRC_DIR, 'assets'), to: 'assets' }] }),
   ],
@@ -58,4 +63,4 @@ export default {
     port: 3000,
     historyApiFallback: true,
   },
-};
+});
