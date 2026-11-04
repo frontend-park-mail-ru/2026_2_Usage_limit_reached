@@ -34,15 +34,31 @@ export interface AvatarResponse {
   avatar_url: string;
 }
 
+export interface ProfilePostAuthor {
+  id: string;
+  username: string;
+  nickname: string;
+  avatar_url?: string;
+}
+
 export interface ProfilePost {
   id: string;
+  author: ProfilePostAuthor;
+  locked: boolean;
   title: string;
-  body: string;
-  status: string;
-  published_at?: string;
+  body_preview: string;
+  likes_count: number;
+  liked_by_user: boolean;
+  published_or_updated_at: string | null;
 }
 
 export interface ProfilePosts {
-  user_id: string;
-  posts: ProfilePost[];
+  items: ProfilePost[];
+  next_cursor: string | null;
+}
+
+export interface ProfilePostsQuery {
+  sort: 'new' | 'popular';
+  limit?: number;
+  cursor?: string;
 }

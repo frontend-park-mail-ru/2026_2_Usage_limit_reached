@@ -1,5 +1,6 @@
 import { request } from './request.ts';
-import type { AvatarResponse, Profile, ProfilePosts, ProfileUpdate } from './profile.types.ts';
+import type { AvatarResponse, Profile, ProfilePosts, ProfilePostsQuery, ProfileUpdate } from './profile.types.ts';
+import { DEFAULT_PROFILE_POSTS_QUERY } from './profile.constants.ts';
 
 /**
  * Получает профиль текущего пользователя.
@@ -34,6 +35,17 @@ export const deleteAvatar = () => request<void>('/profile/me/avatar', { method: 
 
 /**
  * Получает посты текущего пользователя.
+ * Загружает одну страницу, следующий cursor передаётся явно.
+ * @param query
  * @throws {ApiError}
  */
-export const getProfilePosts = () => request<ProfilePosts>('/profile/me/posts');
+export const getProfilePosts = ({ sort, limit, cursor }: ProfilePostsQuery = DEFAULT_PROFILE_POSTS_QUERY) => {
+  const search = new URLSearchParams({ sort });
+  if (limit !== undefined) {
+    search.set('limit', String(limit));
+  }
+  if (cursor !== undefined) {
+    search.set('cursor', cursor);
+  }
+  return request<ProfilePosts>(`/profile/me/posts?${search}`);
+};

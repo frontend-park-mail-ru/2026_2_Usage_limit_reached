@@ -4,6 +4,7 @@ import type { LoginData, SignupData } from '../api/auth.types.ts';
 import { ApiError } from '../api/request.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
 import type { SessionUser } from './auth.types.ts';
+import type { ProfilePostsQuery } from '../api/profile.types.ts';
 import './auth.store.ts';
 
 let sessionVersion = 0;
@@ -48,8 +49,8 @@ export function checkSession() {
 }
 
 /** Загружает посты, ответ от прежней сессии игнорируется. */
-export function loadProfilePosts() {
-  return readSession(getProfilePosts);
+export function loadProfilePosts(query?: ProfilePostsQuery) {
+  return readSession(() => getProfilePosts(query));
 }
 
 /**

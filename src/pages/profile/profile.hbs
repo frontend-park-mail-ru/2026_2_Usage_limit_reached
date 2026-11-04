@@ -17,7 +17,7 @@
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
           <p class="profile__bio">{{bio}}</p>
-          <p class="profile__post-count">{{postCountLabel}}</p>
+          <p class="profile__post-count">{{postCountLabel}}{{#if hasMorePosts}}. Есть ещё посты, они не загружены.{{/if}}</p>
         {{/if}}
       </div>
     </div>
@@ -41,7 +41,7 @@
           </button>
           <label class="profile__sort-label" for="profile-sort">Порядок постов</label>
           <select class="profile__sort" id="profile-sort" name="profile-sort">
-            <option value="newest">Сначала новые</option>
+            <option value="new">Сначала новые</option>
           </select>
         </div>
       {{/if}}

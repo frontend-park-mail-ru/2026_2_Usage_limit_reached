@@ -11,12 +11,12 @@ import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts
  */
 export function buildProfileViewModel(profileResponse: Profile, postsResponse: ProfilePosts) {
   const referenceTime = new Date();
-  const posts = postsResponse.posts.filter((post) => post.status === 'published').map((post) => {
-    const publishedAt = post.published_at ?? '';
+  const posts = postsResponse.items.map((post) => {
+    const publishedAt = post.published_or_updated_at ?? '';
     return {
       id: post.id,
       title: post.title,
-      body: post.body,
+      bodyPreview: post.locked ? '' : post.body_preview,
       publishedAt,
       publishedAtLabel: formatPublishedAt(publishedAt, referenceTime),
     };
@@ -27,7 +27,8 @@ export function buildProfileViewModel(profileResponse: Profile, postsResponse: P
     hasAuthor: !!profileResponse.author,
     bio: profileResponse.author?.bio ?? '',
     avatarUrl: '/assets/profile/avatar-placeholder.svg',
-    postCountLabel: formatPostCount(posts.length),
+    postCountLabel: `Загружено: ${formatPostCount(posts.length)}`,
+    hasMorePosts: postsResponse.next_cursor !== null,
     hasPosts: posts.length > 0,
     posts,
   };
