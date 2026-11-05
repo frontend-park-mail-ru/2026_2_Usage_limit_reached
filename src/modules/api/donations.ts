@@ -11,11 +11,11 @@ export const sendDonation = (authorId: string, data: DonationInput) =>
   request<DonationResult>(`/authors/${encodeURIComponent(authorId)}/donations`, { method: 'POST', data });
 
 /**
- * Получает страницу пожертвований текущему автору.
+ * Получает страницу полученных пожертвований.
  * @param cursor
  * @throws {ApiError}
  */
-export const getMyDonations = (cursor?: string | null) => {
+export const getReceivedDonations = (cursor?: string | null) => {
   const query = cursor ? `?${new URLSearchParams({ cursor }).toString()}` : '';
-  return request<DonationsPage>(`/profile/me/donations${query}`);
+  return request<DonationsPage>(`/profile/me/donations/received${query}`);
 };
