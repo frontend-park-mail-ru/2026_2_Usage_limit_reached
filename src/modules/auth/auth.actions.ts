@@ -5,7 +5,7 @@ import { ApiError } from '../api/request.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
 import type { SessionContext } from './auth.types.ts';
 import type { Profile, ProfilePostsQuery } from '../api/profile.types.ts';
-import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '../offline/offline.storage.ts';
+import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, invalidateOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '../offline/offline.storage.ts';
 import type { OfflineClearToken } from '../offline/offline.types.ts';
 import { DEFAULT_PROFILE_POSTS_QUERY } from '../api/profile.constants.ts';
 import './auth.store.ts';
@@ -154,6 +154,40 @@ export async function runSessionRequest<T>(context: SessionContext, request: () 
     }
     throw error;
   }
+}
+
+/** После успешного изменения отзывает копию и отклоняет прежние GET. */
+export async function runSessionMutation<T>(context: SessionContext, request: () => Promise<T>): Promise<T | undefined> {
+  if (!isSessionCurrent(context)) {
+    return undefined;
+  }
+  let result: T;
+  try {
+    result = await request();
+  } catch (error) {
+    if (!isSessionCurrent(context)) {
+      return undefined;
+    }
+    if (error instanceof ApiError && error.status === 401) {
+      if (!await expireSession(context.offlineToken)) {
+        return undefined;
+      }
+    }
+    throw error;
+  }
+  // Успех меняет данные владельца даже после сброса памяти другой вкладкой.
+  const cleared = await invalidateOfflineCopy(context.userId, context.offlineToken);
+  if (cleared === false || !isSessionCurrent(context)) {
+    return undefined;
+  }
+  // Отказ IndexedDB уже оставил отметку отзыва и уведомил другие вкладки.
+  const token = await captureOfflineToken();
+  if (!isSessionCurrent(context)) {
+    return undefined;
+  }
+  sessionVersion += 1;
+  confirmedSession = Object.freeze({ userId: context.userId, offlineToken: token });
+  return result;
 }
 
 /** Загружает посты, ответ от прежней сессии игнорируется. */

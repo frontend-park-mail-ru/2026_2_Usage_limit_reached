@@ -246,8 +246,20 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
   });
 }
 
-/** Очищает копию только ожидаемой ревизии, старый выход не затрагивает новый аккаунт. */
-export async function clearOfflineCopy(expected: OfflineClearToken | undefined, isCurrent: () => boolean): Promise<boolean | undefined> {
+/** После изменения отзывает текущую копию того же владельца, независимо от её ревизии. */
+export async function invalidateOfflineCopy(ownerId: string, fallback?: OfflineToken): Promise<boolean | undefined> {
+  const token = await captureOfflineToken() ?? fallback;
+  if (!token || token.ownerId === null) {
+    return undefined;
+  }
+  if (token.ownerId !== ownerId) {
+    return false;
+  }
+  return clearOfflineCopy(token, () => true, ownerId);
+}
+
+/** Очищает ожидаемую ревизию, при изменении данных проверяет владельца в транзакции. */
+export async function clearOfflineCopy(expected: OfflineClearToken | undefined, isCurrent: () => boolean, ownerId?: string): Promise<boolean | undefined> {
   if (!expected) {
     return undefined;
   }
@@ -256,21 +268,27 @@ export async function clearOfflineCopy(expected: OfflineClearToken | undefined, 
     return undefined;
   }
   let clearedGeneration: string | undefined;
+  let nextToken: OfflineToken | undefined;
   let notifyTabs = false;
   const cleared = await transaction<boolean>('readwrite', (token, tx, result) => {
-    if (!generations.includes(token.generation) || !isCurrent()) {
+    const matches = ownerId === undefined ? generations.includes(token.generation) : token.ownerId === ownerId;
+    if (!matches || !isCurrent()) {
       result(false);
       return;
     }
     clearedGeneration = token.generation;
     notifyTabs = token.ownerId !== null;
     tx.objectStore('copies').clear();
-    tx.objectStore('metadata').put({ generation: crypto.randomUUID(), ownerId: null }, 'current');
+    nextToken = { generation: crypto.randomUUID(), ownerId: ownerId ?? null };
+    tx.objectStore('metadata').put(nextToken, 'current');
     result(true);
   });
   if (cleared) {
     if (clearedGeneration) {
       forgetGeneration(clearedGeneration);
+    }
+    if (nextToken?.ownerId) {
+      rememberGeneration(nextToken.generation);
     }
     if (notifyTabs) {
       channel?.postMessage('changed');

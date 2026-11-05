@@ -1,7 +1,8 @@
 import postTemplate from './post.hbs';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { formatPostDate } from '../../utils/helpers/posts.ts';
-import { checkSession } from '../../modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, isSessionCurrent, runSessionMutation } from '../../modules/auth/auth.actions.ts';
+import type { SessionContext } from '../../modules/auth/auth.types.ts';
 import { deletePost, getPost } from '../../modules/api/posts.ts';
 import type { Post } from '../../modules/api/posts.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
@@ -64,11 +65,28 @@ function bindBackLink(root: HTMLElement): void {
  * Удаляет пост и возвращает текст ошибки или null.
  * @param id
  * @param navigate
+ * @param context
+ * @param isActive
  */
-async function removePost(id: string, navigate: Navigate): Promise<string | null> {
+async function removePost(id: string, navigate: Navigate, context: SessionContext, isActive: () => boolean): Promise<string | null> {
   try {
-    await deletePost(id);
+    const deleted = await runSessionMutation(context, async () => {
+      try {
+        await deletePost(id);
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 404) {
+          throw error;
+        }
+      }
+      return true;
+    });
+    if (!deleted || !isActive()) {
+      return null;
+    }
   } catch (err) {
+    if (!isActive() || !isSessionCurrent(context)) {
+      return null;
+    }
     if (!(err instanceof ApiError)) {
       throw err;
     }
@@ -91,12 +109,18 @@ async function removePost(id: string, navigate: Navigate): Promise<string | null
  * @param navigate
  */
 function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate): void {
+  const context = getSessionContext();
+  if (!context || context.userId !== post.author.id) {
+    return;
+  }
+  const page = root.firstElementChild;
+  const isActive = () => root.firstElementChild === page;
   const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '.confirm-dialog'));
   new ActionMenu(requireElement<HTMLElement>(root, '.post-page__menu'), (action) => {
     if (action === 'edit') {
       navigate(postEditRoute(post.id));
     } else if (action === 'delete') {
-      dialog.open(post.title, () => removePost(post.id, navigate));
+      dialog.open(post.title, () => removePost(post.id, navigate, context, isActive));
     }
   });
 }

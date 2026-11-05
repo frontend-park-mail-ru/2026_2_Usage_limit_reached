@@ -89,7 +89,7 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
 
   try {
     const saved = await saveProfile(buildProfileUpdate(profile, values), context);
-    if (!saved || !form.isConnected || !isSessionCurrent(context)) {
+    if (!saved || !form.isConnected) {
       return;
     }
     showToast(SAVED_MESSAGE);

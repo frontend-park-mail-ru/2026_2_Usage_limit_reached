@@ -1,6 +1,6 @@
 import * as profileApi from '../api/profile.ts';
 import type { ProfileUpdate } from '../api/profile.types.ts';
-import { isSessionCurrent, runSessionRequest } from '../auth/auth.actions.ts';
+import { isSessionCurrent, runSessionRequest, runSessionMutation } from '../auth/auth.actions.ts';
 import { authDispatcher } from '../auth/auth.dispatcher.ts';
 import { authStore } from '../auth/auth.store.ts';
 import type { SessionContext, SessionUser } from '../auth/auth.types.ts';
@@ -23,11 +23,11 @@ function updateSessionUser(changes: Partial<SessionUser>): void {
  * @throws {ApiError}
  */
 export async function saveProfile(data: ProfileUpdate, context: SessionContext): Promise<boolean> {
-  const saved = await runSessionRequest(context, async () => {
+  const saved = await runSessionMutation(context, async () => {
     await profileApi.updateProfile(data);
     return true;
   });
-  if (!saved || !isSessionCurrent(context)) {
+  if (!saved) {
     return false;
   }
   updateSessionUser({ username: data.user.username, nickname: data.user.nickname });

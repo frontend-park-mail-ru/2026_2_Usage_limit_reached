@@ -1,6 +1,7 @@
 import postEditorTemplate from './postEditor.hbs';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { checkSession } from '../../modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '../../modules/auth/auth.actions.ts';
+import type { SessionContext } from '../../modules/auth/auth.types.ts';
 import { createPost, getPost, updatePost } from '../../modules/api/posts.ts';
 import type { Post, PostStatus } from '../../modules/api/posts.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
@@ -115,8 +116,9 @@ function getErrorText(err: ApiError): string {
  * @param root
  * @param loaded
  * @param navigate
+ * @param context
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext): void {
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
@@ -151,7 +153,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving) {
+    if (isSaving || !isSessionCurrent(context)) {
       return;
     }
     const status = getTargetStatus(mode, intent);
@@ -162,12 +164,16 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
     setAlert(alert, null);
     const data = { title: values.title.trim(), body: values.body, status };
     try {
-      let id = post?.id;
-      if (post) {
-        await updatePost(post.id, { ...data, last_updated_at: post.updated_at });
-      } else {
-        id = (await createPost(data)).id;
-      }
+      const save = async () => {
+        if (post) {
+          await updatePost(post.id, { ...data, last_updated_at: post.updated_at });
+          return post.id;
+        }
+        return (await createPost(data)).id;
+      };
+      const id = status === 'published'
+        ? await runSessionMutation(context, save)
+        : await runSessionRequest(context, save);
       if (!form.isConnected || !id) {
         return;
       }
@@ -184,7 +190,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
         post = await getPost(id).catch(() => post);
       }
     } catch (err) {
-      if (!form.isConnected) {
+      if (!form.isConnected || !isSessionCurrent(context)) {
         return;
       }
       if (!(err instanceof ApiError)) {
@@ -246,11 +252,13 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
 export async function initPostEditor(root: HTMLElement, navigate: Navigate, params: RouteParams): Promise<void> {
   const loadingPage = root.firstElementChild;
   let post: Post | null = null;
+  let context: SessionContext | undefined;
   try {
     const profile = await checkSession();
     if (!profile) {
       return;
     }
+    context = getSessionContext();
     if (params.id) {
       post = await getPost(params.id);
       if (post.author.id !== profile.user.id) {
@@ -273,6 +281,9 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
   if (root.firstElementChild !== loadingPage) {
     return;
   }
+  if (!context || !isSessionCurrent(context)) {
+    return;
+  }
   root.innerHTML = postEditorTemplate(buildViewModel(post));
-  bindEditor(root, post, navigate);
+  bindEditor(root, post, navigate, context);
 }
