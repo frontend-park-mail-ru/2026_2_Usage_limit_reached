@@ -1,5 +1,6 @@
 import { Modal } from '../modal/modal.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
+import { setAlert } from '../alert/alert.ts';
 import { CONFIRM_ERROR_FALLBACK } from './confirmDialog.constants.ts';
 import type { ConfirmAction } from './confirmDialog.types.ts';
 
@@ -7,7 +8,6 @@ import type { ConfirmAction } from './confirmDialog.types.ts';
 export class ConfirmDialog {
   private readonly modal: Modal;
   private readonly error: HTMLElement;
-  private readonly errorText: HTMLElement;
   private readonly subject: HTMLElement;
   private readonly buttons: HTMLButtonElement[];
   private readonly labels: string[];
@@ -22,8 +22,7 @@ export class ConfirmDialog {
     this.modal = new Modal(dialog, () => {
       this.action = null;
     });
-    this.error = requireElement<HTMLElement>(dialog, '[data-confirm-error]');
-    this.errorText = requireElement<HTMLElement>(dialog, '[data-confirm-error-text]');
+    this.error = requireElement<HTMLElement>(dialog, '.confirm-dialog__error');
     this.subject = requireElement<HTMLElement>(dialog, '[data-confirm-subject]');
     this.submitButton = requireElement<HTMLButtonElement>(dialog, '[data-confirm-submit]');
     this.buttons = [...dialog.querySelectorAll<HTMLButtonElement>('.confirm-dialog__actions .button')];
@@ -57,8 +56,7 @@ export class ConfirmDialog {
    * @param text
    */
   private setError(text: string | null): void {
-    this.error.hidden = !text;
-    this.errorText.textContent = text ?? '';
+    setAlert(this.error, text);
     this.buttons.forEach((button, index) => {
       button.textContent = (text && button.dataset.errorLabel) || this.labels[index];
     });
