@@ -6,6 +6,8 @@ export const ROUTES = {
   register: '/register',
   profile: '/profile',
   settings: '/settings',
+  postNew: '/posts/new',
+  postEdit: '/posts/:id/edit',
 } as const;
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES];
@@ -67,6 +69,12 @@ export function matchRoute(path: string): RouteMatch | undefined {
   }
   return undefined;
 }
+
+/**
+ * Адрес редактирования поста.
+ * @param id
+ */
+export const postEditRoute = (id: string): RoutePath => `/posts/${encodeURIComponent(id)}/edit`;
 
 /**
  * Проверяет, входит ли адрес в список маршрутов приложения.

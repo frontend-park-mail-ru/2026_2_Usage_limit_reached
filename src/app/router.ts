@@ -3,6 +3,7 @@ import { renderHome, initHome } from '../pages/home/home.ts';
 import { renderRegister, initRegister } from '../pages/register/register.ts';
 import { renderProfile, initProfile } from '../pages/profile/profile.ts';
 import { renderSettings, initSettings } from '../pages/settings/settings.ts';
+import { renderPostEditor, initPostEditor } from '../pages/postEditor/postEditor.ts';
 import { renderNotFound } from '../pages/notFound/notFound.ts';
 import {
   renderSidebar,
@@ -27,9 +28,13 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
+  [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
+  [ROUTES.postEdit]: { title: 'Редактирование поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
 };
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
+
+const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.settings, ROUTES.postNew, ROUTES.postEdit];
 
 let currentLayout: Layout | undefined;
 let currentPath = '';
@@ -49,7 +54,9 @@ function getAuthRedirect(path: string): RoutePath | undefined {
   const isAuthPage = path === ROUTES.login || path === ROUTES.register;
   if (status === 'authenticated' && (path === ROUTES.home || isAuthPage)) {
     return ROUTES.profile;
-  } else if (status === 'guest' && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
+  }
+  const pattern = matchRoute(path)?.pattern;
+  if (status === 'guest' && pattern && PRIVATE_ROUTES.includes(pattern)) {
     return ROUTES.login;
   }
   return undefined;

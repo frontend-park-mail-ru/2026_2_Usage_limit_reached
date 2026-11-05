@@ -18,6 +18,7 @@
 @import url('./profile.css');
 @import url('./settings.css');
 @import url('./rich-text.css');
+@import url('./post-editor.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
 
