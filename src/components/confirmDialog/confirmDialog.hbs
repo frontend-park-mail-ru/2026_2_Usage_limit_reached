@@ -1,0 +1,12 @@
+{{#> modal id=id title=title className="confirm-dialog"}}
+  <div class="confirm-dialog__error" role="alert" data-confirm-error hidden>
+    <p class="confirm-dialog__error-title">{{errorTitle}}</p>
+    <p class="confirm-dialog__error-text" data-confirm-error-text></p>
+  </div>
+  <p class="confirm-dialog__subject" data-confirm-subject></p>
+  <p class="confirm-dialog__text">{{text}}</p>
+  <div class="confirm-dialog__actions">
+    <button class="button button_view_secondary confirm-dialog__button confirm-dialog__button_type_cancel" type="button" data-modal-close data-error-label="{{errorCancelLabel}}">{{cancelLabel}}</button>
+    <button class="button button_view_primary confirm-dialog__button confirm-dialog__button_type_confirm" type="button" data-confirm-submit data-error-label="{{errorConfirmLabel}}">{{confirmLabel}}</button>
+  </div>
+{{/modal}}
