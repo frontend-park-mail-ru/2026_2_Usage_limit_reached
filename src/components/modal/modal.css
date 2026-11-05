@@ -12,6 +12,10 @@
   overflow: visible;
 }
 
+.modal:focus {
+  outline: none;
+}
+
 .modal::backdrop {
   background: var(--color-modal-backdrop);
 }

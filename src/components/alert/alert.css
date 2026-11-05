@@ -1,0 +1,30 @@
+:root {
+  --color-alert: rgba(179, 38, 30, 0.06);
+  --color-alert-border: rgba(179, 38, 30, 0.24);
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-alert-border);
+  border-radius: 16px;
+  background: var(--color-alert);
+}
+
+.alert[hidden] {
+  display: none;
+}
+
+.alert__title,
+.alert__text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.alert__title {
+  font-weight: 500;
+}

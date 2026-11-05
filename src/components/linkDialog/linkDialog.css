@@ -1,0 +1,25 @@
+.link-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.link-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.link-dialog__button_type_cancel {
+  width: 152px;
+}
+
+.link-dialog__button_type_submit {
+  flex: 1;
+  width: auto;
+}
+
+.link-dialog__button_type_submit:disabled {
+  cursor: default;
+}

@@ -7,13 +7,26 @@
 @import url('../components/avatarCropper/avatarCropper.css');
 @import url('../components/toast/toast.css');
 @import url('../components/refreshNotice/refreshNotice.css');
+@import url('../components/tabs/tabs.css');
+@import url('../components/actionMenu/actionMenu.css');
+@import url('../components/sortMenu/sortMenu.css');
+@import url('../components/confirmDialog/confirmDialog.css');
+@import url('../components/linkDialog/linkDialog.css');
+@import url('../components/richEditor/richEditor.css');
+@import url('../components/alert/alert.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');
 @import url('./profile.css');
 @import url('./settings.css');
+@import url('./rich-text.css');
+@import url('./post-editor.css');
+@import url('./post.css');
+@import url('../components/donateDialog/donateDialog.css');
+@import url('./donations.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
+@import url('../components/donationCard/donationCard.css');
 
 @font-face {
   font-family: 'Inter';
@@ -32,7 +45,6 @@
   --color-white: #ffffff;
   --color-error: #b3261e;
   --color-secondary: #81b29a;
-  --color-profile-border: rgba(61, 64, 91, 0.5);
   --color-primary-hover: #c96a50;
   --color-primary-pressed: #b35a45;
   --color-secondary-button-hover: rgba(224, 122, 95, 0.06);

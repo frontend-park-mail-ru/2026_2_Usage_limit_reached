@@ -2,8 +2,6 @@
   --color-settings-muted: rgba(61, 64, 91, 0.6);
   --color-settings-divider: rgba(61, 64, 91, 0.12);
   --color-settings-picker: rgba(61, 64, 91, 0.04);
-  --color-settings-alert: rgba(224, 122, 95, 0.08);
-  --color-settings-alert-border: rgba(224, 122, 95, 0.32);
 }
 
 .settings {
@@ -48,30 +46,6 @@
   font-size: 32px;
   font-weight: 500;
   text-align: center;
-}
-
-.settings__alert {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--color-settings-alert-border);
-  border-radius: 12px;
-  background: var(--color-settings-alert);
-}
-
-.settings__alert[hidden] {
-  display: none;
-}
-
-.settings__alert-title,
-.settings__alert-text {
-  margin: 0;
-  font-size: 14px;
-}
-
-.settings__alert-title {
-  font-weight: 500;
 }
 
 .settings__card {

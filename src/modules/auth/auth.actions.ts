@@ -157,9 +157,9 @@ export async function runSessionRequest<T>(context: SessionContext, request: () 
 }
 
 /** Загружает посты, ответ от прежней сессии игнорируется. */
-export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFILE_POSTS_QUERY) {
+export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFILE_POSTS_QUERY, isCurrent: () => boolean = () => true) {
   const context = getSessionContext();
-  if (!context) {
+  if (!context || !isCurrent()) {
     return undefined;
   }
   const parameters: ProfilePostsQuery = { sort: query.sort, limit: query.limit ?? DEFAULT_PROFILE_POSTS_QUERY.limit };
@@ -170,7 +170,7 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
   try {
     posts = await runSessionRequest(context, () => getProfilePosts(parameters));
   } catch (error) {
-    if (error instanceof ApiError && error.status === 403) {
+    if (isCurrent() && error instanceof ApiError && error.status === 403) {
       const cleared = await clearOfflineCopy(context.offlineToken, () => isSessionCurrent(context));
       if (cleared === false || !isSessionCurrent(context)) {
         return undefined;
@@ -178,11 +178,11 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
     }
     throw error;
   }
-  if (!posts || !isSessionCurrent(context) || posts.items.some((item) => item.author.id !== context.userId)) {
+  if (!posts || !isCurrent() || !isSessionCurrent(context) || posts.items.some((item) => item.author.id !== context.userId)) {
     return undefined;
   }
-  const saved = await saveOfflinePosts(context.offlineToken, posts, parameters, () => isSessionCurrent(context));
-  return saved !== false && isSessionCurrent(context) ? posts : undefined;
+  const saved = await saveOfflinePosts(context.offlineToken, posts, parameters, () => isCurrent() && isSessionCurrent(context));
+  return saved !== false && isCurrent() && isSessionCurrent(context) ? posts : undefined;
 }
 
 /**

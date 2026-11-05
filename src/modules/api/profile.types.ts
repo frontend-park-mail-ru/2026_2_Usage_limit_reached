@@ -58,7 +58,7 @@ export interface ProfilePosts {
 }
 
 export interface ProfilePostsQuery {
-  sort: 'new' | 'popular';
+  sort: 'new' | 'old' | 'popular';
   limit?: number;
   cursor?: string;
 }
