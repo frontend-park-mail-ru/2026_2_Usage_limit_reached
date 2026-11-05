@@ -20,11 +20,6 @@
   gap: 12px;
 }
 
-.confirm-dialog__button {
-  height: 44px;
-  line-height: 42px;
-}
-
 .confirm-dialog__button_type_cancel {
   width: 152px;
 }
