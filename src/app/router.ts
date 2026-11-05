@@ -4,6 +4,7 @@ import { renderRegister, initRegister } from '../pages/register/register.ts';
 import { renderProfile, initProfile } from '../pages/profile/profile.ts';
 import { renderSettings, initSettings } from '../pages/settings/settings.ts';
 import { renderPostEditor, initPostEditor } from '../pages/postEditor/postEditor.ts';
+import { renderPost, initPost } from '../pages/post/post.ts';
 import { renderNotFound } from '../pages/notFound/notFound.ts';
 import {
   renderSidebar,
@@ -29,6 +30,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
+  [ROUTES.post]: { title: 'Публикация', render: renderPost, init: initPost, layout: 'sidebar' },
   [ROUTES.postEdit]: { title: 'Редактирование поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
 };
 

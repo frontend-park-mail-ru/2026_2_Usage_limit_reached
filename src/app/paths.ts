@@ -7,6 +7,7 @@ export const ROUTES = {
   profile: '/profile',
   settings: '/settings',
   postNew: '/posts/new',
+  post: '/posts/:id',
   postEdit: '/posts/:id/edit',
 } as const;
 
@@ -69,6 +70,12 @@ export function matchRoute(path: string): RouteMatch | undefined {
   }
   return undefined;
 }
+
+/**
+ * Адрес страницы поста.
+ * @param id
+ */
+export const postRoute = (id: string): RoutePath => `/posts/${encodeURIComponent(id)}`;
 
 /**
  * Адрес редактирования поста.

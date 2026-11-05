@@ -13,6 +13,16 @@ export function formatPostCount(count: number): string {
 }
 
 /**
+ * Дата вида «11 октября 2026».
+ * @param iso
+ */
+export function formatPostDate(iso: string): string {
+  return new Intl.DateTimeFormat('ru', { day: 'numeric', month: 'long', year: 'numeric' })
+    .format(new Date(iso))
+    .replace(/\s*г\.$/u, '');
+}
+
+/**
  * Показывает, сколько времени прошло с публикации.
  * @param publishedAt
  * @param referenceTime

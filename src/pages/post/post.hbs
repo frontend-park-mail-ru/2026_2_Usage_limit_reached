@@ -1,0 +1,46 @@
+{{#if message}}
+  <section class="post-page" aria-label="Публикация">
+    <p class="{{#if isError}}post-page__load-error{{else}}post-page__loading{{/if}}" role="status">{{message}}</p>
+  </section>
+{{else if unavailable}}
+  <section class="post-page" aria-labelledby="post-page-unavailable">
+    <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
+    <div class="post-page__card post-page__card_type_unavailable">
+      <h1 class="post-page__title" id="post-page-unavailable">Публикация недоступна</h1>
+      <p class="post-page__unavailable-text">Автор удалил публикацию или ссылка больше не работает. Вернитесь в профиль автора</p>
+    </div>
+  </section>
+{{else}}
+<section class="post-page" aria-labelledby="post-page-title">
+  <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
+  <article class="post-page__card">
+    <header class="post-page__header">
+      <img class="post-page__avatar" src="{{avatarUrl}}" alt="" />
+      <div class="post-page__meta">
+        <p class="post-page__author">{{authorName}}</p>
+        {{#if publishedAt}}
+          <time class="post-page__date" datetime="{{publishedAt}}">{{dateLabel}}</time>
+        {{/if}}
+      </div>
+      {{#if isOwner}}
+        {{> actionMenu id="post-page-menu" label="Действия с постом" divided=true items=menuItems className="post-page__menu"}}
+      {{/if}}
+    </header>
+    <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
+    <div class="rich-text post-page__body" data-post-body></div>
+    <footer class="post-page__footer">
+      <span class="post-page__stat post-page__stat_type_likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+      <span class="post-page__stat post-page__stat_type_comments" aria-label="Комментариев: 0">0</span>
+      {{#unless isOwner}}
+        <button class="button button_view_primary button_borderless post-page__donate" type="button" aria-disabled="true" title="Будет доступно позже">Пожертвовать</button>
+      {{/unless}}
+    </footer>
+  </article>
+
+  {{#if isOwner}}
+    {{> confirmDialog id="post-page-delete" title="Удалить?" text="Пост исчезнет из профиля. Восстановить его после удаления не получится"
+        errorTitle="Не удалось удалить пост" cancelLabel="Отмена" confirmLabel="Удалить"
+        errorCancelLabel="Закрыть" errorConfirmLabel="Повторить удаление"}}
+  {{/if}}
+</section>
+{{/if}}

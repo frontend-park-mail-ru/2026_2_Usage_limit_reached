@@ -13,7 +13,7 @@ import { Modal } from '../../components/modal/modal.ts';
 import { setAlert } from '../../components/alert/alert.ts';
 import { showToast } from '../../components/toast/toast.ts';
 import { setLeaveGuard } from '../../app/router.ts';
-import { ROUTES, postEditRoute } from '../../app/paths.ts';
+import { ROUTES, postEditRoute, postRoute } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 import type { RouteParams } from '../../app/router.types.ts';
 import {
@@ -59,7 +59,7 @@ function buildViewModel(post: Post | null) {
   const mode = getMode(post);
   return {
     ...EDITOR_MODES[mode],
-    backHref: post && mode === 'published' ? `/posts/${encodeURIComponent(post.id)}` : ROUTES.profile,
+    backHref: post && mode === 'published' ? postRoute(post.id) : ROUTES.profile,
     title: post?.title ?? '',
     statusText: CLEAN_STATUS[mode],
   };
@@ -176,7 +176,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
       if (afterSave) {
         afterSave();
       } else if (status === 'published') {
-        navigate(ROUTES.profile);
+        navigate(postRoute(id));
       } else if (!post) {
         navigate(postEditRoute(id), { replace: true });
       } else {
