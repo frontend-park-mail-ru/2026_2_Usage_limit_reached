@@ -20,7 +20,7 @@ export class ActionMenu {
     this.root = root;
     this.button = requireElement<HTMLButtonElement>(root, '.action-menu__button');
     this.list = requireElement<HTMLElement>(root, '.action-menu__list');
-    this.items = [...this.list.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+    this.items = [...this.list.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]')];
     this.onSelect = onSelect;
 
     this.onToggle = this.toggle.bind(this);
@@ -84,7 +84,7 @@ export class ActionMenu {
    * @param event
    */
   private handleListClick(event: MouseEvent): void {
-    const item = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[role="menuitem"]') : null;
+    const item = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[role^="menuitem"]') : null;
     if (!item) {
       return;
     }
