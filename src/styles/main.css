@@ -25,6 +25,7 @@
 @import url('./donations.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
+@import url('../components/likeButton/likeButton.css');
 @import url('../components/donationCard/donationCard.css');
 
 @font-face {
