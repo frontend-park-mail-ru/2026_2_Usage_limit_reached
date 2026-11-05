@@ -9,6 +9,7 @@ import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
 import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
 import { ActionMenu } from '../../components/actionMenu/actionMenu.ts';
 import { ConfirmDialog } from '../../components/confirmDialog/confirmDialog.ts';
+import { DonateDialog } from '../../components/donateDialog/donateDialog.ts';
 import { showToast } from '../../components/toast/toast.ts';
 import { ROUTES, postEditRoute } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
@@ -101,6 +102,24 @@ function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate): vo
 }
 
 /**
+ * Подключает кнопку «Пожертвовать».
+ * @param root
+ * @param post
+ * @param isGuest
+ * @param navigate
+ */
+function bindDonate(root: HTMLElement, post: Post, isGuest: boolean, navigate: Navigate): void {
+  const dialog = new DonateDialog(requireElement<HTMLDialogElement>(root, '.donate-dialog'));
+  requireElement(root, '[data-donate]').addEventListener('click', () => {
+    if (isGuest) {
+      navigate(ROUTES.login);
+    } else {
+      dialog.open(post.author);
+    }
+  });
+}
+
+/**
  * Загружает пост и показывает его.
  * @param root
  * @param navigate
@@ -110,10 +129,12 @@ export async function initPost(root: HTMLElement, navigate: Navigate, params: Ro
   const loadingPage = root.firstElementChild;
   let post: Post;
   let isOwner = false;
+  let isGuest = true;
   try {
     const [loaded, profile] = await Promise.all([getPost(params.id ?? ''), checkSession().catch(() => undefined)]);
     post = loaded;
     isOwner = !!profile && profile.user.id === post.author.id;
+    isGuest = !profile;
   } catch (err) {
     if (root.firstElementChild !== loadingPage) {
       return;
@@ -140,5 +161,7 @@ export async function initPost(root: HTMLElement, navigate: Navigate, params: Ro
   bindBackLink(root);
   if (isOwner) {
     bindOwnerActions(root, post, navigate);
+  } else {
+    bindDonate(root, post, isGuest, navigate);
   }
 }
