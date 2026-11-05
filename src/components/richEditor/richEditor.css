@@ -138,6 +138,10 @@
   color: var(--color-error);
 }
 
+.rich-editor:has(.form-field__input_invalid) .rich-editor__content[data-empty][data-error-placeholder]::before {
+  content: attr(data-error-placeholder);
+}
+
 .rich-editor__error {
   margin-top: 16px;
 }

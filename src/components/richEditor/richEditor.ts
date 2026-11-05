@@ -153,6 +153,10 @@ export class RichEditor {
 
   /** Запоминает выделение внутри поля и подсвечивает кнопки. */
   private handleSelectionChange(): void {
+    if (!this.content.isConnected) {
+      this.destroy();
+      return;
+    }
     const selection = document.getSelection();
     if (!selection?.rangeCount || !this.content.contains(selection.anchorNode)) {
       return;

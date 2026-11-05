@@ -27,6 +27,7 @@
     aria-label="{{label}}"
     aria-describedby="{{id}}-error"
     data-placeholder="{{placeholder}}"
+    {{#if errorPlaceholder}}data-error-placeholder="{{errorPlaceholder}}"{{/if}}
     data-empty
   ></div>
   <input type="hidden" name="{{name}}" data-rich-editor-value>
