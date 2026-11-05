@@ -1,7 +1,5 @@
 export const PROFILE_CATEGORIES = ['Творчество', 'Образование', 'Технологии', 'Игры', 'Другое'];
 
-export const AVATAR_PLACEHOLDER = '/assets/profile/avatar-placeholder.svg';
-
 export const LOADING_MESSAGE = 'Загрузка профиля...';
 export const LOAD_ERROR = 'Что-то пошло не так. Попробуйте позже';
 

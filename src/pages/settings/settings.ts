@@ -2,6 +2,7 @@ import settingsTemplate from './settings.hbs';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { checkSession } from '../../modules/auth/auth.actions.ts';
 import { saveProfile, uploadAvatar, deleteAvatar } from '../../modules/profile/profile.actions.ts';
+import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
 import type { Profile, ProfileUpdate } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindValidation, setFieldError } from '../../modules/validation/bindForm.ts';
@@ -19,7 +20,6 @@ import {
   AVATAR_DELETED_MESSAGE,
   AVATAR_DELETE_ERROR,
   AVATAR_OPEN_ERROR,
-  AVATAR_PLACEHOLDER,
   AVATAR_SAVED_MESSAGE,
   LOADING_MESSAGE,
   LOAD_ERROR,
