@@ -29,7 +29,7 @@
     <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
     <div class="rich-text post-page__body" data-post-body></div>
     <footer class="post-page__footer">
-      <span class="post-page__stat post-page__stat_type_likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+      {{> likeButton liked=liked count=likesCount}}
       <span class="post-page__stat post-page__stat_type_comments" aria-label="Комментариев: 0">0</span>
       {{#unless isOwner}}
         <button class="button button_view_primary button_borderless post-page__donate" type="button" data-donate>Пожертвовать</button>
