@@ -20,6 +20,7 @@ export class Modal {
   open(): void {
     if (!this.dialog.open) {
       this.dialog.showModal();
+      this.dialog.focus();
     }
   }
 

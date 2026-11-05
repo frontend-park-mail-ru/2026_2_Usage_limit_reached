@@ -2,8 +2,8 @@
   --color-settings-muted: rgba(61, 64, 91, 0.6);
   --color-settings-divider: rgba(61, 64, 91, 0.12);
   --color-settings-picker: rgba(61, 64, 91, 0.04);
-  --color-settings-alert: rgba(224, 122, 95, 0.08);
-  --color-settings-alert-border: rgba(224, 122, 95, 0.32);
+  --color-settings-alert: rgba(179, 38, 30, 0.06);
+  --color-settings-alert-border: rgba(179, 38, 30, 0.24);
 }
 
 .settings {
@@ -53,10 +53,10 @@
 .settings__alert {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px;
+  gap: 8px;
+  padding: 16px;
   border: 1px solid var(--color-settings-alert-border);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--color-settings-alert);
 }
 
@@ -67,7 +67,7 @@
 .settings__alert-title,
 .settings__alert-text {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .settings__alert-title {
