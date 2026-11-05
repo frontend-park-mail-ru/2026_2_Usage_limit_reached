@@ -1,5 +1,5 @@
 /**
- * Случайный UUID v4, работает и без HTTPS.
+ * Случайный UUID v4.
  */
 export function createUuid(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
