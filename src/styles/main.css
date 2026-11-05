@@ -9,6 +9,7 @@
 @import url('../components/tabs/tabs.css');
 @import url('../components/actionMenu/actionMenu.css');
 @import url('../components/confirmDialog/confirmDialog.css');
+@import url('../components/linkDialog/linkDialog.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');
