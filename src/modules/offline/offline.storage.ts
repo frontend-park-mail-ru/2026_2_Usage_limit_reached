@@ -256,12 +256,14 @@ export async function clearOfflineCopy(expected: OfflineClearToken | undefined, 
     return undefined;
   }
   let clearedGeneration: string | undefined;
+  let notifyTabs = false;
   const cleared = await transaction<boolean>('readwrite', (token, tx, result) => {
     if (!generations.includes(token.generation) || !isCurrent()) {
       result(false);
       return;
     }
     clearedGeneration = token.generation;
+    notifyTabs = token.ownerId !== null;
     tx.objectStore('copies').clear();
     tx.objectStore('metadata').put({ generation: crypto.randomUUID(), ownerId: null }, 'current');
     result(true);
@@ -270,9 +272,12 @@ export async function clearOfflineCopy(expected: OfflineClearToken | undefined, 
     if (clearedGeneration) {
       forgetGeneration(clearedGeneration);
     }
-    channel?.postMessage('changed');
+    if (notifyTabs) {
+      channel?.postMessage('changed');
+    }
   } else if (cleared === undefined && isCurrent()) {
     rememberRevocation(generations);
+    channel?.postMessage('changed');
   }
   return cleared;
 }
@@ -284,7 +289,7 @@ export function readOfflineCopy(ownerId?: string): Promise<OfflineCopy | null | 
       result(null);
       return;
     }
-    const copy: OfflineCopy = { ownerId: token.ownerId };
+    const copy: OfflineCopy = { ownerId: token.ownerId, generation: token.generation };
     const profile = tx.objectStore('copies').get([token.ownerId, 'profile']);
     const posts = tx.objectStore('copies').get([token.ownerId, 'posts']);
     profile.onsuccess = () => { copy.profile = profile.result; };

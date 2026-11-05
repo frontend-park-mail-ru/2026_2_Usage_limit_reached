@@ -11,3 +11,5 @@ export const API_ERROR_MESSAGES: Record<number, string> = {
 };
 
 export const UNKNOWN_API_ERROR = 'Не удалось выполнить запрос. Попробуйте позже';
+
+export const API_READ_TIMEOUT = 8000;

@@ -15,9 +15,10 @@ import {
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
-import { checkSession, handleOfflineSessionChange } from '../modules/auth/auth.actions.ts';
+import { checkSession, invalidateSessionMemory } from '../modules/auth/auth.actions.ts';
 import { initOfflineSync } from '../modules/offline/offline.storage.ts';
 import { authStore } from '../modules/auth/auth.store.ts';
+import { initRefreshNotice } from '../components/refreshNotice/refreshNotice.ts';
 import { ROUTES, isRoutePath } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath } from './paths.ts';
 import type { Layout, Route } from './router.types.ts';
@@ -33,6 +34,9 @@ const routes: Record<RoutePath, Route> = {
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
 let currentLayout: Layout | undefined;
+let disposePage: (() => void) | undefined;
+let refreshNotice: ReturnType<typeof initRefreshNotice> | undefined;
+let pageVersion = 0;
 
 /** Выбирает адрес перенаправления по состоянию сессии. */
 function getAuthRedirect(path: string): RoutePath | undefined {
@@ -89,12 +93,23 @@ function renderCurrentRoute(): void {
   const route = isRoutePath(path) ? routes[path] : notFoundRoute;
   const root = requireElement<HTMLElement>(document, '#app');
 
+  disposePage?.();
+  disposePage = undefined;
+  const version = ++pageVersion;
+  refreshNotice?.update(null);
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain');
   updateSidebarProfileState(path);
   document.title = route.title;
   root.innerHTML = route.render();
-  route.init?.(root, navigate);
+  const cleanup = route.init?.(root, navigate, (state, retry) => {
+    if (version === pageVersion) {
+      refreshNotice?.update(state, retry);
+    }
+  });
+  if (typeof cleanup === 'function') {
+    disposePage = cleanup;
+  }
 }
 
 /**
@@ -120,9 +135,10 @@ export function navigate(path: NavigationPath, { replace = false }: NavigateOpti
 /** Запускает роутер и возвращает функцию отключения его обработчиков. */
 export function initRouter(): () => void {
   let active = true;
+  refreshNotice = initRefreshNotice(requireElement<HTMLElement>(document, '#refresh-notice'));
   const stopOfflineSync = initOfflineSync(() => {
     if (active) {
-      void handleOfflineSessionChange();
+      invalidateSessionMemory();
     }
   });
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
@@ -151,6 +167,11 @@ export function initRouter(): () => void {
 
   return () => {
     active = false;
+    disposePage?.();
+    disposePage = undefined;
+    pageVersion += 1;
+    refreshNotice?.destroy();
+    refreshNotice = undefined;
     stopOfflineSync();
     unbindLinks();
     unsubscribeAuth();

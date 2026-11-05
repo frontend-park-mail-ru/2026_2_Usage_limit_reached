@@ -4,7 +4,7 @@ import type { LoginData, SignupData } from '../api/auth.types.ts';
 import { ApiError } from '../api/request.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
 import type { SessionContext } from './auth.types.ts';
-import type { ProfilePostsQuery } from '../api/profile.types.ts';
+import type { Profile, ProfilePostsQuery } from '../api/profile.types.ts';
 import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '../offline/offline.storage.ts';
 import type { OfflineClearToken } from '../offline/offline.types.ts';
 import { DEFAULT_PROFILE_POSTS_QUERY } from '../api/profile.constants.ts';
@@ -13,6 +13,7 @@ import './auth.store.ts';
 let sessionVersion = 0;
 let confirmedSession: SessionContext | undefined;
 let pendingChangeVersion: number | undefined;
+let profileRequest: { version: number; promise: Promise<Profile | undefined> } | undefined;
 
 /** Очищает копию актуальной сессии и сохраняет состояние гостя. */
 export async function expireSession(expected: OfflineClearToken | undefined = confirmedSession?.offlineToken): Promise<boolean> {
@@ -27,8 +28,23 @@ export async function expireSession(expected: OfflineClearToken | undefined = co
   return true;
 }
 
+/** Объединяет одновременные проверки одной сессии, не сохраняя завершённый ответ. */
+export function checkSession(): Promise<Profile | undefined> {
+  const version = sessionVersion;
+  if (profileRequest?.version === version) {
+    return profileRequest.promise;
+  }
+  const promise = loadSessionProfile().finally(() => {
+    if (profileRequest?.promise === promise) {
+      profileRequest = undefined;
+    }
+  });
+  profileRequest = { version, promise };
+  return promise;
+}
+
 /** Проверяет профиль онлайн, сохраняет минимальную копию и подтверждает владельца. */
-export async function checkSession() {
+async function loadSessionProfile(): Promise<Profile | undefined> {
   const version = sessionVersion;
   const canUpdate = pendingChangeVersion === undefined;
   const isCurrent = () => canUpdate && version === sessionVersion && pendingChangeVersion === undefined;
@@ -62,11 +78,29 @@ export async function checkSession() {
     if (!isCurrent()) {
       return undefined;
     }
+    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) {
+      const cleared = await clearOfflineCopy(token ?? fallback, isCurrent);
+      if (cleared === false || !isCurrent()) {
+        return undefined;
+      }
+    }
     if (error instanceof ApiError && error.status === 401 && !await expireSession(token ?? fallback)) {
       return undefined;
     }
     throw error;
   }
+}
+
+/** Возвращает версию для отклонения устаревшего отображения страницы. */
+export function getSessionVersion(): number {
+  return sessionVersion;
+}
+
+/** Убирает данные из памяти по уведомлению вкладки, не подтверждая выход. */
+export function invalidateSessionMemory(): void {
+  sessionVersion += 1;
+  confirmedSession = undefined;
+  authDispatcher.dispatch({ type: 'auth/unknown' });
 }
 
 /** Инвалидирует только память вкладки после изменения ревизии в другой вкладке. */
@@ -132,7 +166,18 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
   if (query.cursor !== undefined) {
     parameters.cursor = query.cursor;
   }
-  const posts = await runSessionRequest(context, () => getProfilePosts(parameters));
+  let posts;
+  try {
+    posts = await runSessionRequest(context, () => getProfilePosts(parameters));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) {
+      const cleared = await clearOfflineCopy(context.offlineToken, () => isSessionCurrent(context));
+      if (cleared === false || !isSessionCurrent(context)) {
+        return undefined;
+      }
+    }
+    throw error;
+  }
   if (!posts || !isSessionCurrent(context) || posts.items.some((item) => item.author.id !== context.userId)) {
     return undefined;
   }

@@ -3,10 +3,12 @@
 }
 
 .app-layout {
+  --content-offset: 0px;
   min-height: 100vh;
 }
 
 .app-layout_sidebar {
+  --content-offset: var(--sidebar-width);
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   align-items: start;
@@ -14,10 +16,24 @@
 
 .app-layout__content {
   min-width: 0;
+  padding-bottom: var(--notification-clearance, 0px);
 }
 
 .app-layout__sidebar:not([hidden]) {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+/* Общая фиксированная область не сдвигает верх страницы, toast стоит ниже. */
+.app-layout__notifications {
+  position: fixed;
+  left: calc(var(--content-offset) + 16px);
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 200;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  pointer-events: none;
 }

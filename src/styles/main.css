@@ -6,6 +6,7 @@
 @import url('../components/modal/modal.css');
 @import url('../components/avatarCropper/avatarCropper.css');
 @import url('../components/toast/toast.css');
+@import url('../components/refreshNotice/refreshNotice.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');

@@ -23,6 +23,7 @@ export interface SavedPosts {
 }
 
 export interface OfflineCopy {
+  generation: string;
   ownerId: string;
   profile?: SavedProfile;
   posts?: SavedPosts;
