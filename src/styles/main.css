@@ -11,6 +11,7 @@
 @import url('../components/confirmDialog/confirmDialog.css');
 @import url('../components/linkDialog/linkDialog.css');
 @import url('../components/richEditor/richEditor.css');
+@import url('../components/alert/alert.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');
