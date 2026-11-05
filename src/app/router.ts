@@ -136,9 +136,9 @@ export function navigate(path: NavigationPath, { replace = false, force = false 
     return;
   }
   if (replace || redirect) {
-    history.replaceState({}, '', nextPath);
+    history.replaceState(history.state, '', nextPath);
   } else {
-    history.pushState({}, '', nextPath);
+    history.pushState({ from: currentPath }, '', nextPath);
   }
   renderCurrentRoute();
 }

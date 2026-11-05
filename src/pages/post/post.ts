@@ -47,12 +47,12 @@ function buildViewModel(post: Post, isOwner: boolean) {
 }
 
 /**
- * Возвращает назад по истории, если на страницу пришли внутри приложения.
+ * Возвращает назад по истории, если на страницу пришли из профиля.
  * @param root
  */
 function bindBackLink(root: HTMLElement): void {
   requireElement(root, '[data-back]').addEventListener('click', (event) => {
-    if (history.state !== null) {
+    if (history.state?.from === ROUTES.profile) {
       event.preventDefault();
       history.back();
     }
