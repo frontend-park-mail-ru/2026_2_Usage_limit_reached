@@ -1,0 +1,8 @@
+<div class="action-menu sort-menu{{#if className}} {{className}}{{/if}}">
+  <button class="action-menu__button sort-menu__button" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="{{id}}" aria-label="Порядок: {{currentLabel}}" data-sort-label>{{currentLabel}}</button>
+  <div class="action-menu__list sort-menu__list" id="{{id}}" role="menu" aria-label="Порядок" hidden>
+    {{#each options}}
+      <button class="action-menu__item sort-menu__option" type="button" role="menuitemradio" aria-checked="{{#if selected}}true{{else}}false{{/if}}" tabindex="-1" data-action="{{value}}">{{label}}</button>
+    {{/each}}
+  </div>
+</div>

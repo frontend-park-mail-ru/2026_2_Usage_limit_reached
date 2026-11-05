@@ -1,4 +1,4 @@
-import { ALLOWED_TAGS, LINK_REL, REMOVED_WITH_CONTENT, SAFE_LINK_PROTOCOL, TAG_ALIASES } from './sanitize.constants.ts';
+import { ALLOWED_TAGS, LINK_REL, REMOVED_WITH_CONTENT, SAFE_LINK_PROTOCOL, TAG_ALIASES, TEXT_BREAKS } from './sanitize.constants.ts';
 
 /**
  * Возвращает полный https-адрес или null.
@@ -55,4 +55,16 @@ export function sanitizeHtml(html: string): string {
   const container = doc.createElement('div');
   container.append(...[...doc.body.childNodes].flatMap((child) => cleanNode(child, doc)));
   return container.innerHTML;
+}
+
+/**
+ * Оставляет из HTML только текст с переносами между абзацами.
+ * @param html
+ */
+export function htmlToText(html: string): string {
+  const body = new DOMParser().parseFromString(html, 'text/html').body;
+  for (const element of body.querySelectorAll(Object.keys(TEXT_BREAKS).join(', '))) {
+    element.after(TEXT_BREAKS[element.tagName] ?? '');
+  }
+  return (body.textContent ?? '').trim();
 }

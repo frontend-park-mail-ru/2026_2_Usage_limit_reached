@@ -1,11 +1,17 @@
-<article class="post-card" aria-labelledby="post-title-{{id}}">
-  <div class="post-card__preview">
-    <p class="post-card__excerpt">{{body}}</p>
-  </div>
-  <h3 class="post-card__title" id="post-title-{{id}}">{{title}}</h3>
+<article class="post-card" aria-labelledby="post-card-title-{{id}}" data-post-id="{{id}}">
+  <a class="post-card__link" href="{{href}}" data-link aria-labelledby="post-card-title-{{id}}"></a>
+  <p class="post-card__excerpt">{{preview}}</p>
+  <h3 class="post-card__title" id="post-card-title-{{id}}">{{title}}</h3>
   <div class="post-card__footer">
-    {{#if publishedAt}}
-      <time class="post-card__time" datetime="{{publishedAt}}">{{publishedAtLabel}}</time>
+    {{#if isDraft}}
+      <span class="post-card__draft-date">Черновик · {{dateLabel}}</span>
+      {{> actionMenu id=menuId label="Действия с черновиком" items=menuItems className="post-card__menu"}}
+    {{else}}
+      <span class="post-card__stat post-card__stat_type_likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+      <span class="post-card__stat post-card__stat_type_comments" aria-label="Комментариев: 0">0</span>
+      {{#if date}}
+        <time class="post-card__time" datetime="{{date}}">{{dateLabel}}</time>
+      {{/if}}
     {{/if}}
   </div>
 </article>

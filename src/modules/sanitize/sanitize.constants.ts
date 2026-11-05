@@ -15,3 +15,12 @@ export const REMOVED_WITH_CONTENT: ReadonlySet<string> = new Set([
 export const SAFE_LINK_PROTOCOL = 'https:';
 
 export const LINK_REL = 'noopener noreferrer nofollow';
+
+export const TEXT_BREAKS: Readonly<Record<string, string>> = {
+  P: '\n\n',
+  H3: '\n\n',
+  LI: '\n',
+  UL: '\n',
+  OL: '\n',
+  BR: '\n',
+};
