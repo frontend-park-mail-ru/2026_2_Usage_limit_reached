@@ -1,0 +1,29 @@
+<section class="donations" aria-labelledby="donations-title">
+  <a class="donations__back" href="/profile" data-link>← Мой профиль</a>
+  <div class="donations__container">
+    <div class="donations__heading">
+      <h1 class="donations__title" id="donations-title">Пожертвования</h1>
+      <p class="donations__subtitle">Пожертвования читателей и личные сообщения для вас</p>
+    </div>
+    <div class="donations__list" data-donations-list></div>
+    <div class="donations__empty" data-donations-empty hidden>
+      <h2 class="donations__empty-title">Пока нет пожертвований</h2>
+      <p class="donations__empty-text">Пожертвования и сообщения читателей появятся здесь</p>
+    </div>
+    <div class="donations__more" data-donations-more>
+      <p class="donations__more-text" role="status" data-donations-more-text></p>
+      <button class="button button_view_secondary donations__retry" type="button" data-donations-retry hidden>Повторить</button>
+    </div>
+  </div>
+
+  {{#> modal id="donation-message" title="Личное сообщение" className="donation-message"}}
+    <div class="donation-message__header">
+      <div class="donation-message__meta">
+        <p class="donation-message__name" data-message-name></p>
+        <time class="donation-message__date" data-message-date></time>
+      </div>
+      <p class="donation-message__amount" data-message-amount></p>
+    </div>
+    <p class="donation-message__text" data-message-text></p>
+  {{/modal}}
+</section>

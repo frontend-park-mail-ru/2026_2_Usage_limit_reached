@@ -6,6 +6,7 @@ export const ROUTES = {
   register: '/register',
   profile: '/profile',
   settings: '/settings',
+  donations: '/donations',
   postNew: '/posts/new',
   post: '/posts/:id',
   postEdit: '/posts/:id/edit',

@@ -5,6 +5,7 @@ import { renderProfile, initProfile } from '../pages/profile/profile.ts';
 import { renderSettings, initSettings } from '../pages/settings/settings.ts';
 import { renderPostEditor, initPostEditor } from '../pages/postEditor/postEditor.ts';
 import { renderPost, initPost } from '../pages/post/post.ts';
+import { renderDonations, initDonations } from '../pages/donations/donations.ts';
 import { renderNotFound } from '../pages/notFound/notFound.ts';
 import {
   renderSidebar,
@@ -29,6 +30,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
+  [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
   [ROUTES.post]: { title: 'Публикация', render: renderPost, init: initPost, layout: 'sidebar' },
   [ROUTES.postEdit]: { title: 'Редактирование поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
@@ -36,7 +38,7 @@ const routes: Record<RoutePattern, Route> = {
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
-const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.settings, ROUTES.postNew, ROUTES.postEdit];
+const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
 
 let currentLayout: Layout | undefined;
 let currentPath = '';

@@ -1,0 +1,82 @@
+.donation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 32px;
+  border-radius: 16px;
+  background: var(--color-white);
+}
+
+.donation-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.donation-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.donation-card__name,
+.donation-card__amount,
+.donation-card__message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.donation-card__name,
+.donation-card__amount {
+  font-weight: 500;
+}
+
+.donation-card__name {
+  overflow-wrap: anywhere;
+}
+
+.donation-card__date {
+  color: var(--color-input-placeholder);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.donation-card__amount {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.donation-card__message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donation-card__more {
+  align-self: flex-start;
+  margin-top: -4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 17px;
+  cursor: pointer;
+}
+
+.donation-card__more:hover {
+  text-decoration: underline;
+}
+
+.donation-card__more:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.donation-card__more[hidden] {
+  display: none;
+}

@@ -22,8 +22,10 @@
 @import url('./post-editor.css');
 @import url('./post.css');
 @import url('../components/donateDialog/donateDialog.css');
+@import url('./donations.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
+@import url('../components/donationCard/donationCard.css');
 
 @font-face {
   font-family: 'Inter';

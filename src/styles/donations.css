@@ -1,0 +1,158 @@
+.donations {
+  position: relative;
+  padding: 96px 64px 32px;
+  box-sizing: border-box;
+}
+
+.donations__back {
+  position: absolute;
+  top: 32px;
+  left: 64px;
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.donations__back:hover {
+  text-decoration: underline;
+}
+
+.donations__container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.donations__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+}
+
+.donations__title,
+.donations__subtitle,
+.donations__empty-title,
+.donations__empty-text,
+.donations__more-text {
+  margin: 0;
+}
+
+.donations__title {
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.donations__subtitle {
+  color: var(--color-input-placeholder);
+  font-size: 16px;
+}
+
+.donations__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.donations__list:empty {
+  display: none;
+}
+
+.donations__empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--color-white);
+  box-sizing: border-box;
+}
+
+.donations__empty-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.donations__empty-text {
+  font-size: 16px;
+}
+
+.donations__more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+}
+
+.donations__empty[hidden],
+.donations__more[hidden],
+.donations__retry[hidden] {
+  display: none;
+}
+
+.donations__more-text {
+  font-size: 16px;
+}
+
+.donations__retry {
+  width: auto;
+}
+
+.donation-message__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--color-input-border);
+}
+
+.donation-message__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.donation-message__name,
+.donation-message__amount,
+.donation-message__text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.donation-message__name,
+.donation-message__amount {
+  font-weight: 500;
+}
+
+.donation-message__amount {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.donation-message__date {
+  color: var(--color-input-placeholder);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.donation-message__text {
+  white-space: pre-line;
+}
+
+@media (max-width: 720px) {
+  .donations {
+    padding: 72px 16px 32px;
+  }
+
+  .donations__back {
+    left: 16px;
+  }
+}
