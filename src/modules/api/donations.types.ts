@@ -17,17 +17,17 @@ export interface DonationResult {
 
 export interface DonationDonor {
   username: string;
-  nickname: string;
   avatar_url?: string | null;
 }
 
 export interface ReceivedDonation {
   id: string;
-  donor: DonationDonor | null;
-  amount_minor: number;
-  currency: DonationCurrency;
   message: string | null;
+  is_anonymous: boolean;
+  amount_minor: number;
+  currency: string;
   paid_at: string;
+  donor?: DonationDonor | null;
 }
 
 export interface DonationsPage {
