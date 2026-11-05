@@ -1,6 +1,6 @@
-import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs } from './rules.ts';
+import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs, richTextRequired, httpsUrl } from './rules.ts';
 import type { Rule, Schema } from './validation.types.ts';
-import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX } from './schemas.constants.ts';
+import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX } from './schemas.constants.ts';
 
 const usernameRules: Rule[] = [
   required('Введите имя пользователя'),
@@ -52,4 +52,20 @@ export const authorSettingsSchema: Schema = {
   ...userSettingsSchema,
   category: [required('Укажите категорию контента')],
   bio: [maxLength(BIO_MAX, 'Сократите описание до 200 символов')],
+};
+
+export const postSchema: Schema = {
+  title: [
+    required('Введите заголовок поста'),
+    maxLength(POST_TITLE_MAX, 'Максимальная длина заголовка — 255 символов'),
+  ],
+  body: [
+    richTextRequired('Введите текст публикации'),
+    maxLength(POST_BODY_MAX, 'Текст слишком длинный. Сократите его'),
+  ],
+};
+
+export const linkSchema: Schema = {
+  text: [required('Введите текст ссылки')],
+  url: [httpsUrl('Укажите полный адрес, начинающийся с https://')],
 };
