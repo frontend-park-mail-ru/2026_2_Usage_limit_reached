@@ -1,0 +1,26 @@
+<div class="form-field">
+  <label class="form-field__label" id="{{id}}-label" for="{{id}}">{{label}}</label>
+  <div class="select">
+    <input
+      class="form-field__input select__input"
+      id="{{id}}"
+      name="{{name}}"
+      type="text"
+      value="{{value}}"
+      placeholder="{{placeholder}}"
+      readonly
+      autocomplete="off"
+      role="combobox"
+      aria-haspopup="listbox"
+      aria-expanded="false"
+      aria-controls="{{id}}-list"
+      aria-describedby="{{id}}-error"
+    />
+    <ul class="select__list" id="{{id}}-list" role="listbox" aria-labelledby="{{id}}-label" hidden>
+      {{#each options}}
+        <li class="select__option" id="{{../id}}-option-{{@index}}" role="option" data-value="{{value}}" aria-selected="{{#if selected}}true{{else}}false{{/if}}">{{value}}</li>
+      {{/each}}
+    </ul>
+  </div>
+  <p class="form-field__error" id="{{id}}-error" data-error-for="{{name}}" aria-live="polite"></p>
+</div>

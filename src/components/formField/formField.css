@@ -106,3 +106,22 @@
 .form-field__error:empty {
   display: none;
 }
+
+.form-field__hint {
+  margin: 0 0 -7px;
+  padding: 0 3px;
+  color: rgba(61, 64, 91, 0.6);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.form-field:has(.form-field__error:not(:empty)) .form-field__hint {
+  display: none;
+}
+
+.form-field__input_type_textarea {
+  height: auto;
+  min-height: 72px;
+  resize: vertical;
+  line-height: normal;
+}

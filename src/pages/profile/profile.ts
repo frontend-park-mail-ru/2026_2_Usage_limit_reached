@@ -3,6 +3,7 @@ import { checkSession, loadProfilePosts } from '../../modules/auth/auth.actions.
 import type { Profile, ProfilePosts } from '../../modules/api/profile.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { formatPostCount, formatPublishedAt } from '../../utils/helpers/posts.ts';
+import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
 
 /**
  * Готовит профиль и опубликованные посты для шаблона.
@@ -26,7 +27,7 @@ export function buildProfileViewModel(profileResponse: Profile, postsResponse: P
     username: `@${profileResponse.user.username}`,
     hasAuthor: !!profileResponse.author,
     bio: profileResponse.author?.bio ?? '',
-    avatarUrl: '/assets/profile/avatar-placeholder.svg',
+    avatarUrl: profileResponse.user.avatar_url ?? AVATAR_PLACEHOLDER,
     postCountLabel: formatPostCount(posts.length),
     hasPosts: posts.length > 0,
     posts,
