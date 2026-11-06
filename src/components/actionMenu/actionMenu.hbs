@@ -1,0 +1,11 @@
+<div class="action-menu{{#if className}} {{className}}{{/if}}">
+  <button class="action-menu__button" type="button" aria-label="{{label}}" aria-haspopup="menu" aria-expanded="false" aria-controls="{{id}}">
+    <span aria-hidden="true">···</span>
+  </button>
+  <div class="action-menu__list" id="{{id}}" role="menu" hidden>
+    {{#each items}}
+      {{#if @index}}{{#if ../divided}}<hr class="action-menu__divider">{{/if}}{{/if}}
+      <button class="action-menu__item{{#if danger}} action-menu__item_view_danger{{/if}}" type="button" role="menuitem" tabindex="-1" data-action="{{action}}">{{label}}</button>
+    {{/each}}
+  </div>
+</div>

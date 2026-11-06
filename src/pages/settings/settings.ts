@@ -14,6 +14,7 @@ import { Select } from '../../components/select/select.ts';
 import { Modal } from '../../components/modal/modal.ts';
 import { AvatarCropper } from '../../components/avatarCropper/avatarCropper.ts';
 import { showToast } from '../../components/toast/toast.ts';
+import { setAlert } from '../../components/alert/alert.ts';
 import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 import {
@@ -53,16 +54,6 @@ function buildSettingsViewModel(profile: Profile) {
 }
 
 /**
- * Показывает или прячет плашку ошибки.
- * @param alert
- * @param text
- */
-function setAlert(alert: HTMLElement, text: string | null): void {
-  requireElement(alert, '.settings__alert-text').textContent = text ?? '';
-  alert.hidden = !text;
-}
-
-/**
  * Тело запроса из формы.
  * @param profile
  * @param values
@@ -87,7 +78,7 @@ function buildProfileUpdate(profile: Profile, values: FormValues): ProfileUpdate
 async function submitSettings(root: HTMLElement, profile: Profile, values: FormValues, navigate: Navigate): Promise<void> {
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
-  const alert = requireElement<HTMLElement>(root, '[data-save-error]');
+  const alert = requireElement<HTMLElement>(root, '.settings__save-error');
   if (button.disabled) {
     return;
   }
@@ -133,7 +124,7 @@ function bindAvatar(root: HTMLElement): void {
   const hint = requireElement<HTMLElement>(root, '[data-avatar-hint]');
   const hintText = hint.textContent ?? '';
   const fileInput = requireElement<HTMLInputElement>(root, '[data-avatar-file]');
-  const pickerAlert = requireElement<HTMLElement>(root, '[data-picker-error]');
+  const pickerAlert = requireElement<HTMLElement>(root, '.settings__picker-error');
   const applyButton = requireElement<HTMLButtonElement>(root, '[data-avatar-apply]');
   const cropper = new AvatarCropper(requireElement<HTMLElement>(root, '.avatar-cropper'));
   const picker = new Modal(requireElement<HTMLDialogElement>(root, '.settings__modal_type_picker'), () => {

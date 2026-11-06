@@ -33,16 +33,3 @@ export interface ProfileUpdate {
 export interface AvatarResponse {
   avatar_url: string;
 }
-
-export interface ProfilePost {
-  id: string;
-  title: string;
-  body: string;
-  status: string;
-  published_at?: string;
-}
-
-export interface ProfilePosts {
-  user_id: string;
-  posts: ProfilePost[];
-}

@@ -1,0 +1,30 @@
+.confirm-dialog__subject,
+.confirm-dialog__text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.confirm-dialog__subject {
+  font-weight: 500;
+}
+
+.confirm-dialog__text {
+  color: var(--color-input-placeholder);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.confirm-dialog__button_type_cancel {
+  width: 152px;
+}
+
+.confirm-dialog__button_type_confirm {
+  flex: 1;
+  width: auto;
+}

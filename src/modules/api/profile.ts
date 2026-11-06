@@ -1,5 +1,5 @@
 import { request } from './request.ts';
-import type { AvatarResponse, Profile, ProfilePosts, ProfileUpdate } from './profile.types.ts';
+import type { AvatarResponse, Profile, ProfileUpdate } from './profile.types.ts';
 
 /**
  * Получает профиль текущего пользователя.
@@ -31,9 +31,3 @@ export const uploadAvatar = (file: Blob) => {
  * @throws {ApiError}
  */
 export const deleteAvatar = () => request<void>('/profile/me/avatar', { method: 'DELETE', responseType: 'empty' });
-
-/**
- * Получает посты текущего пользователя.
- * @throws {ApiError}
- */
-export const getProfilePosts = () => request<ProfilePosts>('/profile/me/posts');

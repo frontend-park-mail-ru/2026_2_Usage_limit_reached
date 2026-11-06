@@ -8,10 +8,7 @@
   <div class="settings__container">
     <h1 class="settings__title" id="settings-title">Настройки профиля</h1>
 
-    <div class="settings__alert" data-save-error role="alert" hidden>
-      <p class="settings__alert-title">Не удалось сохранить изменения</p>
-      <p class="settings__alert-text" data-save-error-text></p>
-    </div>
+    {{> alert title="Не удалось сохранить изменения" className="settings__save-error"}}
 
     <form class="settings__card" id="settings-form" novalidate>
       <div class="settings__photo">
@@ -52,10 +49,7 @@
   </div>
 
   {{#> modal id="avatar-picker" title="Изменить фото" className="settings__modal settings__modal_type_picker"}}
-    <div class="settings__alert settings__alert_type_modal" data-picker-error role="alert" hidden>
-      <p class="settings__alert-title">Не удалось загрузить фото</p>
-      <p class="settings__alert-text" data-picker-error-text></p>
-    </div>
+    {{> alert title="Не удалось загрузить фото" className="settings__picker-error"}}
     <div class="settings__picker">
       <p class="settings__picker-title">Выберите изображение для аватара</p>
       <p class="settings__hint">JPG, PNG или WebP · до 5 МБ</p>

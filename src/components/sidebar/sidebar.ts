@@ -53,9 +53,21 @@ function updateSidebarAvatar(): void {
   icon.hidden = !!url;
 }
 
-/** Подписывает аватар на store. */
+/** Показывает пункты меню для гостя или для вошедшего. */
+function updateSidebarMenu(): void {
+  const isGuest = authStore.getState().status === 'guest';
+  document.querySelectorAll<HTMLElement>('#sidebar [data-auth]').forEach((item) => {
+    item.hidden = (item.dataset.auth === 'guest') !== isGuest;
+  });
+}
+
+/** Подписывает аватар и меню на store. */
 export function initSidebarAvatar(): void {
-  unsubscribeAvatar = authStore.subscribe(updateSidebarAvatar);
+  updateSidebarMenu();
+  unsubscribeAvatar = authStore.subscribe(() => {
+    updateSidebarAvatar();
+    updateSidebarMenu();
+  });
 }
 
 /** Отписывает аватар от store. */
