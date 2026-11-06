@@ -1,6 +1,6 @@
-import { required, minLength, maxLength, maxByteLength, pattern, email, sameAs, richTextRequired, httpsUrl } from './rules.ts';
+import { required, minLength, maxLength, maxByteLength, minNumber, pattern, email, sameAs, richTextRequired, httpsUrl } from './rules.ts';
 import type { Rule, Schema } from './validation.types.ts';
-import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX } from './schemas.constants.ts';
+import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX, DONATION_AMOUNT_MIN, DONATION_AMOUNT_MAX_DIGITS, DONATION_MESSAGE_MAX } from './schemas.constants.ts';
 
 const usernameRules: Rule[] = [
   required('Введите имя пользователя'),
@@ -68,4 +68,14 @@ export const postSchema: Schema = {
 export const linkSchema: Schema = {
   text: [required('Введите текст ссылки')],
   url: [httpsUrl('Укажите полный адрес, начинающийся с https://')],
+};
+
+export const donationSchema: Schema = {
+  amount: [
+    required('Введите сумму больше нуля'),
+    pattern(/^\d+$/, 'Введите сумму целым числом'),
+    maxLength(DONATION_AMOUNT_MAX_DIGITS, 'Слишком большая сумма'),
+    minNumber(DONATION_AMOUNT_MIN, 'Введите сумму больше нуля'),
+  ],
+  message: [maxLength(DONATION_MESSAGE_MAX, 'Максимальная длина сообщения — 200 символов')],
 };

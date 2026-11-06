@@ -32,6 +32,14 @@ export const maxByteLength = (max: number, message: string): Rule =>
   (value) => (new TextEncoder().encode(value).length <= max ? null : message);
 
 /**
+ * Число не меньше min.
+ * @param min
+ * @param message
+ */
+export const minNumber = (min: number, message: string): Rule =>
+  (value) => (Number(value) >= min ? null : message);
+
+/**
  * Значение должно соответствовать регулярному выражению.
  * @param regexp
  * @param message

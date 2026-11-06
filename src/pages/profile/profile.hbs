@@ -21,12 +21,22 @@
       </div>
     </div>
     <div class="profile__actions">
-      {{#if hasAuthor}}
-        <button class="button button_view_primary button_borderless profile__button profile__button_type_statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
-      {{/if}}
       <a class="button button_view_secondary profile__button profile__button_type_edit" href="/settings" data-link>Редактировать профиль</a>
+      {{#if hasAuthor}}
+        <a class="button button_view_secondary profile__button profile__button_type_donations" href="/donations" data-link>Пожертвования</a>
+      {{/if}}
     </div>
   </div>
+
+  {{#if needsPayout}}
+    <section class="profile__payout" aria-labelledby="profile-payout-title">
+      <div class="profile__payout-content">
+        <h2 class="profile__payout-title" id="profile-payout-title">Настройте получение пожертвований</h2>
+        <p class="profile__payout-text">Публиковать можно сразу. Чтобы получать пожертвования, настройте оплату</p>
+      </div>
+      <a class="button button_view_primary button_borderless profile__payout-button" href="/settings" data-link>Настроить оплату</a>
+    </section>
+  {{/if}}
 
   {{#if hasAuthor}}
   <section class="profile__posts" aria-label="Публикации">

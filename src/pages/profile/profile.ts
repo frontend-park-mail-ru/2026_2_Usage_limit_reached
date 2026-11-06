@@ -41,6 +41,7 @@ export function buildProfileViewModel(profile: Profile) {
     username: `@${profile.user.username}`,
     hasAuthor: !!profile.author,
     bio: profile.author?.bio ?? '',
+    needsPayout: !!profile.author && !profile.author.payout_provider,
     avatarUrl: profile.user.avatar_url ?? AVATAR_PLACEHOLDER,
     tabs: PROFILE_TABS.map((item, index) => ({ ...item, selected: index === 0 })),
   };
