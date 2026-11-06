@@ -1,0 +1,38 @@
+.sort-menu__button {
+  width: auto;
+  min-width: 185px;
+  height: 36px;
+  padding: 0 16px 0 40px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 16px;
+  background: var(--color-white) url('/assets/profile/chevron.svg') left 16px center / 12px 7px no-repeat;
+  font-size: 14px;
+  line-height: 34px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sort-menu__button:hover,
+.sort-menu__button[aria-expanded='true'] {
+  background-color: var(--color-white);
+  border-color: var(--color-input-border-hover);
+}
+
+.sort-menu__list {
+  width: 220px;
+}
+
+.sort-menu__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.sort-menu__option[aria-checked='true']::before {
+  content: '';
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background: url('/assets/select/check.svg') center / contain no-repeat;
+}

@@ -1,0 +1,81 @@
+.refresh-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 4px 12px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: 0 4px 16px var(--color-sidebar-border);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.refresh-notice[hidden],
+body:has(.modal[open]) .refresh-notice,
+body:has(.sidebar__profile-menu:not([hidden])) .refresh-notice {
+  display: none;
+}
+
+.refresh-notice__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.refresh-notice__button:not(:disabled):hover {
+  background: var(--color-sidebar-hover);
+}
+
+.refresh-notice__button:not(:disabled):active {
+  background: var(--color-sidebar-border);
+}
+
+.refresh-notice__button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.refresh-notice__button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.refresh-notice__icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url('/assets/refreshNotice/refresh-cw.svg') center / contain no-repeat;
+}
+
+/* Обе надписи занимают одну ячейку: смена текста не меняет размер кнопки. */
+.refresh-notice__label {
+  display: grid;
+}
+
+.refresh-notice__label > span {
+  grid-area: 1 / 1;
+}
+
+.refresh-notice__label-reserve {
+  visibility: hidden;
+}

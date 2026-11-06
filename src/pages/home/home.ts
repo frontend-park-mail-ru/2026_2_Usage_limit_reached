@@ -1,41 +1,20 @@
 import homeTemplate from './home.hbs';
-import { getProfile } from '../../modules/api/profile.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { ROUTES } from '../../app/paths.ts';
+import { initProfile } from '../profile/profile.ts';
 import type { Navigate } from '../../app/paths.ts';
+import type { SetRefreshNotice } from '../../components/refreshNotice/refreshNotice.types.ts';
+import type { RouteParams } from '../../app/router.types.ts';
 
 /** Возвращает текст проверки авторизации. */
 export function renderHome(): string {
   return homeTemplate({ message: 'Проверка авторизации...' });
 }
 
-/**
- * Проверяет сессию и открывает профиль или страницу входа.
- * @param root
- * @param navigate
- */
-export async function initHome(
+/** Проверяет сессию, при недоступности сервера показывает сохранённый профиль. */
+export function initHome(
   root: HTMLElement,
   navigate: Navigate,
-): Promise<void> {
-  const page = root.firstElementChild;
-  try {
-    await getProfile();
-    if (root.firstElementChild !== page) {
-      return;
-    }
-    navigate(ROUTES.profile, { replace: true });
-  } catch (err) {
-    if (root.firstElementChild !== page) {
-      return;
-    }
-    if (err instanceof ApiError && err.status === 401) {
-      navigate(ROUTES.login, { replace: true });
-      return;
-    }
-    const message = err instanceof ApiError && err.status === 0
-      ? 'Сервер недоступен. Проверьте интернет и попробуйте ещё раз'
-      : 'Что-то пошло не так. Попробуйте позже';
-    root.innerHTML = homeTemplate({ message, isError: true });
-  }
+  params: RouteParams,
+  setRefreshNotice: SetRefreshNotice
+): () => void {
+  return initProfile(root, navigate, params, setRefreshNotice);
 }

@@ -1,3 +1,4 @@
+import { normalizeUrl } from '../sanitize/sanitize.ts';
 import type { Rule } from './validation.types.ts';
 
 /**
@@ -31,6 +32,14 @@ export const maxByteLength = (max: number, message: string): Rule =>
   (value) => (new TextEncoder().encode(value).length <= max ? null : message);
 
 /**
+ * Число не меньше min.
+ * @param min
+ * @param message
+ */
+export const minNumber = (min: number, message: string): Rule =>
+  (value) => (Number(value) >= min ? null : message);
+
+/**
  * Значение должно соответствовать регулярному выражению.
  * @param regexp
  * @param message
@@ -47,3 +56,17 @@ export const email: Rule = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{
  */
 export const sameAs = (field: string, message: string): Rule =>
   (value, values = {}) => (value === values[field] ? null : message);
+
+/**
+ * В HTML должен быть заполненный текст.
+ * @param message
+ */
+export const richTextRequired = (message: string): Rule =>
+  (value) => ((new DOMParser().parseFromString(value, 'text/html').body.textContent ?? '').trim() !== '' ? null : message);
+
+/**
+ * Значение должно быть полным https-адресом.
+ * @param message
+ */
+export const httpsUrl = (message: string): Rule =>
+  (value) => (normalizeUrl(value) ? null : message);

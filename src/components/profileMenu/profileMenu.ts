@@ -1,8 +1,7 @@
-import { logout } from '../../modules/api/auth.ts';
+import { logout } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 /** Управляет меню профиля и выходом из аккаунта. */
@@ -15,6 +14,7 @@ export class ProfileMenu {
   private readonly onOutsideClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
   private readonly onLogout: () => Promise<void>;
+  private readonly unbindLinks: () => void;
   private pending = false;
   private destroyed = false;
 
@@ -27,7 +27,7 @@ export class ProfileMenu {
   constructor(
     navigate: Navigate,
     menuSelector = '#sidebar .profile-menu',
-    buttonSelector = '#sidebar .sidebar__item--profile',
+    buttonSelector = '#sidebar .sidebar__item_type_profile',
   ) {
     this.menuElement = requireElement<HTMLElement>(document, menuSelector);
     this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);
@@ -37,9 +37,9 @@ export class ProfileMenu {
     this.onToggle = this.toggle.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
     this.onKeydown = this.handleKeydown.bind(this);
-    this.onLogout = this.handleLogout.bind(this, navigate);
+    this.onLogout = this.handleLogout.bind(this);
 
-    bindLinks(this.menu, (path) => {
+    this.unbindLinks = bindLinks(this.menu, (path) => {
       this.close();
       navigate(path);
     });
@@ -78,7 +78,7 @@ export class ProfileMenu {
     this.button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', this.onOutsideClick);
     document.addEventListener('keydown', this.onKeydown);
-    this.menu.querySelector<HTMLElement>('a[data-link]')?.focus();
+    this.menu.querySelector<HTMLElement>('[role="menuitem"]:not([hidden])')?.focus();
   }
 
   /** Переключает видимость меню. */
@@ -121,7 +121,7 @@ export class ProfileMenu {
     }
     event.preventDefault();
     const items = [...this.menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .filter((item) => !(item instanceof HTMLButtonElement && item.disabled));
+      .filter((item) => !item.hidden && !(item instanceof HTMLButtonElement && item.disabled));
     const current = items.findIndex((item) => item === document.activeElement);
     let next = event.key === 'ArrowUp' ? current - 1 : current + 1;
     if (event.key === 'Home') {
@@ -143,9 +143,8 @@ export class ProfileMenu {
 
   /**
    * Завершает сессию или показывает ошибку выхода.
-   * @param navigate
    */
-  private async handleLogout(navigate: Navigate): Promise<void> {
+  private async handleLogout(): Promise<void> {
     if (this.pending || this.destroyed) {
       return;
     }
@@ -153,15 +152,11 @@ export class ProfileMenu {
     this.close();
     try {
       await logout();
-      if (!this.destroyed) {
-        navigate(ROUTES.login);
-      }
     } catch (err) {
       if (this.destroyed) {
         return;
       }
       if (err instanceof ApiError && err.status === 401) {
-        navigate(ROUTES.login);
         return;
       }
       if (err instanceof ApiError) {
@@ -181,6 +176,7 @@ export class ProfileMenu {
   destroy(): void {
     this.destroyed = true;
     this.close();
+    this.unbindLinks();
     this.button.removeEventListener('click', this.onToggle);
     this.logoutButton.removeEventListener('click', this.onLogout);
   }

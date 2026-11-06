@@ -1,0 +1,14 @@
+<div class="tabs{{#if className}} {{className}}{{/if}}" role="tablist" aria-label="{{label}}">
+  {{#each items}}
+    <button
+      class="tabs__tab"
+      id="{{../id}}-tab-{{value}}"
+      type="button"
+      role="tab"
+      data-tab="{{value}}"
+      aria-controls="{{../panelId}}"
+      aria-selected="{{#if selected}}true{{else}}false{{/if}}"
+      tabindex="{{#if selected}}0{{else}}-1{{/if}}"
+    >{{label}}</button>
+  {{/each}}
+</div>

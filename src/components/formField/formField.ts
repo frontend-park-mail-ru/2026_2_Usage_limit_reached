@@ -19,7 +19,7 @@ export function initPasswordToggles(root: HTMLElement): void {
     const isHidden = input.type === 'password';
 
     input.type = isHidden ? 'text' : 'password';
-    toggle.classList.toggle('form-field__toggle--visible', isHidden);
+    toggle.classList.toggle('form-field__toggle_visible', isHidden);
     toggle.setAttribute('aria-label', isHidden ? 'Скрыть пароль' : 'Показать пароль');
   });
 }

@@ -9,8 +9,21 @@
 </head>
 <body>
   <div class="app-layout" id="layout">
-    <div id="sidebar" hidden></div>
+    <div class="app-layout__sidebar" id="sidebar" hidden></div>
     <div id="app" class="app-layout__content"></div>
+    <div class="app-layout__notifications">
+      <div class="refresh-notice" id="refresh-notice" role="status" hidden>
+        <span>Не удалось обновить данные</span>
+        <button class="refresh-notice__button" type="button">
+          <span class="refresh-notice__icon" aria-hidden="true"></span>
+          <span class="refresh-notice__label">
+            <span data-refresh-label>Повторить</span>
+            <span class="refresh-notice__label-reserve" aria-hidden="true">Обновляем…</span>
+          </span>
+        </button>
+      </div>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
   </div>
 </body>
 </html>

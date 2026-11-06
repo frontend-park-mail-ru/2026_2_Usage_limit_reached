@@ -1,0 +1,4 @@
+<button class="like-button{{#if liked}} like-button_liked{{/if}}{{#if className}} {{className}}{{/if}}" type="button"
+    aria-pressed="{{#if liked}}true{{else}}false{{/if}}" aria-label="Нравится. Лайков: {{count}}">
+  <span class="like-button__count" aria-hidden="true">{{count}}</span>
+</button>
