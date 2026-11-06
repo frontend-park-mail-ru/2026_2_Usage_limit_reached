@@ -171,10 +171,19 @@ function handleBeforeUnload(event: BeforeUnloadEvent): void {
 export function initRouter(): () => void {
   let active = true;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
+  let lastStatus = authStore.getState().status;
   const unsubscribeAuth = authStore.subscribe(() => {
+    const { status } = authStore.getState();
+    const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
+    lastStatus = status;
     // Сначала завершаем действие Flux, затем выполняем переход.
     queueMicrotask(() => {
-      if (active) {
+      if (!active) {
+        return;
+      }
+      if (isLoggedOut) {
+        navigate(ROUTES.login, { replace: true, force: true });
+      } else {
         redirectByAuth();
       }
     });

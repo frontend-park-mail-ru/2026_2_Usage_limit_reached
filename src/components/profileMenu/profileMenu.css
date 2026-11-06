@@ -32,6 +32,10 @@
   cursor: pointer;
 }
 
+.profile-menu__item[hidden] {
+  display: none;
+}
+
 .profile-menu__item:not(:disabled):hover {
   background: var(--color-sidebar-hover);
 }
