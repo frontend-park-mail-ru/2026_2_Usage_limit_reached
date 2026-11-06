@@ -57,3 +57,8 @@ export interface PostUpdate extends PostInput {
 export interface CreatedPost {
   id: string;
 }
+
+export interface PostLikes {
+  likes_count: number;
+  liked_by_user: boolean;
+}

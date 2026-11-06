@@ -94,7 +94,7 @@
 .post-page__footer {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 8px;
   padding-top: 24px;
   border-top: 1px solid var(--color-input-border);
 }
@@ -112,10 +112,6 @@
   width: 24px;
   height: 24px;
   background: center no-repeat;
-}
-
-.post-page__stat_type_likes::before {
-  background-image: url('/assets/post/like.svg');
 }
 
 .post-page__stat_type_comments::before {

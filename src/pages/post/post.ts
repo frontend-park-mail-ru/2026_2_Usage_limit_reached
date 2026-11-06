@@ -1,15 +1,16 @@
 import postTemplate from './post.hbs';
 import { requireElement } from '../../utils/helpers/dom.ts';
 import { formatPostDate } from '../../utils/helpers/posts.ts';
-import { checkSession } from '../../modules/auth/auth.actions.ts';
-import { deletePost, getPost } from '../../modules/api/posts.ts';
-import type { Post } from '../../modules/api/posts.types.ts';
+import { checkSession, expireSession } from '../../modules/auth/auth.actions.ts';
+import { deletePost, getPost, setPostLike } from '../../modules/api/posts.ts';
+import type { Post, PostLikes } from '../../modules/api/posts.types.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
 import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
 import { ActionMenu } from '../../components/actionMenu/actionMenu.ts';
 import { ConfirmDialog } from '../../components/confirmDialog/confirmDialog.ts';
 import { DonateDialog } from '../../components/donateDialog/donateDialog.ts';
+import { LikeButton } from '../../components/likeButton/likeButton.ts';
 import { showToast } from '../../components/toast/toast.ts';
 import { ROUTES, postEditRoute } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
@@ -18,6 +19,7 @@ import {
   DELETED_MESSAGE,
   DELETE_ERROR,
   DELETE_NETWORK_ERROR,
+  LIKE_ERROR,
   LOADING_MESSAGE,
   LOAD_ERROR,
   POST_MENU_ITEMS,
@@ -42,6 +44,7 @@ function buildViewModel(post: Post, isOwner: boolean) {
     dateLabel: publishedAt ? formatPostDate(publishedAt) : '',
     title: post.title,
     likesCount: post.likes_count,
+    liked: post.liked_by_user,
     isOwner,
     menuItems: POST_MENU_ITEMS,
   };
@@ -120,6 +123,46 @@ function bindDonate(root: HTMLElement, post: Post, isGuest: boolean, navigate: N
 }
 
 /**
+ * Отправляет лайк и возвращает ответ сервера или null.
+ * @param id
+ * @param liked
+ * @param navigate
+ */
+async function sendLike(id: string, liked: boolean, navigate: Navigate): Promise<PostLikes | null> {
+  try {
+    return await setPostLike(id, liked);
+  } catch (err) {
+    if (!(err instanceof ApiError)) {
+      throw err;
+    }
+    if (err.status === 401) {
+      expireSession();
+      navigate(ROUTES.login);
+    } else {
+      showToast(err.status === 0 ? err.text : LIKE_ERROR);
+    }
+    return null;
+  }
+}
+
+/**
+ * Подключает кнопку лайка.
+ * @param root
+ * @param post
+ * @param isGuest
+ * @param navigate
+ */
+function bindLike(root: HTMLElement, post: Post, isGuest: boolean, navigate: Navigate): void {
+  const button = requireElement<HTMLButtonElement>(root, '.like-button');
+  if (isGuest) {
+    button.addEventListener('click', () => navigate(ROUTES.login));
+  } else {
+    const state = { likes_count: post.likes_count, liked_by_user: post.liked_by_user };
+    new LikeButton(button, state, (liked) => sendLike(post.id, liked, navigate));
+  }
+}
+
+/**
  * Загружает пост и показывает его.
  * @param root
  * @param navigate
@@ -159,6 +202,7 @@ export async function initPost(root: HTMLElement, navigate: Navigate, params: Ro
   root.innerHTML = postTemplate(buildViewModel(post, isOwner));
   requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
   bindBackLink(root);
+  bindLike(root, post, isGuest, navigate);
   if (isOwner) {
     bindOwnerActions(root, post, navigate);
   } else {
