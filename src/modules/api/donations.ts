@@ -8,7 +8,7 @@ import type { DonationInput, DonationResult, DonationsPage } from './donations.t
  * @throws {ApiError}
  */
 export const sendDonation = (authorId: string, data: DonationInput) =>
-  request<DonationResult>(`/authors/${encodeURIComponent(authorId)}/donations`, { method: 'POST', data });
+  request<DonationResult>(`/authors/${encodeURIComponent(authorId)}/donation`, { method: 'POST', data });
 
 /**
  * Получает страницу полученных пожертвований.
