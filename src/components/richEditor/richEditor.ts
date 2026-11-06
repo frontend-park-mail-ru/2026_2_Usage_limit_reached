@@ -214,11 +214,16 @@ export class RichEditor {
 
   /** Открывает окно ссылки с выделенным текстом. */
   private openLinkDialog(): void {
-    this.linkDialog.open(this.savedRange?.toString() ?? '', (text, href) => {
+    const range = this.savedRange?.cloneRange() ?? null;
+    this.linkDialog.open(range?.toString() ?? '', (text, href) => {
+      this.savedRange = range;
       const link = document.createElement('a');
       link.href = href;
       link.textContent = text;
-      this.run('insertHTML', link.outerHTML);
+      this.run('insertHTML', sanitizeHtml(link.outerHTML));
+    }, () => {
+      this.savedRange = range;
+      this.restoreSelection();
     });
   }
 }
