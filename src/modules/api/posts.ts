@@ -1,5 +1,5 @@
 import { request } from './request.ts';
-import type { CreatedPost, Post, PostInput, PostsPage, PostsQuery, PostUpdate } from './posts.types.ts';
+import type { CreatedPost, Post, PostInput, PostLikes, PostsPage, PostsQuery, PostUpdate } from './posts.types.ts';
 
 /**
  * Собирает параметры списка постов.
@@ -62,3 +62,12 @@ export const updatePost = (id: string, data: PostUpdate) =>
  * @throws {ApiError}
  */
 export const deletePost = (id: string) => request<void>(postPath(id), { method: 'DELETE', responseType: 'empty' });
+
+/**
+ * Ставит или снимает лайк.
+ * @param id
+ * @param liked
+ * @throws {ApiError}
+ */
+export const setPostLike = (id: string, liked: boolean) =>
+  request<PostLikes>(`${postPath(id)}/like`, { method: liked ? 'POST' : 'DELETE' });

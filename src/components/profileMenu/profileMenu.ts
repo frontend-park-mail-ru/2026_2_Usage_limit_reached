@@ -78,7 +78,7 @@ export class ProfileMenu {
     this.button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', this.onOutsideClick);
     document.addEventListener('keydown', this.onKeydown);
-    this.menu.querySelector<HTMLElement>('a[data-link]')?.focus();
+    this.menu.querySelector<HTMLElement>('[role="menuitem"]:not([hidden])')?.focus();
   }
 
   /** Переключает видимость меню. */
@@ -121,7 +121,7 @@ export class ProfileMenu {
     }
     event.preventDefault();
     const items = [...this.menu.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .filter((item) => !(item instanceof HTMLButtonElement && item.disabled));
+      .filter((item) => !item.hidden && !(item instanceof HTMLButtonElement && item.disabled));
     const current = items.findIndex((item) => item === document.activeElement);
     let next = event.key === 'ArrowUp' ? current - 1 : current + 1;
     if (event.key === 'Home') {

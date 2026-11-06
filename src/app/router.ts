@@ -159,9 +159,9 @@ export function navigate(path: NavigationPath, { replace = false, force = false 
     return;
   }
   if (replace || redirect) {
-    history.replaceState({}, '', nextPath);
+    history.replaceState(history.state, '', nextPath);
   } else {
-    history.pushState({}, '', nextPath);
+    history.pushState({ from: currentPath }, '', nextPath);
   }
   renderCurrentRoute();
 }
@@ -198,17 +198,25 @@ export function initRouter(): () => void {
     }
   });
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
+  let lastStatus = authStore.getState().status;
   const unsubscribeAuth = authStore.subscribe(() => {
+    const { status } = authStore.getState();
+    const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
+    lastStatus = status;
     // Сначала завершаем действие Flux, затем выполняем переход.
     queueMicrotask(() => {
-      if (active) {
-        const path = window.location.pathname;
-        if (authStore.getState().status === 'unknown'
-          && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
-          renderCurrentRoute();
-        } else {
-          redirectByAuth();
-        }
+      if (!active) {
+        return;
+      }
+      const currentStatus = authStore.getState().status;
+      const path = window.location.pathname;
+      if (isLoggedOut && currentStatus === 'guest') {
+        navigate(ROUTES.login, { replace: true, force: true });
+      } else if (currentStatus === 'unknown'
+        && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
+        renderCurrentRoute();
+      } else {
+        redirectByAuth();
       }
     });
   });

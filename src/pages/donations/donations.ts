@@ -21,7 +21,7 @@ export function renderDonations(): string {
 function buildCard(donation: ReceivedDonation) {
   return {
     id: donation.id,
-    name: donation.donor?.nickname ?? ANONYMOUS_DONOR,
+    name: donation.is_anonymous || !donation.donor ? ANONYMOUS_DONOR : donation.donor.username,
     paidAt: donation.paid_at,
     dateLabel: formatPostDate(donation.paid_at),
     amountLabel: formatMoney(donation.amount_minor, donation.currency),
