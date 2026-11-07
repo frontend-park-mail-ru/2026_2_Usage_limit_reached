@@ -2,6 +2,7 @@ import * as authApi from '../api/auth.ts';
 import { getProfile, getProfilePosts } from '../api/profile.ts';
 import type { LoginData, SignupData } from '../api/auth.types.ts';
 import { ApiError } from '../api/request.ts';
+import { invalidateCsrfRequests, notifyCsrfSessionChange, resetCsrfToken } from '../api/csrf.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
 import type { SessionContext } from './auth.types.ts';
 import type { Profile, ProfilePostsQuery } from '../api/profile.types.ts';
@@ -27,6 +28,8 @@ export async function expireSession(expected: OfflineClearToken | undefined = co
   }
   sessionVersion += 1;
   confirmedSession = undefined;
+  resetCsrfToken();
+  notifyCsrfSessionChange();
   authDispatcher.dispatch({ type: 'auth/guest' });
   return true;
 }
@@ -70,8 +73,12 @@ async function loadSessionProfile(): Promise<Profile | undefined> {
     }
     if (confirmedSession?.userId !== profile.user.id
       || confirmedSession?.offlineToken?.generation !== saved?.generation) {
+      if (confirmedSession?.userId !== profile.user.id) {
+        resetCsrfToken();
+      }
       if (confirmedSession) {
         sessionVersion += 1;
+        invalidateCsrfRequests();
       }
       confirmedSession = Object.freeze({ userId: profile.user.id, offlineToken: saved });
     }
@@ -81,13 +88,13 @@ async function loadSessionProfile(): Promise<Profile | undefined> {
     if (!isCurrent()) {
       return undefined;
     }
-    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) {
+    if (error instanceof ApiError && !error.isCsrfFailure && (error.status === 403 || error.status === 404)) {
       const cleared = await clearOfflineCopy(token ?? fallback, isCurrent);
       if (cleared === false || !isCurrent()) {
         return undefined;
       }
     }
-    if (error instanceof ApiError && error.status === 401 && !await expireSession(token ?? fallback)) {
+    if (error instanceof ApiError && error.isUnauthorized && !await expireSession(token ?? fallback)) {
       return undefined;
     }
     throw error;
@@ -103,6 +110,7 @@ export function getSessionVersion(): number {
 export function invalidateSessionMemory(): void {
   sessionVersion += 1;
   confirmedSession = undefined;
+  resetCsrfToken();
   authDispatcher.dispatch({ type: 'auth/unknown' });
 }
 
@@ -116,6 +124,7 @@ export async function handleOfflineSessionChange(): Promise<void> {
   if (session && token && session.offlineToken?.generation !== token.generation) {
     sessionVersion += 1;
     confirmedSession = undefined;
+    resetCsrfToken();
     authDispatcher.dispatch({ type: 'auth/unknown' });
   }
 }
@@ -151,7 +160,7 @@ export async function runSessionRequest<T>(context: SessionContext, request: () 
     if (!isCurrent()) {
       return undefined;
     }
-    if (error instanceof ApiError && error.status === 401) {
+    if (error instanceof ApiError && error.isUnauthorized) {
       if (!await expireSession(context.offlineToken)) {
         return undefined;
       }
@@ -172,7 +181,7 @@ export async function runSessionMutation<T>(context: SessionContext, request: ()
     if (!isSessionCurrent(context)) {
       return undefined;
     }
-    if (error instanceof ApiError && error.status === 401) {
+    if (error instanceof ApiError && error.isUnauthorized) {
       if (!await expireSession(context.offlineToken)) {
         return undefined;
       }
@@ -190,6 +199,7 @@ export async function runSessionMutation<T>(context: SessionContext, request: ()
     return undefined;
   }
   sessionVersion += 1;
+  invalidateCsrfRequests();
   confirmedSession = Object.freeze({ userId: context.userId, offlineToken: token });
   return result;
 }
@@ -208,7 +218,7 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
   try {
     posts = await runSessionRequest(context, () => getProfilePosts(parameters));
   } catch (error) {
-    if (isCurrent() && error instanceof ApiError && error.status === 403) {
+    if (isCurrent() && error instanceof ApiError && error.status === 403 && !error.isCsrfFailure) {
       const cleared = await clearOfflineCopy(context.offlineToken, () => isSessionCurrent(context));
       if (cleared === false || !isSessionCurrent(context)) {
         return undefined;
@@ -230,6 +240,7 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
 async function authenticate(request: () => ReturnType<typeof authApi.login>): Promise<void> {
   const version = ++sessionVersion;
   pendingChangeVersion = version;
+  invalidateCsrfRequests();
   try {
     const fallback = confirmedSession?.offlineToken ?? captureOfflineClearFallback();
     const token = await captureOfflineToken();
@@ -237,11 +248,15 @@ async function authenticate(request: () => ReturnType<typeof authApi.login>): Pr
       return;
     }
     const user = await request();
+    if (version === sessionVersion) {
+      resetCsrfToken();
+    }
     const cleared = version === sessionVersion
       ? await clearOfflineCopy(token ?? fallback, () => version === sessionVersion) : false;
     if (cleared !== false && version === sessionVersion) {
       confirmedSession = undefined;
       pendingChangeVersion = undefined;
+      notifyCsrfSessionChange();
       authDispatcher.dispatch({ type: 'auth/authenticated', user });
     }
   } finally {
@@ -266,6 +281,7 @@ export function signup(data: SignupData): Promise<void> {
 export async function logout(): Promise<void> {
   const version = ++sessionVersion;
   pendingChangeVersion = version;
+  invalidateCsrfRequests();
   const fallback = confirmedSession?.offlineToken ?? captureOfflineClearFallback();
   const token = await captureOfflineToken();
   try {
@@ -274,10 +290,11 @@ export async function logout(): Promise<void> {
     }
     await authApi.logout();
     if (version === sessionVersion) {
+      resetCsrfToken();
       await expireSession(token ?? fallback);
     }
   } catch (err) {
-    if (version === sessionVersion && err instanceof ApiError && err.status === 401) {
+    if (version === sessionVersion && err instanceof ApiError && err.isUnauthorized) {
       await expireSession(token ?? fallback);
     }
     throw err;

@@ -20,6 +20,7 @@ import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
 import { checkSession, invalidateSessionMemory } from '../modules/auth/auth.actions.ts';
 import { initOfflineSync } from '../modules/offline/offline.storage.ts';
+import { initCsrfSync } from '../modules/api/csrf.ts';
 import { authStore } from '../modules/auth/auth.store.ts';
 import { initRefreshNotice } from '../components/refreshNotice/refreshNotice.ts';
 import { ROUTES, matchRoute } from './paths.ts';
@@ -197,6 +198,11 @@ export function initRouter(): () => void {
       invalidateSessionMemory();
     }
   });
+  const stopCsrfSync = initCsrfSync(() => {
+    if (active) {
+      invalidateSessionMemory();
+    }
+  });
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   let lastStatus = authStore.getState().status;
   const unsubscribeAuth = authStore.subscribe(() => {
@@ -233,6 +239,7 @@ export function initRouter(): () => void {
     refreshNotice?.destroy();
     refreshNotice = undefined;
     stopOfflineSync();
+    stopCsrfSync();
     unbindLinks();
     unsubscribeAuth();
     window.removeEventListener('popstate', handlePopState);
