@@ -20,11 +20,11 @@
   gap: 12px;
 }
 
-.confirm-dialog__button_type_cancel {
+.confirm-dialog__button-cancel {
   width: 152px;
 }
 
-.confirm-dialog__button_type_confirm {
+.confirm-dialog__button-confirm {
   flex: 1;
   width: auto;
 }

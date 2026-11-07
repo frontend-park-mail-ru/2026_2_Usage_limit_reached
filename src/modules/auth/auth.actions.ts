@@ -22,6 +22,9 @@ export async function expireSession(expected: OfflineClearToken | undefined = co
   if (cleared === false || version !== sessionVersion) {
     return false;
   }
+  if (pendingChangeVersion === version) {
+    pendingChangeVersion = undefined;
+  }
   sessionVersion += 1;
   confirmedSession = undefined;
   authDispatcher.dispatch({ type: 'auth/guest' });
@@ -129,22 +132,23 @@ export function isSessionCurrent(context: SessionContext): boolean {
 
 /** Выполняет запрос аккаунта, устаревшие результаты и ошибки игнорируются. */
 export async function runSessionRequest<T>(context: SessionContext, request: () => Promise<T>): Promise<T | undefined> {
-  if (!isSessionCurrent(context)) {
+  const version = sessionVersion;
+  const isCurrent = () => version === sessionVersion && isSessionCurrent(context);
+  if (!isCurrent()) {
     return undefined;
   }
-  const version = sessionVersion;
   try {
     const result = await request();
-    if (version !== sessionVersion || !isSessionCurrent(context)) {
+    if (!isCurrent()) {
       return undefined;
     }
     const token = await captureOfflineToken();
     if (context.offlineToken && token && context.offlineToken.generation !== token.generation) {
       return undefined;
     }
-    return version === sessionVersion && isSessionCurrent(context) ? result : undefined;
+    return isCurrent() ? result : undefined;
   } catch (error) {
-    if (version !== sessionVersion || !isSessionCurrent(context)) {
+    if (!isCurrent()) {
       return undefined;
     }
     if (error instanceof ApiError && error.status === 401) {
@@ -237,13 +241,14 @@ async function authenticate(request: () => ReturnType<typeof authApi.login>): Pr
       ? await clearOfflineCopy(token ?? fallback, () => version === sessionVersion) : false;
     if (cleared !== false && version === sessionVersion) {
       confirmedSession = undefined;
+      pendingChangeVersion = undefined;
       authDispatcher.dispatch({ type: 'auth/authenticated', user });
     }
   } finally {
     if (pendingChangeVersion === version) {
       pendingChangeVersion = undefined;
-      void handleOfflineSessionChange();
     }
+    void handleOfflineSessionChange();
   }
 }
 
@@ -279,7 +284,7 @@ export async function logout(): Promise<void> {
   } finally {
     if (pendingChangeVersion === version) {
       pendingChangeVersion = undefined;
-      void handleOfflineSessionChange();
     }
+    void handleOfflineSessionChange();
   }
 }

@@ -30,9 +30,9 @@
     </div>
     {{#unless offline}}
     <div class="profile__actions">
-      <a class="button button_view_secondary profile__button profile__button_type_edit" href="/settings" data-link>Редактировать профиль</a>
+      <a class="button button_view_secondary profile__button profile__button-edit" href="/settings" data-link>Редактировать профиль</a>
       {{#if hasAuthor}}
-        <a class="button button_view_secondary profile__button profile__button_type_donations" href="/donations" data-link>Пожертвования</a>
+        <a class="button button_view_secondary profile__button profile__button-donations" href="/donations" data-link>Пожертвования</a>
       {{/if}}
     </div>
     {{/unless}}
@@ -66,7 +66,7 @@
       <div class="profile__toolbar">
         {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs}}
         <div class="profile__controls">
-          <a class="button button_view_accent button_borderless profile__button profile__button_type_add" href="/posts/new" data-link data-create-post>
+          <a class="button button_view_accent button_borderless profile__button profile__button-add" href="/posts/new" data-link data-create-post>
             <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
             Создать пост
           </a>
@@ -83,7 +83,7 @@
       <div class="profile__author-content">
         <h2 class="profile__author-title" id="profile-author-title">Станьте автором, чтобы начать публиковать контент</h2>
         <p class="profile__author-text">Делитесь своими идеями, историями и знаниями с аудиторией. Авторский профиль даёт доступ к публикации постов, статистике и другим возможностям.</p>
-        <button class="button button_view_primary button_borderless profile__button profile__button_type_become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
+        <button class="button button_view_primary button_borderless profile__button profile__button-become-author" type="button" aria-disabled="true" title="Будет доступно позже">Стать автором</button>
       </div>
       <img class="profile__author-image" src="/assets/profile/img-author.svg" alt="" />
     </section>
