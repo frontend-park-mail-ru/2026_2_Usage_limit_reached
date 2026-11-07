@@ -5,7 +5,7 @@
 {{else if unavailable}}
   <section class="post-page" aria-labelledby="post-page-unavailable">
     <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
-    <div class="post-page__card post-page__card_type_unavailable">
+    <div class="post-page__card post-page__card-unavailable">
       <h1 class="post-page__title" id="post-page-unavailable">Публикация недоступна</h1>
       <p class="post-page__unavailable-text">Автор удалил публикацию или ссылка больше не работает. Вернитесь в профиль автора</p>
     </div>
@@ -29,8 +29,8 @@
     <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
     <div class="rich-text post-page__body" data-post-body></div>
     <footer class="post-page__footer">
-      <span class="post-page__stat post-page__stat_type_likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
-      <span class="post-page__stat post-page__stat_type_comments" aria-label="Комментариев: 0">0</span>
+      <span class="post-page__stat post-page__stat-likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+      <span class="post-page__stat post-page__stat-comments" aria-label="Комментариев: 0">0</span>
       {{#unless isOwner}}
         <button class="button button_view_primary button_borderless post-page__donate" type="button" data-donate>Пожертвовать</button>
       {{/unless}}
