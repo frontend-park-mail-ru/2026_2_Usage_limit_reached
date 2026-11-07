@@ -69,7 +69,7 @@ function updateLayout(layout: Layout): void {
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  requireElement(document, '#layout').classList.toggle('app-layout_sidebar', hasSidebar);
+  requireElement(document, '#layout').classList.toggle('app-layout-wrapper', hasSidebar);
   currentLayout = layout;
 }
 

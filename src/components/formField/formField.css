@@ -75,12 +75,12 @@
   outline-offset: 3px;
 }
 
-.form-field__icon_type_visible,
-.form-field__toggle_visible .form-field__icon_type_hidden {
+.form-field__icon-visible,
+.form-field__toggle_visible .form-field__icon-hidden {
   display: none;
 }
 
-.form-field__toggle_visible .form-field__icon_type_visible {
+.form-field__toggle_visible .form-field__icon-visible {
   display: block;
 }
 
