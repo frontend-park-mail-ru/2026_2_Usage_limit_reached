@@ -1,4 +1,5 @@
 import { request } from './request.ts';
+import { sessionRequest } from './session.ts';
 import type { AvatarResponse, Profile, ProfilePosts, ProfileUpdate } from './profile.types.ts';
 
 /**
@@ -13,7 +14,10 @@ export const getProfile = () => request<Profile>('/profile/me');
  * @throws {ApiError}
  */
 export const updateProfile = (data: ProfileUpdate) =>
-  request<void>('/profile/me', { method: 'PUT', data, responseType: 'empty' });
+  sessionRequest<void>('/profile/me', { method: 'PUT', data, responseType: 'empty' }, () => ({
+    username: data.user.username,
+    nickname: data.user.nickname,
+  }));
 
 /**
  * Загружает аватар.
@@ -23,14 +27,15 @@ export const updateProfile = (data: ProfileUpdate) =>
 export const uploadAvatar = (file: Blob) => {
   const data = new FormData();
   data.append('avatar', file);
-  return request<AvatarResponse>('/profile/me/avatar', { method: 'PUT', data });
+  return sessionRequest<AvatarResponse>('/profile/me/avatar', { method: 'PUT', data }, ({ avatar_url }) => ({ avatar_url }));
 };
 
 /**
  * Удаляет аватар.
  * @throws {ApiError}
  */
-export const deleteAvatar = () => request<void>('/profile/me/avatar', { method: 'DELETE', responseType: 'empty' });
+export const deleteAvatar = () =>
+  sessionRequest<void>('/profile/me/avatar', { method: 'DELETE', responseType: 'empty' }, () => ({ avatar_url: undefined }));
 
 /**
  * Получает посты текущего пользователя.

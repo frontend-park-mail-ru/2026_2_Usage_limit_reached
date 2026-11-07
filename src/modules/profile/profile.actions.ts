@@ -1,6 +1,5 @@
 import * as profileApi from '../api/profile.ts';
 import type { ProfileUpdate } from '../api/profile.types.ts';
-import { updateSession, withSession } from '../api/session.ts';
 
 /**
  * Сохраняет профиль.
@@ -8,8 +7,7 @@ import { updateSession, withSession } from '../api/session.ts';
  * @throws {ApiError}
  */
 export async function saveProfile(data: ProfileUpdate): Promise<void> {
-  await withSession(() => profileApi.updateProfile(data));
-  updateSession({ username: data.user.username, nickname: data.user.nickname });
+  await profileApi.updateProfile(data);
 }
 
 /**
@@ -18,8 +16,7 @@ export async function saveProfile(data: ProfileUpdate): Promise<void> {
  * @throws {ApiError}
  */
 export async function uploadAvatar(file: Blob): Promise<string> {
-  const { avatar_url } = await withSession(() => profileApi.uploadAvatar(file));
-  updateSession({ avatar_url });
+  const { avatar_url } = await profileApi.uploadAvatar(file);
   return avatar_url;
 }
 
@@ -28,6 +25,5 @@ export async function uploadAvatar(file: Blob): Promise<string> {
  * @throws {ApiError}
  */
 export async function deleteAvatar(): Promise<void> {
-  await withSession(profileApi.deleteAvatar);
-  updateSession({ avatar_url: undefined });
+  await profileApi.deleteAvatar();
 }
