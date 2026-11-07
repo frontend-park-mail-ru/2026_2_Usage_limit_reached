@@ -17,23 +17,9 @@ export function renderSidebar(): string {
   return sidebarTemplate({ avatarUrl: getAvatarUrl() });
 }
 
-/**
- * Подключает меню профиля в сайдбаре.
- * @param navigate
- */
-export function initSidebarProfileMenu(navigate: Navigate): void {
-  profileMenu = new ProfileMenu(navigate);
-}
-
 /** Закрывает меню профиля. */
 export function closeSidebarProfileMenu(): void {
   profileMenu?.close();
-}
-
-/** Снимает обработчики меню профиля и удаляет ссылку на него. */
-export function destroySidebarProfileMenu(): void {
-  profileMenu?.destroy();
-  profileMenu = null;
 }
 
 /** Показывает аватар или иконку. */
@@ -53,13 +39,19 @@ function updateSidebarAvatar(): void {
   icon.hidden = !!url;
 }
 
-/** Подписывает аватар на store. */
-export function initSidebarAvatar(): void {
+/**
+ * Подключает меню профиля и аватар.
+ * @param navigate
+ */
+export function initSidebar(navigate: Navigate): void {
+  profileMenu = new ProfileMenu(navigate);
   unsubscribeAvatar = authStore.subscribe(updateSidebarAvatar);
 }
 
-/** Отписывает аватар от store. */
-export function destroySidebarAvatar(): void {
+/** Снимает обработчики сайдбара. */
+export function destroySidebar(): void {
+  profileMenu?.destroy();
+  profileMenu = null;
   unsubscribeAvatar?.();
   unsubscribeAvatar = null;
 }
