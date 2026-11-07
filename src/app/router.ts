@@ -115,12 +115,9 @@ export function initRouter(): () => void {
   let active = true;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   const unsubscribeAuth = authStore.subscribe(() => {
-    // Сначала завершаем действие Flux, затем выполняем переход.
-    queueMicrotask(() => {
-      if (active) {
-        redirectByAuth();
-      }
-    });
+    if (active) {
+      redirectByAuth();
+    }
   });
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();
