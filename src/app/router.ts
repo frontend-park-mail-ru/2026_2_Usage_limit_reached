@@ -75,7 +75,7 @@ function updateLayout(layout: Layout): void {
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  requireElement(document, '#layout').classList.toggle('app-layout_sidebar', hasSidebar);
+  requireElement(document, '#layout').classList.toggle('app-layout-wrapper', hasSidebar);
   currentLayout = layout;
 }
 
@@ -121,12 +121,9 @@ export function initRouter(): () => void {
   let active = true;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   const unsubscribeAuth = authStore.subscribe(() => {
-    // Сначала завершаем действие Flux, затем выполняем переход.
-    queueMicrotask(() => {
-      if (active) {
-        redirectByAuth();
-      }
-    });
+    if (active) {
+      redirectByAuth();
+    }
   });
   window.addEventListener('popstate', renderCurrentRoute);
   renderCurrentRoute();

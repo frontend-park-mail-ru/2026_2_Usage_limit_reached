@@ -69,7 +69,7 @@ export function destroySidebarAvatar(): void {
  * @param path
  */
 export function updateSidebarProfileState(path: string): void {
-  const profileButton = document.querySelector('#sidebar .sidebar__item_type_profile');
+  const profileButton = document.querySelector('.sidebar__item-profile');
   if (!profileButton) {
     return;
   }

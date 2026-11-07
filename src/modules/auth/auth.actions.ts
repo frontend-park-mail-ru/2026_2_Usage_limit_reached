@@ -11,6 +11,9 @@ let pendingChangeVersion: number | undefined;
 
 /** Сохраняет состояние гостя после ответа backend об отсутствии сессии. */
 export function expireSession(): void {
+  if (pendingChangeVersion === sessionVersion) {
+    pendingChangeVersion = undefined;
+  }
   sessionVersion += 1;
   authDispatcher.dispatch({ type: 'auth/guest' });
 }
@@ -22,9 +25,13 @@ export function expireSession(): void {
 async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) => SessionUser) {
   const version = sessionVersion;
   const canUpdate = pendingChangeVersion === undefined;
+  const isCurrent = () => canUpdate && version === sessionVersion;
+  if (!isCurrent()) {
+    return undefined;
+  }
   try {
     const result = await request();
-    if (!canUpdate || version !== sessionVersion) {
+    if (!isCurrent()) {
       return undefined;
     }
     if (getUser) {
@@ -32,7 +39,7 @@ async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) =
     }
     return result;
   } catch (err) {
-    if (!canUpdate || version !== sessionVersion) {
+    if (!isCurrent()) {
       return undefined;
     }
     if (err instanceof ApiError && err.status === 401) {
@@ -62,6 +69,7 @@ async function authenticate(request: () => ReturnType<typeof authApi.login>): Pr
   try {
     const user = await request();
     if (version === sessionVersion) {
+      pendingChangeVersion = undefined;
       authDispatcher.dispatch({ type: 'auth/authenticated', user });
     }
   } finally {
