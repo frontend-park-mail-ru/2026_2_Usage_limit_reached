@@ -1,8 +1,10 @@
+@import url('./app-layout.css');
 @import url('../components/sidebar/sidebar.css');
 @import url('../components/profileMenu/profileMenu.css');
 @import url('../components/formField/formField.css');
 @import url('./auth.css');
 @import url('./button.css');
+@import url('./home.css');
 @import url('./profile.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');

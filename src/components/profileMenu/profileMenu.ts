@@ -1,8 +1,7 @@
-import { logout } from '../../modules/api/auth.ts';
+import { logout } from '../../modules/auth/auth.actions.ts';
 import { ApiError } from '../../modules/api/request.ts';
 import { bindLinks } from '../../utils/helpers/bindLinks.ts';
 import { requireElement } from '../../utils/helpers/dom.ts';
-import { ROUTES } from '../../app/paths.ts';
 import type { Navigate } from '../../app/paths.ts';
 
 /** Управляет меню профиля и выходом из аккаунта. */
@@ -15,6 +14,7 @@ export class ProfileMenu {
   private readonly onOutsideClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
   private readonly onLogout: () => Promise<void>;
+  private readonly unbindLinks: () => void;
   private pending = false;
   private destroyed = false;
 
@@ -26,8 +26,8 @@ export class ProfileMenu {
    */
   constructor(
     navigate: Navigate,
-    menuSelector = '#sidebar .profile-menu',
-    buttonSelector = '#sidebar .sidebar__item--profile',
+    menuSelector = '.profile-menu',
+    buttonSelector = '.sidebar__item-profile',
   ) {
     this.menuElement = requireElement<HTMLElement>(document, menuSelector);
     this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);
@@ -37,9 +37,9 @@ export class ProfileMenu {
     this.onToggle = this.toggle.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
     this.onKeydown = this.handleKeydown.bind(this);
-    this.onLogout = this.handleLogout.bind(this, navigate);
+    this.onLogout = this.handleLogout.bind(this);
 
-    bindLinks(this.menu, (path) => {
+    this.unbindLinks = bindLinks(this.menu, (path) => {
       this.close();
       navigate(path);
     });
@@ -143,9 +143,8 @@ export class ProfileMenu {
 
   /**
    * Завершает сессию или показывает ошибку выхода.
-   * @param navigate
    */
-  private async handleLogout(navigate: Navigate): Promise<void> {
+  private async handleLogout(): Promise<void> {
     if (this.pending || this.destroyed) {
       return;
     }
@@ -153,15 +152,11 @@ export class ProfileMenu {
     this.close();
     try {
       await logout();
-      if (!this.destroyed) {
-        navigate(ROUTES.login);
-      }
     } catch (err) {
       if (this.destroyed) {
         return;
       }
       if (err instanceof ApiError && err.status === 401) {
-        navigate(ROUTES.login);
         return;
       }
       if (err instanceof ApiError) {
@@ -181,6 +176,7 @@ export class ProfileMenu {
   destroy(): void {
     this.destroyed = true;
     this.close();
+    this.unbindLinks();
     this.button.removeEventListener('click', this.onToggle);
     this.logoutButton.removeEventListener('click', this.onLogout);
   }
