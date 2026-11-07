@@ -104,6 +104,9 @@ function getErrorTitle(status: PostStatus, intent: EditorIntent): string {
  * @param err
  */
 function getErrorText(err: ApiError): string {
+  if (err.isCsrfError) {
+    return err.text;
+  }
   const texts: Record<number, string> = { 403: AUTHOR_ONLY_ERROR, 404: NOT_FOUND_ERROR, 409: CONFLICT_ERROR };
   if (err.status === 400) {
     return err.text;
@@ -196,7 +199,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (!(err instanceof ApiError)) {
         throw err;
       }
-      if (err.status === 401) {
+      if (err.isUnauthorized) {
         return;
       }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));
@@ -267,7 +270,7 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
       }
     }
   } catch (err) {
-    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.status === 401)) {
+    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
       return;
     }
     if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {

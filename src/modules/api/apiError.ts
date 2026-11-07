@@ -19,6 +19,11 @@ export class ApiError extends Error {
     return this.source === 'api' && this.status === 403 && this.code === 'csrf_failed';
   }
 
+  /** Ошибка получения токена или отказ проверки перед выполнением действия. */
+  get isCsrfError(): boolean {
+    return this.source === 'csrf' || this.isCsrfFailure;
+  }
+
   /** Ошибка подготовки запроса не подтверждает отсутствие сессии. */
   get isUnauthorized(): boolean {
     return this.source === 'api' && this.status === 401;

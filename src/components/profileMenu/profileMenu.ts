@@ -156,7 +156,7 @@ export class ProfileMenu {
       if (this.destroyed) {
         return;
       }
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && err.isUnauthorized) {
         return;
       }
       if (err instanceof ApiError) {

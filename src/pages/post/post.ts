@@ -83,7 +83,7 @@ async function removePost(id: string, navigate: Navigate, context: SessionContex
       try {
         await deletePost(id);
       } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 404) {
+        if (!(error instanceof ApiError) || error.isCsrfError || error.status !== 404) {
           throw error;
         }
       }
@@ -99,8 +99,11 @@ async function removePost(id: string, navigate: Navigate, context: SessionContex
     if (!(err instanceof ApiError)) {
       throw err;
     }
-    if (err.status === 401) {
+    if (err.isUnauthorized) {
       return null;
+    }
+    if (err.isCsrfError) {
+      return err.text;
     }
     if (err.status !== 404) {
       return err.status === 0 ? DELETE_NETWORK_ERROR : DELETE_ERROR;
@@ -178,8 +181,8 @@ async function sendLike(
     if (!(err instanceof ApiError)) {
       throw err;
     }
-    if (err.status !== 401) {
-      showToast(err.status === 0 ? err.text : LIKE_ERROR);
+    if (!err.isUnauthorized) {
+      showToast(err.isCsrfError || err.status === 0 ? err.text : LIKE_ERROR);
     }
     return null;
   }

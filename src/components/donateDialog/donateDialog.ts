@@ -239,10 +239,10 @@ export class DonateDialog {
       if (!this.dialog.open || this.requestKey !== requestKey) {
         return;
       }
-      if (err.status === 409) {
+      if (!err.isCsrfError && err.status === 409) {
         this.requestKey = null;
       }
-      this.showError(DONATE_ERROR_MESSAGES[err.status] ?? DONATE_ERROR);
+      this.showError(err.isCsrfError ? err.text : DONATE_ERROR_MESSAGES[err.status] ?? DONATE_ERROR);
     } finally {
       this.setSending(false);
     }

@@ -180,8 +180,11 @@ function bindPosts(
         return null;
       }
     } catch (error) {
-      if (!isActive() || id !== request || (error instanceof ApiError && error.status === 401)) {
+      if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
         return null;
+      }
+      if (error instanceof ApiError && error.isCsrfError) {
+        return error.text;
       }
       if (!(error instanceof ApiError) || error.status !== 404) {
         return DRAFT_DELETE_ERROR;
@@ -249,7 +252,7 @@ function bindPosts(
       }
       setRetry();
     } catch (error) {
-      if (!isActive() || id !== request || (error instanceof ApiError && error.status === 401)) {
+      if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
         return;
       }
       if (error instanceof ApiError && error.status === 403) {
@@ -319,7 +322,7 @@ function bindPosts(
         setRetry();
       }
     } catch (error) {
-      if (!isActive() || id !== request || (error instanceof ApiError && error.status === 401)) {
+      if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
         return;
       }
       if (!isBackendUnavailable(error) || !panel.querySelector('[data-posts-grid], .posts-list__empty')) {

@@ -101,15 +101,15 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
     if (!(err instanceof ApiError)) {
       throw err;
     }
-    if (err.status === 401) {
+    if (err.isUnauthorized) {
       return;
     }
-    if (err.status === 409) {
+    if (!err.isCsrfError && err.status === 409) {
       setFieldError(form, 'username', USERNAME_TAKEN);
       form.querySelector<HTMLElement>('[name="username"]')?.focus();
       return;
     }
-    setAlert(alert, err.status === 0 ? SAVE_NETWORK_ERROR : err.text);
+    setAlert(alert, err.isCsrfError ? err.text : err.status === 0 ? SAVE_NETWORK_ERROR : err.text);
   } finally {
     if (form.isConnected) {
       button.disabled = false;
@@ -197,10 +197,10 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
       crop.close();
       showToast(AVATAR_SAVED_MESSAGE);
     } catch (err) {
-      if (!isActive() || (err instanceof ApiError && err.status === 401)) {
+      if (!isActive() || (err instanceof ApiError && err.isUnauthorized)) {
         return;
       }
-      const isFileError = err instanceof ApiError && [400, 413, 415].includes(err.status);
+      const isFileError = err instanceof ApiError && !err.isCsrfError && [400, 413, 415].includes(err.status);
       crop.close();
       openPicker(err instanceof ApiError && !isFileError ? err.text : AVATAR_ERROR);
     } finally {
@@ -222,10 +222,10 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
       setAvatar();
       showToast(AVATAR_DELETED_MESSAGE);
     } catch (err) {
-      if (!isActive() || (err instanceof ApiError && err.status === 401)) {
+      if (!isActive() || (err instanceof ApiError && err.isUnauthorized)) {
         return;
       }
-      setHintError(err instanceof ApiError && err.status === 0 ? err.text : AVATAR_DELETE_ERROR);
+      setHintError(err instanceof ApiError && (err.isCsrfError || err.status === 0) ? err.text : AVATAR_DELETE_ERROR);
     } finally {
       deleteButton.disabled = false;
     }
@@ -266,7 +266,7 @@ export async function initSettings(root: HTMLElement, navigate: Navigate): Promi
   try {
     profile = await checkSession();
   } catch (err) {
-    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.status === 401)) {
+    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
       return;
     }
     const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;

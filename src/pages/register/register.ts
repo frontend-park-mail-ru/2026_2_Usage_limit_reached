@@ -34,7 +34,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<
       throw err;
     }
 
-    const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
+    const kind = !err.isCsrfError && (err.status === 400 || err.status === 409) ? 'data' : 'server';
     const currentValues = new FormData(form);
     const valuesChanged = [...submittedValues].some(
       ([name, value]) => currentValues.get(name) !== value
@@ -43,7 +43,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<
     if (kind === 'data' && valuesChanged) {
       return;
     }
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
+    setFormError(form, err.isCsrfError ? err.text : FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     if (form.isConnected) {
       button.disabled = false;
