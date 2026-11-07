@@ -38,7 +38,7 @@
   text-decoration: underline;
 }
 
-.post-editor__back_place_page {
+.post-editor__back-page {
   display: inline-block;
   margin: 32px 0 40px;
 }
@@ -149,7 +149,7 @@
   outline-offset: 3px;
 }
 
-.post-editor__card_type_unavailable {
+.post-editor__card-unavailable {
   gap: 16px;
 }
 
