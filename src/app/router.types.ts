@@ -1,5 +1,5 @@
 import type { Navigate, RoutePattern } from './paths.ts';
-import type { SetRefreshNotice } from '../components/refreshNotice/refreshNotice.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
 export type Layout = 'plain' | 'sidebar';
 

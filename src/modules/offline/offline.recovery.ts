@@ -1,4 +1,4 @@
-import { ApiError } from '../api/request.ts';
+import { ApiError } from '@/modules/api/request.ts';
 
 /** Отличает недоступность сервера от отказа в доступе и ошибки запроса. */
 export function isBackendUnavailable(error: unknown): boolean {

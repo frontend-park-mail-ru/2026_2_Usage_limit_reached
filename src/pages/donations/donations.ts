@@ -1,12 +1,12 @@
 import donationsTemplate from './donations.hbs';
-import donationCardTemplate from '../../components/donationCard/donationCard.hbs';
-import { Modal } from '../../components/modal/modal.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { formatMoney } from '../../utils/helpers/money.ts';
-import { formatPostDate } from '../../utils/helpers/posts.ts';
-import { getReceivedDonations } from '../../modules/api/donations.ts';
-import type { ReceivedDonation } from '../../modules/api/donations.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
+import donationCardTemplate from '@/components/donationCard/donationCard.hbs';
+import { Modal } from '@/components/modal/modal.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { getReceivedDonations } from '@/modules/api/donations.ts';
+import type { ReceivedDonation } from '@/modules/api/donations.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
 import { ANONYMOUS_DONOR, LOADING_MESSAGE, LOAD_ERROR } from './donations.constants.ts';
 
 /** Возвращает каркас страницы. */

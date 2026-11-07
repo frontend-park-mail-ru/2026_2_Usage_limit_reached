@@ -1,22 +1,22 @@
 import postEditorTemplate from './postEditor.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { checkSession, getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '../../modules/auth/auth.actions.ts';
-import type { SessionContext } from '../../modules/auth/auth.types.ts';
-import { createPost, getPost, updatePost } from '../../modules/api/posts.ts';
-import type { Post, PostStatus } from '../../modules/api/posts.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { bindValidation } from '../../modules/validation/bindForm.ts';
-import { postSchema } from '../../modules/validation/schemas.ts';
-import type { FormValues } from '../../modules/validation/validation.types.ts';
-import { RichEditor } from '../../components/richEditor/richEditor.ts';
-import { LinkDialog } from '../../components/linkDialog/linkDialog.ts';
-import { Modal } from '../../components/modal/modal.ts';
-import { setAlert } from '../../components/alert/alert.ts';
-import { showToast } from '../../components/toast/toast.ts';
-import { setLeaveGuard } from '../../app/router.ts';
-import { ROUTES, postEditRoute, postRoute } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { RouteParams } from '../../app/router.types.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { checkSession, getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
+import { createPost, getPost, updatePost } from '@/modules/api/posts.ts';
+import type { Post, PostStatus } from '@/modules/api/posts.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { bindValidation } from '@/modules/validation/bindForm.ts';
+import { postSchema } from '@/modules/validation/schemas.ts';
+import type { FormValues } from '@/modules/validation/validation.types.ts';
+import { RichEditor } from '@/components/richEditor/richEditor.ts';
+import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { setAlert } from '@/components/alert/alert.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { setLeaveGuard } from '@/app/router.ts';
+import { ROUTES, postEditRoute, postRoute } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 import {
   AUTHOR_ONLY_ERROR,
   CHANGES_ERROR_TITLE,

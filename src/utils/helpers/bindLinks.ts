@@ -1,5 +1,5 @@
-import { isRoutePath } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
+import { isRoutePath } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
 
 /**
  * Подключает SPA-переходы для текущих и будущих ссылок контейнера.

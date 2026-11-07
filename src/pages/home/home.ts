@@ -1,8 +1,8 @@
 import homeTemplate from './home.hbs';
-import { initProfile } from '../profile/profile.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { SetRefreshNotice } from '../../components/refreshNotice/refreshNotice.types.ts';
-import type { RouteParams } from '../../app/router.types.ts';
+import { initProfile } from '@/pages/profile/profile.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 
 /** Возвращает текст проверки авторизации. */
 export function renderHome(): string {

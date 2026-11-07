@@ -1,5 +1,5 @@
-import type { Profile, ProfilePosts, ProfilePostsQuery } from '../api/profile.types.ts';
-import { DEFAULT_PROFILE_POSTS_QUERY } from '../api/profile.constants.ts';
+import type { Profile, ProfilePosts, ProfilePostsQuery } from '@/modules/api/profile.types.ts';
+import { DEFAULT_PROFILE_POSTS_QUERY } from '@/modules/api/profile.constants.ts';
 import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GENERATION } from './offline.constants.ts';
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
 

@@ -1,12 +1,12 @@
-import { renderLogin, initLogin } from '../pages/login/login.ts';
-import { renderHome, initHome } from '../pages/home/home.ts';
-import { renderRegister, initRegister } from '../pages/register/register.ts';
-import { renderProfile, initProfile } from '../pages/profile/profile.ts';
-import { renderSettings, initSettings } from '../pages/settings/settings.ts';
-import { renderPostEditor, initPostEditor } from '../pages/postEditor/postEditor.ts';
-import { renderPost, initPost } from '../pages/post/post.ts';
-import { renderDonations, initDonations } from '../pages/donations/donations.ts';
-import { renderNotFound } from '../pages/notFound/notFound.ts';
+import { renderLogin, initLogin } from '@/pages/login/login.ts';
+import { renderHome, initHome } from '@/pages/home/home.ts';
+import { renderRegister, initRegister } from '@/pages/register/register.ts';
+import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
+import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
+import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
+import { renderPost, initPost } from '@/pages/post/post.ts';
+import { renderDonations, initDonations } from '@/pages/donations/donations.ts';
+import { renderNotFound } from '@/pages/notFound/notFound.ts';
 import {
   renderSidebar,
   initSidebarProfileMenu,
@@ -15,14 +15,14 @@ import {
   destroySidebarProfileMenu,
   initSidebarAvatar,
   destroySidebarAvatar,
-} from '../components/sidebar/sidebar.ts';
-import { requireElement } from '../utils/helpers/dom.ts';
-import { bindLinks } from '../utils/helpers/bindLinks.ts';
-import { checkSession, invalidateSessionMemory } from '../modules/auth/auth.actions.ts';
-import { initOfflineSync } from '../modules/offline/offline.storage.ts';
-import { initCsrfSync } from '../modules/api/csrf.ts';
-import { authStore } from '../modules/auth/auth.store.ts';
-import { initRefreshNotice } from '../components/refreshNotice/refreshNotice.ts';
+} from '@/components/sidebar/sidebar.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import { checkSession, invalidateSessionMemory } from '@/modules/auth/auth.actions.ts';
+import { initOfflineSync } from '@/modules/offline/offline.storage.ts';
+import { initCsrfSync } from '@/modules/api/csrf.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import { initRefreshNotice } from '@/components/refreshNotice/refreshNotice.ts';
 import { ROUTES, matchRoute } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath, RoutePattern } from './paths.ts';
 import type { Layout, LeaveGuard, Route } from './router.types.ts';

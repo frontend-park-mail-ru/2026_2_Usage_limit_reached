@@ -27,6 +27,9 @@ export default (_env, argv) => ({
     clean: true,
   },
   devtool: 'source-map',
+  resolve: {
+    alias: { '@': SRC_DIR },
+  },
   module: {
     rules: [
       {

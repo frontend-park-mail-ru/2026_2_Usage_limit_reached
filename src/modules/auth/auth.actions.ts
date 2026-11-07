@@ -1,14 +1,14 @@
-import * as authApi from '../api/auth.ts';
-import { getProfile, getProfilePosts } from '../api/profile.ts';
-import type { LoginData, SignupData } from '../api/auth.types.ts';
-import { ApiError } from '../api/request.ts';
-import { invalidateCsrfRequests, notifyCsrfSessionChange, resetCsrfToken } from '../api/csrf.ts';
+import * as authApi from '@/modules/api/auth.ts';
+import { getProfile, getProfilePosts } from '@/modules/api/profile.ts';
+import type { LoginData, SignupData } from '@/modules/api/auth.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { invalidateCsrfRequests, notifyCsrfSessionChange, resetCsrfToken } from '@/modules/api/csrf.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
 import type { SessionContext } from './auth.types.ts';
-import type { Profile, ProfilePostsQuery } from '../api/profile.types.ts';
-import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, invalidateOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '../offline/offline.storage.ts';
-import type { OfflineClearToken } from '../offline/offline.types.ts';
-import { DEFAULT_PROFILE_POSTS_QUERY } from '../api/profile.constants.ts';
+import type { Profile, ProfilePostsQuery } from '@/modules/api/profile.types.ts';
+import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, invalidateOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '@/modules/offline/offline.storage.ts';
+import type { OfflineClearToken } from '@/modules/offline/offline.types.ts';
+import { DEFAULT_PROFILE_POSTS_QUERY } from '@/modules/api/profile.constants.ts';
 import './auth.store.ts';
 
 let sessionVersion = 0;

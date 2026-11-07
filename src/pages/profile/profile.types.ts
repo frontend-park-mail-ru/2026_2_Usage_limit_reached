@@ -1,4 +1,4 @@
-import type { PostsSort } from '../../modules/api/posts.types.ts';
+import type { PostsSort } from '@/modules/api/posts.types.ts';
 
 export type ProfileTab = 'posts' | 'drafts';
 

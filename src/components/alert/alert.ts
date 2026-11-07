@@ -1,4 +1,4 @@
-import { requireElement } from '../../utils/helpers/dom.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
 
 /**
  * Показывает плашку ошибки или прячет её при text = null.

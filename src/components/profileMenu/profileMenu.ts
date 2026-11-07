@@ -1,8 +1,8 @@
-import { logout } from '../../modules/auth/auth.actions.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import type { Navigate } from '../../app/paths.ts';
+import { logout } from '@/modules/auth/auth.actions.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import type { Navigate } from '@/app/paths.ts';
 
 /** Управляет меню профиля и выходом из аккаунта. */
 export class ProfileMenu {

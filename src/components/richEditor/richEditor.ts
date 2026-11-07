@@ -1,7 +1,7 @@
-import { ActionMenu } from '../actionMenu/actionMenu.ts';
-import type { LinkDialog } from '../linkDialog/linkDialog.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import type { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import { BLOCK_LABELS, FORMAT_COMMANDS } from './richEditor.constants.ts';
 import type { BlockType } from './richEditor.types.ts';
 

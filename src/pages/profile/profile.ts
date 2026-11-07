@@ -1,9 +1,9 @@
 import profileTemplate from './profile.hbs';
-import postsListTemplate from '../../components/postsList/postsList.hbs';
-import postCardTemplate from '../../components/postCard/postCard.hbs';
-import sortMenuTemplate from '../../components/sortMenu/sortMenu.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { formatDraftDate, formatPostDate } from '../../utils/helpers/posts.ts';
+import postsListTemplate from '@/components/postsList/postsList.hbs';
+import postCardTemplate from '@/components/postCard/postCard.hbs';
+import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
 import {
   checkSession,
   getSessionContext,
@@ -11,26 +11,26 @@ import {
   isSessionCurrent,
   loadProfilePosts,
   runSessionRequest,
-} from '../../modules/auth/auth.actions.ts';
-import type { SessionContext } from '../../modules/auth/auth.types.ts';
-import { deletePost, getMyDrafts } from '../../modules/api/posts.ts';
-import type { PostPreview, PostsPage, PostsSort } from '../../modules/api/posts.types.ts';
-import type { Profile } from '../../modules/api/profile.types.ts';
-import type { SavedProfile, SavedPosts } from '../../modules/offline/offline.types.ts';
-import { captureOfflineToken, readOfflineCopy } from '../../modules/offline/offline.storage.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '../../modules/offline/offline.recovery.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { htmlToText } from '../../modules/sanitize/sanitize.ts';
-import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
-import { ActionMenu } from '../../components/actionMenu/actionMenu.ts';
-import { ConfirmDialog } from '../../components/confirmDialog/confirmDialog.ts';
-import { SortMenu } from '../../components/sortMenu/sortMenu.ts';
-import { Tabs } from '../../components/tabs/tabs.ts';
-import { showToast } from '../../components/toast/toast.ts';
-import { postEditRoute, postRoute } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { RouteParams } from '../../app/router.types.ts';
-import type { SetRefreshNotice } from '../../components/refreshNotice/refreshNotice.types.ts';
+} from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
+import { deletePost, getMyDrafts } from '@/modules/api/posts.ts';
+import type { PostPreview, PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
+import type { Profile } from '@/modules/api/profile.types.ts';
+import type { SavedProfile, SavedPosts } from '@/modules/offline/offline.types.ts';
+import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
+import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { htmlToText } from '@/modules/sanitize/sanitize.ts';
+import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
+import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
+import { Tabs } from '@/components/tabs/tabs.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { postEditRoute, postRoute } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   DRAFT_DELETED_MESSAGE,
   DRAFT_DELETE_ERROR,

@@ -1,6 +1,6 @@
-import { Modal } from '../modal/modal.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { setAlert } from '../alert/alert.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { setAlert } from '@/components/alert/alert.ts';
 import { CONFIRM_ERROR_FALLBACK } from './confirmDialog.constants.ts';
 import type { ConfirmAction } from './confirmDialog.types.ts';
 

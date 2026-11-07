@@ -1,4 +1,4 @@
-import { normalizeUrl } from '../sanitize/sanitize.ts';
+import { normalizeUrl } from '@/modules/sanitize/sanitize.ts';
 import type { Rule } from './validation.types.ts';
 
 /**

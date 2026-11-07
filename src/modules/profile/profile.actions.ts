@@ -1,9 +1,9 @@
-import * as profileApi from '../api/profile.ts';
-import type { ProfileUpdate } from '../api/profile.types.ts';
-import { isSessionCurrent, runSessionRequest, runSessionMutation } from '../auth/auth.actions.ts';
-import { authDispatcher } from '../auth/auth.dispatcher.ts';
-import { authStore } from '../auth/auth.store.ts';
-import type { SessionContext, SessionUser } from '../auth/auth.types.ts';
+import * as profileApi from '@/modules/api/profile.ts';
+import type { ProfileUpdate } from '@/modules/api/profile.types.ts';
+import { isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
+import { authDispatcher } from '@/modules/auth/auth.dispatcher.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import type { SessionContext, SessionUser } from '@/modules/auth/auth.types.ts';
 
 /**
  * Обновляет пользователя в store.

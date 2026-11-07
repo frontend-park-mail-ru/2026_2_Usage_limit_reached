@@ -1,8 +1,8 @@
 import sidebarTemplate from './sidebar.hbs';
-import { ProfileMenu } from '../profileMenu/profileMenu.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import { authStore } from '../../modules/auth/auth.store.ts';
+import { ProfileMenu } from '@/components/profileMenu/profileMenu.ts';
+import { ROUTES } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
 
 let profileMenu: ProfileMenu | null = null;
 let unsubscribeAvatar: (() => void) | null = null;

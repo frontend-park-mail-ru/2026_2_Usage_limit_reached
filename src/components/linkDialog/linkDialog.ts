@@ -1,9 +1,9 @@
-import { Modal } from '../modal/modal.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { validate } from '../../modules/validation/validate.ts';
-import { linkSchema } from '../../modules/validation/schemas.ts';
-import { setFieldError, showErrors } from '../../modules/validation/bindForm.ts';
-import { normalizeUrl } from '../../modules/sanitize/sanitize.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { validate } from '@/modules/validation/validate.ts';
+import { linkSchema } from '@/modules/validation/schemas.ts';
+import { setFieldError, showErrors } from '@/modules/validation/bindForm.ts';
+import { normalizeUrl } from '@/modules/sanitize/sanitize.ts';
 import type { LinkInsert } from './linkDialog.types.ts';
 
 /** Окно «Добавить ссылку». */

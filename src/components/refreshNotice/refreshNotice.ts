@@ -1,4 +1,4 @@
-import { requireElement } from '../../utils/helpers/dom.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
 import type { SetRefreshNotice } from './refreshNotice.types.ts';
 
 /** Подключает один индикатор layout, без собственной загрузки данных. */

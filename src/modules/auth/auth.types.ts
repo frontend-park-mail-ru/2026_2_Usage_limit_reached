@@ -1,4 +1,4 @@
-import type { OfflineToken } from '../offline/offline.types.ts';
+import type { OfflineToken } from '@/modules/offline/offline.types.ts';
 
 /** Пользователь с ID, только если он получен из собственного профиля. */
 export interface SessionUser {

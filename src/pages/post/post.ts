@@ -1,27 +1,27 @@
 import postTemplate from './post.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { formatPostDate } from '../../utils/helpers/posts.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
 import {
   checkSession,
   getSessionContext,
   isSessionCurrent,
   runSessionMutation,
   runSessionRequest,
-} from '../../modules/auth/auth.actions.ts';
-import type { SessionContext } from '../../modules/auth/auth.types.ts';
-import { deletePost, getPost, setPostLike } from '../../modules/api/posts.ts';
-import type { Post, PostLikes } from '../../modules/api/posts.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
-import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
-import { ActionMenu } from '../../components/actionMenu/actionMenu.ts';
-import { ConfirmDialog } from '../../components/confirmDialog/confirmDialog.ts';
-import { DonateDialog } from '../../components/donateDialog/donateDialog.ts';
-import { LikeButton } from '../../components/likeButton/likeButton.ts';
-import { showToast } from '../../components/toast/toast.ts';
-import { ROUTES, postEditRoute } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { RouteParams } from '../../app/router.types.ts';
+} from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
+import { deletePost, getPost, setPostLike } from '@/modules/api/posts.ts';
+import type { Post, PostLikes } from '@/modules/api/posts.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
+import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
+import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
+import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { ROUTES, postEditRoute } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 import {
   DELETED_MESSAGE,
   DELETE_ERROR,

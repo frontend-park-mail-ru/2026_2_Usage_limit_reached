@@ -1,4 +1,4 @@
-import type { ProfilePost, ProfilePostsQuery } from '../api/profile.types.ts';
+import type { ProfilePost, ProfilePostsQuery } from '@/modules/api/profile.types.ts';
 
 /** Ревизия хранилища, не является токеном авторизации. */
 export interface OfflineToken {
