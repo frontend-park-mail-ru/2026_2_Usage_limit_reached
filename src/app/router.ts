@@ -101,7 +101,7 @@ function updateLayout(layout: Layout): void {
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  requireElement(document, '#layout').classList.toggle('app-layout_sidebar', hasSidebar);
+  requireElement(document, '#layout').classList.toggle('app-layout-wrapper', hasSidebar);
   currentLayout = layout;
 }
 
@@ -203,22 +203,17 @@ export function initRouter(): () => void {
     const { status } = authStore.getState();
     const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
     lastStatus = status;
-    // Сначала завершаем действие Flux, затем выполняем переход.
-    queueMicrotask(() => {
-      if (!active) {
-        return;
-      }
-      const currentStatus = authStore.getState().status;
-      const path = window.location.pathname;
-      if (isLoggedOut && currentStatus === 'guest') {
-        navigate(ROUTES.login, { replace: true, force: true });
-      } else if (currentStatus === 'unknown'
-        && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
-        renderCurrentRoute();
-      } else {
-        redirectByAuth();
-      }
-    });
+    if (!active) {
+      return;
+    }
+    if (isLoggedOut) {
+      navigate(ROUTES.login, { replace: true, force: true });
+    } else if (status === 'unknown'
+      && (window.location.pathname === ROUTES.home || window.location.pathname === ROUTES.profile || window.location.pathname === ROUTES.settings)) {
+      renderCurrentRoute();
+    } else {
+      redirectByAuth();
+    }
   });
   window.addEventListener('popstate', handlePopState);
   window.addEventListener('beforeunload', handleBeforeUnload);

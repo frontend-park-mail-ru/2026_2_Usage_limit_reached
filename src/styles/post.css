@@ -38,7 +38,7 @@
   box-sizing: border-box;
 }
 
-.post-page__card_type_unavailable {
+.post-page__card-unavailable {
   gap: 16px;
   padding-top: 32px;
 }
@@ -114,7 +114,7 @@
   background: center no-repeat;
 }
 
-.post-page__stat_type_comments::before {
+.post-page__stat-comments::before {
   background-image: url('/assets/post/comment.svg');
 }
 

@@ -72,11 +72,11 @@
   background: center / contain no-repeat;
 }
 
-.post-card__stat_type_likes::before {
+.post-card__stat-likes::before {
   background-image: url('/assets/post/like.svg');
 }
 
-.post-card__stat_type_comments::before {
+.post-card__stat-comments::before {
   background-image: url('/assets/post/comment.svg');
 }
 

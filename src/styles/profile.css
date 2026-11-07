@@ -131,12 +131,12 @@
   overflow-wrap: anywhere;
 }
 
-.profile__button_type_edit,
-.profile__button_type_donations {
+.profile__button-edit,
+.profile__button-donations {
   width: 228px;
 }
 
-.profile__button_type_add {
+.profile__button-add {
   flex: 0 0 180px;
   white-space: nowrap;
 }
@@ -215,7 +215,7 @@
   min-width: 0;
 }
 
-.profile__button_type_add[hidden] {
+.profile__button-add[hidden] {
   display: none;
 }
 
@@ -260,7 +260,7 @@
   overflow-wrap: anywhere;
 }
 
-.profile__button_type_become-author {
+.profile__button-become-author {
   width: 100%;
   padding: 8px 16px;
   line-height: 20px;
