@@ -130,16 +130,16 @@
   gap: 12px;
 }
 
-.donate-dialog__button_type_back {
+.donate-dialog__button-back {
   width: 152px;
 }
 
-.donate-dialog__button_type_send {
+.donate-dialog__button-send {
   flex: 1;
   width: auto;
 }
 
-.donate-dialog__step_type_success {
+.donate-dialog__step-success {
   align-items: center;
   text-align: center;
 }
