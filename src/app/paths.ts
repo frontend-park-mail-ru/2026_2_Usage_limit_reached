@@ -3,6 +3,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   profile: '/profile',
+  settings: '/settings',
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];

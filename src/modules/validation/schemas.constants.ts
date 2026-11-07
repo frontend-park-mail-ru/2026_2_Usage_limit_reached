@@ -5,3 +5,4 @@ export const NICKNAME_MAX = 64;
 export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 64;
 export const PASSWORD_MAX_BYTES = 72;
+export const BIO_MAX = 200;

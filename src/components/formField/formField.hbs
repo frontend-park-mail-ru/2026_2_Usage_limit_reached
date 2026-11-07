@@ -6,9 +6,10 @@
       id="{{id}}"
       name="{{name}}"
       type="{{type}}"
+      value="{{value}}"
       autocomplete="{{autocomplete}}"
       placeholder="{{placeholder}}"
-      aria-describedby="{{id}}-error"
+      aria-describedby="{{#if hint}}{{id}}-hint {{/if}}{{id}}-error"
     />
     {{#if passwordToggle}}
       <button class="form-field__toggle" type="button" data-password-toggle="{{id}}" aria-label="Показать пароль">
@@ -22,5 +23,8 @@
       </button>
     {{/if}}
   </div>
+  {{#if hint}}
+    <p class="form-field__hint" id="{{id}}-hint">{{hint}}</p>
+  {{/if}}
   <p class="form-field__error" id="{{id}}-error" data-error-for="{{name}}" aria-live="polite"></p>
 </div>

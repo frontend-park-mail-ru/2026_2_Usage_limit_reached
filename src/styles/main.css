@@ -2,10 +2,15 @@
 @import url('../components/sidebar/sidebar.css');
 @import url('../components/profileMenu/profileMenu.css');
 @import url('../components/formField/formField.css');
+@import url('../components/select/select.css');
+@import url('../components/modal/modal.css');
+@import url('../components/avatarCropper/avatarCropper.css');
+@import url('../components/toast/toast.css');
 @import url('./auth.css');
 @import url('./button.css');
 @import url('./home.css');
 @import url('./profile.css');
+@import url('./settings.css');
 @import url('../components/postsList/postsList.css');
 @import url('../components/postCard/postCard.css');
 

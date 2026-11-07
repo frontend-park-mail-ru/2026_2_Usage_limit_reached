@@ -2,6 +2,7 @@
 export interface SessionUser {
   readonly username: string;
   readonly nickname: string;
+  readonly avatar_url?: string;
 }
 
 export type AuthState =

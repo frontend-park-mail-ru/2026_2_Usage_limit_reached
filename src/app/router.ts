@@ -2,13 +2,14 @@ import { renderLogin, initLogin } from '../pages/login/login.ts';
 import { renderHome, initHome } from '../pages/home/home.ts';
 import { renderRegister, initRegister } from '../pages/register/register.ts';
 import { renderProfile, initProfile } from '../pages/profile/profile.ts';
+import { renderSettings, initSettings } from '../pages/settings/settings.ts';
 import { renderNotFound } from '../pages/notFound/notFound.ts';
 import {
   renderSidebar,
-  initSidebarProfileMenu,
+  initSidebar,
+  destroySidebar,
   updateSidebarProfileState,
   closeSidebarProfileMenu,
-  destroySidebarProfileMenu,
 } from '../components/sidebar/sidebar.ts';
 import { requireElement } from '../utils/helpers/dom.ts';
 import { bindLinks } from '../utils/helpers/bindLinks.ts';
@@ -23,6 +24,7 @@ const routes: Record<RoutePath, Route> = {
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
+  [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
 };
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
@@ -35,7 +37,7 @@ function getAuthRedirect(path: string): RoutePath | undefined {
   const isAuthPage = path === ROUTES.login || path === ROUTES.register;
   if (status === 'authenticated' && (path === ROUTES.home || isAuthPage)) {
     return ROUTES.profile;
-  } else if (status === 'guest' && (path === ROUTES.home || path === ROUTES.profile)) {
+  } else if (status === 'guest' && (path === ROUTES.home || path === ROUTES.profile || path === ROUTES.settings)) {
     return ROUTES.login;
   }
   return undefined;
@@ -54,17 +56,19 @@ function redirectByAuth(): boolean {
 /**
  * Обновляет сайдбар при смене layout.
  * @param layout
+ * @param destroyBeforeUpdate
+ * @param initBeforeUpdate
  */
-function updateLayout(layout: Layout): void {
+function updateLayout(layout: Layout, destroyBeforeUpdate: () => void, initBeforeUpdate: () => void): void {
   if (currentLayout === layout) {
     return;
   }
-  destroySidebarProfileMenu();
+  destroyBeforeUpdate();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
-    initSidebarProfileMenu(navigate);
+    initBeforeUpdate();
   } else {
     sidebar.innerHTML = '';
   }
@@ -83,11 +87,11 @@ function renderCurrentRoute(): void {
   const root = requireElement<HTMLElement>(document, '#app');
 
   closeSidebarProfileMenu();
-  updateLayout(route.layout || 'plain');
+  updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
   updateSidebarProfileState(path);
   document.title = route.title;
   root.innerHTML = route.render();
-  route.init?.(root);
+  route.init?.(root, navigate);
 }
 
 /**
@@ -133,7 +137,7 @@ export function initRouter(): () => void {
     unbindLinks();
     unsubscribeAuth();
     window.removeEventListener('popstate', renderCurrentRoute);
-    destroySidebarProfileMenu();
+    destroySidebar();
     currentLayout = undefined;
   };
 }

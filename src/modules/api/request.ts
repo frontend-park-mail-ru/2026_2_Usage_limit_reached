@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './config.ts';
 import { API_ERROR_MESSAGES, UNKNOWN_API_ERROR } from './request.constants.ts';
+import type { RequestOptions } from './request.types.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -19,11 +20,19 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions {
-  method?: string;
-  data?: object;
-  responseType?: 'json' | 'empty';
-}
+/**
+ * Тело и заголовки запроса.
+ * @param data
+ */
+const buildBody = (data?: object | FormData): Pick<RequestInit, 'headers' | 'body'> => {
+  if (data instanceof FormData) {
+    return { body: data };
+  }
+  if (data) {
+    return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+  }
+  return {};
+};
 
 /**
  * Выполняет запрос к backend с cookie.
@@ -38,8 +47,7 @@ export const request = async <T>(path: string, { method = 'GET', data, responseT
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       credentials: 'include',
-      headers: data ? { 'Content-Type': 'application/json' } : {},
-      body: data ? JSON.stringify(data) : undefined,
+      ...buildBody(data),
     });
   } catch {
     throw new ApiError(0, 'network error');
