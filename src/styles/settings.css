@@ -143,24 +143,24 @@
   line-height: 42px;
 }
 
-.settings__button_type_photo {
+.settings__button-photo {
   width: 168px;
 }
 
-.settings__button_type_submit,
-.settings__button_type_file {
+.settings__button-submit,
+.settings__button-file {
   width: 240px;
 }
 
-.settings__button_type_cancel {
+.settings__button-cancel {
   width: 112px;
 }
 
-.settings__button_type_crop-cancel {
+.settings__button-crop-cancel {
   width: 140px;
 }
 
-.settings__button_type_apply {
+.settings__button-apply {
   flex: 1;
   width: auto;
 }
@@ -182,7 +182,7 @@
   font-weight: 500;
 }
 
-.settings__button_type_file:focus-within {
+.settings__button-file:focus-within {
   outline: 2px solid var(--color-text);
   outline-offset: 3px;
 }
@@ -209,8 +209,8 @@
     padding: 24px 16px;
   }
 
-  .settings__button_type_submit,
-  .settings__button_type_cancel {
+  .settings__button-submit,
+  .settings__button-cancel {
     flex: 1 1 140px;
     width: auto;
   }
