@@ -74,6 +74,6 @@
   background: var(--color-toggle-hover-background);
 }
 
-.action-menu__item_view_danger {
+.action-menu__item-danger {
   color: var(--color-primary);
 }

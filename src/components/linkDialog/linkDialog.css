@@ -11,15 +11,15 @@
   margin-top: 8px;
 }
 
-.link-dialog__button_type_cancel {
+.link-dialog__button-cancel {
   width: 152px;
 }
 
-.link-dialog__button_type_submit {
+.link-dialog__button-submit {
   flex: 1;
   width: auto;
 }
 
-.link-dialog__button_type_submit:disabled {
+.link-dialog__button-submit:disabled {
   cursor: default;
 }

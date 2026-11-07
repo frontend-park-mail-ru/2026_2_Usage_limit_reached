@@ -44,11 +44,11 @@
   background-color: var(--color-toggle-hover-background);
 }
 
-.avatar-cropper__step_type_out {
+.avatar-cropper__step-out {
   background-image: url('/assets/avatarCropper/minus.svg');
 }
 
-.avatar-cropper__step_type_in {
+.avatar-cropper__step-in {
   background-image: url('/assets/avatarCropper/plus.svg');
 }
 

@@ -96,7 +96,7 @@ function updateLayout(layout: Layout): void {
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  requireElement(document, '#layout').classList.toggle('app-layout_sidebar', hasSidebar);
+  requireElement(document, '#layout').classList.toggle('app-layout-wrapper', hasSidebar);
   currentLayout = layout;
 }
 
@@ -176,17 +176,14 @@ export function initRouter(): () => void {
     const { status } = authStore.getState();
     const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
     lastStatus = status;
-    // Сначала завершаем действие Flux, затем выполняем переход.
-    queueMicrotask(() => {
-      if (!active) {
-        return;
-      }
-      if (isLoggedOut) {
-        navigate(ROUTES.login, { replace: true, force: true });
-      } else {
-        redirectByAuth();
-      }
-    });
+    if (!active) {
+      return;
+    }
+    if (isLoggedOut) {
+      navigate(ROUTES.login, { replace: true, force: true });
+    } else {
+      redirectByAuth();
+    }
   });
   window.addEventListener('popstate', handlePopState);
   window.addEventListener('beforeunload', handleBeforeUnload);

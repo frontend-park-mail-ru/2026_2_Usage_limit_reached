@@ -47,7 +47,7 @@
   font-size: 14px;
 }
 
-.rich-editor__block-option_type_heading {
+.rich-editor__block-option-heading {
   font-size: 16px;
   font-weight: 600;
 }
@@ -90,31 +90,31 @@
   outline-offset: -2px;
 }
 
-.rich-editor__tool_type_bold {
+.rich-editor__tool-bold {
   background-image: url('/assets/richEditor/bold.svg');
 }
 
-.rich-editor__tool_type_italic {
+.rich-editor__tool-italic {
   background-image: url('/assets/richEditor/italic.svg');
 }
 
-.rich-editor__tool_type_underline {
+.rich-editor__tool-underline {
   background-image: url('/assets/richEditor/underline.svg');
 }
 
-.rich-editor__tool_type_strikethrough {
+.rich-editor__tool-strikethrough {
   background-image: url('/assets/richEditor/strikethrough.svg');
 }
 
-.rich-editor__tool_type_list-bullet {
+.rich-editor__tool-list-bullet {
   background-image: url('/assets/richEditor/list-bullet.svg');
 }
 
-.rich-editor__tool_type_list-numbered {
+.rich-editor__tool-list-numbered {
   background-image: url('/assets/richEditor/list-numbered.svg');
 }
 
-.rich-editor__tool_type_link {
+.rich-editor__tool-link {
   background-image: url('/assets/richEditor/link.svg');
 }
 

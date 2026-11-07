@@ -6,7 +6,7 @@
   min-height: 100vh;
 }
 
-.app-layout_sidebar {
+.app-layout-wrapper {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   align-items: start;
