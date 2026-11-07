@@ -136,10 +136,10 @@ function bindAvatar(root: HTMLElement): void {
   const pickerAlert = requireElement<HTMLElement>(root, '[data-picker-error]');
   const applyButton = requireElement<HTMLButtonElement>(root, '[data-avatar-apply]');
   const cropper = new AvatarCropper(requireElement<HTMLElement>(root, '.avatar-cropper'));
-  const picker = new Modal(requireElement<HTMLDialogElement>(root, '.settings__modal_type_picker'), () => {
+  const picker = new Modal(requireElement<HTMLDialogElement>(root, '.settings__modal-picker'), () => {
     fileInput.value = '';
   });
-  const crop = new Modal(requireElement<HTMLDialogElement>(root, '.settings__modal_type_crop'), () => cropper.reset());
+  const crop = new Modal(requireElement<HTMLDialogElement>(root, '.settings__modal-crop'), () => cropper.reset());
 
   const setAvatar = (url?: string) => {
     avatar.src = url ?? AVATAR_PLACEHOLDER;
