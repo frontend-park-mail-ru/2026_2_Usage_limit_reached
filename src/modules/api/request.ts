@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './config.ts';
 import { API_ERROR_MESSAGES, UNKNOWN_API_ERROR } from './request.constants.ts';
+import type { RequestOptions } from './request.types.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -17,12 +18,6 @@ export class ApiError extends Error {
   get text(): string {
     return API_ERROR_MESSAGES[this.status] ?? UNKNOWN_API_ERROR;
   }
-}
-
-interface RequestOptions {
-  method?: string;
-  data?: object | FormData;
-  responseType?: 'json' | 'empty';
 }
 
 /**
