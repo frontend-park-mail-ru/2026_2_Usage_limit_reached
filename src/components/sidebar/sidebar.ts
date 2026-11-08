@@ -20,6 +20,7 @@ export function renderSidebar(): string {
 /** Закрывает меню профиля. */
 export function closeSidebarProfileMenu(): void {
   profileMenu?.close();
+  profileMenu?.closeLogoutConfirmation();
 }
 
 /** Показывает аватар или иконку. */
