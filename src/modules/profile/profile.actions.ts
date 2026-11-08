@@ -1,20 +1,8 @@
 import * as profileApi from '@/modules/api/profile.ts';
 import type { ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
-import { authDispatcher } from '@/modules/auth/auth.dispatcher.ts';
-import { authStore } from '@/modules/auth/auth.store.ts';
-import type { SessionContext, SessionUser } from '@/modules/auth/auth.types.ts';
-
-/**
- * Обновляет пользователя в store.
- * @param changes
- */
-function updateSessionUser(changes: Partial<SessionUser>): void {
-  const { status, user } = authStore.getState();
-  if (status === 'authenticated') {
-    authDispatcher.dispatch({ type: 'auth/authenticated', user: { ...user, ...changes } });
-  }
-}
+import { updateSession } from '@/modules/api/session.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
 
 /**
  * Сохраняет профиль.
@@ -30,7 +18,7 @@ export async function saveProfile(data: ProfileUpdate, context: SessionContext):
   if (!saved) {
     return false;
   }
-  updateSessionUser({ username: data.user.username, nickname: data.user.nickname });
+  updateSession({ username: data.user.username, nickname: data.user.nickname });
   return true;
 }
 
@@ -46,7 +34,7 @@ export async function uploadAvatar(file: Blob, context: SessionContext): Promise
     return undefined;
   }
   const { avatar_url } = result;
-  updateSessionUser({ avatar_url });
+  updateSession({ avatar_url });
   return avatar_url;
 }
 
@@ -63,6 +51,6 @@ export async function deleteAvatar(context: SessionContext): Promise<boolean> {
   if (!deleted || !isSessionCurrent(context)) {
     return false;
   }
-  updateSessionUser({ avatar_url: undefined });
+  updateSession({ avatar_url: undefined });
   return true;
 }

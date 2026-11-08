@@ -1,12 +1,7 @@
 import { API_BASE_URL } from './config.ts';
 import { ApiError } from './apiError.ts';
 import { API_READ_TIMEOUT } from './request.constants.ts';
-
-export interface RequestOptions {
-  method?: string;
-  data?: object | FormData;
-  responseType?: 'json' | 'empty';
-}
+import type { RequestOptions } from './request.types.ts';
 
 interface HttpOptions extends RequestOptions {
   headers?: HeadersInit;

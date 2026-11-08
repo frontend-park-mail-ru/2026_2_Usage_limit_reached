@@ -9,12 +9,10 @@ import { renderDonations, initDonations } from '@/pages/donations/donations.ts';
 import { renderNotFound } from '@/pages/notFound/notFound.ts';
 import {
   renderSidebar,
-  initSidebarProfileMenu,
+  initSidebar,
+  destroySidebar,
   updateSidebarProfileState,
   closeSidebarProfileMenu,
-  destroySidebarProfileMenu,
-  initSidebarAvatar,
-  destroySidebarAvatar,
 } from '@/components/sidebar/sidebar.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { bindLinks } from '@/utils/helpers/bindLinks.ts';
@@ -85,19 +83,19 @@ function redirectByAuth(): boolean {
 /**
  * Обновляет сайдбар при смене layout.
  * @param layout
+ * @param destroyBeforeUpdate
+ * @param initBeforeUpdate
  */
-function updateLayout(layout: Layout): void {
+function updateLayout(layout: Layout, destroyBeforeUpdate: () => void, initBeforeUpdate: () => void): void {
   if (currentLayout === layout) {
     return;
   }
-  destroySidebarProfileMenu();
-  destroySidebarAvatar();
+  destroyBeforeUpdate();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
   const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
-    initSidebarProfileMenu(navigate);
-    initSidebarAvatar();
+    initBeforeUpdate();
   } else {
     sidebar.innerHTML = '';
   }
@@ -123,7 +121,7 @@ function renderCurrentRoute(): void {
   const version = ++pageVersion;
   refreshNotice?.update(null);
   closeSidebarProfileMenu();
-  updateLayout(route.layout || 'plain');
+  updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
   updateSidebarProfileState(path);
   document.title = route.title;
   root.innerHTML = route.render();
@@ -245,8 +243,7 @@ export function initRouter(): () => void {
     window.removeEventListener('popstate', handlePopState);
     window.removeEventListener('beforeunload', handleBeforeUnload);
     leaveGuard = undefined;
-    destroySidebarProfileMenu();
-    destroySidebarAvatar();
+    destroySidebar();
     currentLayout = undefined;
   };
 }

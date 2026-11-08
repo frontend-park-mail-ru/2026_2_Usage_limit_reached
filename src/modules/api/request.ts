@@ -1,7 +1,7 @@
 import { ApiError } from './apiError.ts';
 import { getCachedCsrfToken, getCsrfToken, getCsrfVersion, resetCsrfToken } from './csrf.ts';
 import { sendRequest } from './http.ts';
-import type { RequestOptions } from './http.ts';
+import type { RequestOptions } from './request.types.ts';
 
 export { ApiError } from './apiError.ts';
 

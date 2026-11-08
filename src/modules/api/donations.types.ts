@@ -15,9 +15,10 @@ export interface DonationResult {
   status: DonationStatus;
 }
 
-export interface DonationDonor {
+export interface DonationUser {
   username: string;
-  avatar_url?: string | null;
+  nickname: string;
+  avatar_url: string | null;
 }
 
 export interface ReceivedDonation {
@@ -26,8 +27,9 @@ export interface ReceivedDonation {
   is_anonymous: boolean;
   amount_minor: number;
   currency: string;
-  paid_at: string;
-  donor?: DonationDonor | null;
+  status: string;
+  created_or_paid_at: string;
+  user: DonationUser | null;
 }
 
 export interface DonationsPage {
