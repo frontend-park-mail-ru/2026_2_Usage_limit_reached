@@ -1,0 +1,151 @@
+:root {
+  --color-editor-toolbar: #f7f7f8;
+  --color-editor-separator: rgba(61, 64, 91, 0.16);
+  --color-editor-tool-hover: rgba(61, 64, 91, 0.06);
+  --color-editor-tool-pressed: rgba(61, 64, 91, 0.12);
+}
+
+.rich-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.rich-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 52px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 16px;
+  background: var(--color-editor-toolbar);
+  box-sizing: border-box;
+}
+
+.rich-editor__block-button {
+  width: 200px;
+  height: 40px;
+  padding: 0 40px 0 12px;
+  background: url('/assets/profile/chevron.svg') right 12px center / 12px 7px no-repeat;
+  font-size: 14px;
+  line-height: 40px;
+  text-align: left;
+}
+
+.rich-editor__block-list {
+  right: auto;
+  left: 0;
+  width: 220px;
+}
+
+.rich-editor__block-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.rich-editor__block-option-heading {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rich-editor__block-option[aria-checked='true']::after {
+  content: '';
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background: url('/assets/richEditor/check.svg') center / contain no-repeat;
+}
+
+.rich-editor__separator {
+  width: 1px;
+  height: 24px;
+  margin: 0 8px;
+  background: var(--color-editor-separator);
+}
+
+.rich-editor__tool {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent center no-repeat;
+  cursor: pointer;
+}
+
+.rich-editor__tool:hover {
+  background-color: var(--color-editor-tool-hover);
+}
+
+.rich-editor__tool[aria-pressed='true'] {
+  background-color: var(--color-editor-tool-pressed);
+}
+
+.rich-editor__tool:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.rich-editor__tool-bold {
+  background-image: url('/assets/richEditor/bold.svg');
+}
+
+.rich-editor__tool-italic {
+  background-image: url('/assets/richEditor/italic.svg');
+}
+
+.rich-editor__tool-underline {
+  background-image: url('/assets/richEditor/underline.svg');
+}
+
+.rich-editor__tool-strikethrough {
+  background-image: url('/assets/richEditor/strikethrough.svg');
+}
+
+.rich-editor__tool-list-bullet {
+  background-image: url('/assets/richEditor/list-bullet.svg');
+}
+
+.rich-editor__tool-list-numbered {
+  background-image: url('/assets/richEditor/list-numbered.svg');
+}
+
+.rich-editor__tool-link {
+  background-image: url('/assets/richEditor/link.svg');
+}
+
+.rich-editor__content {
+  position: relative;
+  min-height: 200px;
+  padding-top: 24px;
+  outline: none;
+}
+
+.rich-editor__content[data-empty]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 24px;
+  left: 0;
+  color: var(--color-input-placeholder);
+  pointer-events: none;
+}
+
+.rich-editor:has(.form-field__input_invalid) .rich-editor__content[data-empty]::before {
+  color: var(--color-error);
+}
+
+.rich-editor:has(.form-field__input_invalid) .rich-editor__content[data-empty][data-error-placeholder]::before {
+  content: attr(data-error-placeholder);
+}
+
+.rich-editor__error {
+  margin-top: 16px;
+}
+
+.rich-editor__error:empty {
+  display: none;
+}

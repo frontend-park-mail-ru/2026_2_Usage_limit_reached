@@ -1,5 +1,5 @@
 import * as authApi from '../api/auth.ts';
-import { getProfile, getProfilePosts } from '../api/profile.ts';
+import { getProfile } from '../api/profile.ts';
 import type { LoginData, SignupData } from '../api/auth.types.ts';
 import { ApiError } from '../api/request.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
@@ -52,11 +52,6 @@ async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) =
 /** Проверяет сессию через профиль и сохраняет пользователя в store. */
 export function checkSession() {
   return readSession(getProfile, (profile) => profile.user);
-}
-
-/** Загружает посты, ответ от прежней сессии игнорируется. */
-export function loadProfilePosts() {
-  return readSession(getProfilePosts);
 }
 
 /**

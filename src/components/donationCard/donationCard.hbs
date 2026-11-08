@@ -1,0 +1,13 @@
+<article class="donation-card" data-donation-id="{{id}}">
+  <div class="donation-card__header">
+    <div class="donation-card__meta">
+      <p class="donation-card__name">{{name}}</p>
+      <time class="donation-card__date" datetime="{{paidAt}}">{{dateLabel}}</time>
+    </div>
+    <p class="donation-card__amount">{{amountLabel}}</p>
+  </div>
+  {{#if message}}
+    <p class="donation-card__message">{{message}}</p>
+    <button class="donation-card__more" type="button" data-donation-more hidden>Прочитать полностью</button>
+  {{/if}}
+</article>

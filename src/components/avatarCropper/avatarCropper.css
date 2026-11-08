@@ -1,0 +1,101 @@
+:root {
+  --color-avatar-cropper-area: rgba(61, 64, 91, 0.06);
+  --color-avatar-cropper-track: rgba(61, 64, 91, 0.24);
+}
+
+.avatar-cropper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.avatar-cropper__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--color-avatar-cropper-area);
+  cursor: grab;
+  touch-action: none;
+}
+
+.avatar-cropper__canvas:active {
+  cursor: grabbing;
+}
+
+.avatar-cropper__zoom {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 24px;
+  height: 36px;
+}
+
+.avatar-cropper__step {
+  width: 40px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: center / 16px no-repeat;
+  cursor: pointer;
+}
+
+.avatar-cropper__step:hover {
+  background-color: var(--color-toggle-hover-background);
+}
+
+.avatar-cropper__step-out {
+  background-image: url('/assets/avatarCropper/minus.svg');
+}
+
+.avatar-cropper__step-in {
+  background-image: url('/assets/avatarCropper/plus.svg');
+}
+
+.avatar-cropper__step:focus-visible,
+.avatar-cropper__range:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.avatar-cropper__range {
+  --fill: 0%;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.avatar-cropper__range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(var(--color-primary), var(--color-primary)) 0 0 / var(--fill) 100% no-repeat,
+    var(--color-avatar-cropper-track);
+}
+
+.avatar-cropper__range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(var(--color-primary), var(--color-primary)) 0 0 / var(--fill) 100% no-repeat,
+    var(--color-avatar-cropper-track);
+}
+
+.avatar-cropper__range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  appearance: none;
+}
+
+.avatar-cropper__range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+}

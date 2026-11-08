@@ -1,0 +1,137 @@
+.post-page {
+  padding: 32px 64px 64px;
+  box-sizing: border-box;
+}
+
+.post-page__loading,
+.post-page__load-error {
+  margin: 0;
+  padding-top: 64px;
+  font-size: 16px;
+}
+
+.post-page__load-error {
+  color: var(--color-error);
+}
+
+.post-page__back {
+  display: inline-block;
+  margin-bottom: 40px;
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.post-page__back:hover {
+  text-decoration: underline;
+}
+
+.post-page__card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 816px;
+  margin: 0 auto;
+  padding: 48px 24px 24px;
+  border-radius: 16px;
+  background: var(--color-white);
+  box-sizing: border-box;
+}
+
+.post-page__card-unavailable {
+  gap: 16px;
+  padding-top: 32px;
+}
+
+.post-page__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.post-page__avatar {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-page__meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.post-page__author {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.post-page__date {
+  color: var(--color-input-placeholder);
+  font-size: 14px;
+}
+
+.post-page__title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 40px;
+  overflow-wrap: anywhere;
+}
+
+.post-page__unavailable-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.post-page__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-input-border);
+}
+
+.post-page__stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: 14px;
+}
+
+.post-page__stat::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  background: center no-repeat;
+}
+
+.post-page__stat-comments::before {
+  background-image: url('/assets/post/comment.svg');
+}
+
+.post-page__donate {
+  width: auto;
+  height: 44px;
+  margin-left: auto;
+  padding: 0 40px;
+  line-height: 44px;
+}
+
+@media (max-width: 900px) {
+  .post-page {
+    padding: 24px 16px 32px;
+  }
+
+  .post-page__card {
+    padding-top: 24px;
+  }
+}

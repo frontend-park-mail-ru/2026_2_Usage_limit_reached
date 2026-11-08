@@ -1,0 +1,35 @@
+.rich-text {
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.rich-text p,
+.rich-text h3,
+.rich-text ul,
+.rich-text ol {
+  margin: 0 0 16px;
+}
+
+.rich-text > :last-child {
+  margin-bottom: 0;
+}
+
+.rich-text h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.rich-text ul,
+.rich-text ol {
+  padding-left: 24px;
+}
+
+.rich-text li + li {
+  margin-top: 8px;
+}
+
+.rich-text a {
+  color: var(--color-primary);
+}

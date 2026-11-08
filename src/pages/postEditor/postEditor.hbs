@@ -1,0 +1,56 @@
+{{#if message}}
+  <section class="post-editor" aria-label="Редактор поста">
+    <p class="{{#if isError}}post-editor__load-error{{else}}post-editor__loading{{/if}}" role="status">{{message}}</p>
+  </section>
+{{else if unavailable}}
+  <section class="post-editor" aria-labelledby="post-editor-unavailable">
+    <a class="post-editor__back post-editor__back-page" href="/profile" data-link>← Мой профиль</a>
+    <div class="post-editor__card post-editor__card-unavailable">
+      <h1 class="post-editor__unavailable-title" id="post-editor-unavailable">Публикация недоступна</h1>
+      <p class="post-editor__unavailable-text">Автор удалил публикацию или ссылка больше не работает. Вернитесь в профиль автора</p>
+    </div>
+  </section>
+{{else}}
+<section class="post-editor" aria-labelledby="post-editor-heading">
+  <header class="post-editor__bar">
+    <a class="post-editor__back" href="{{backHref}}" data-link>{{backLabel}}</a>
+    <h1 class="post-editor__heading" id="post-editor-heading">{{heading}}</h1>
+    <div class="post-editor__actions">
+      {{#if isPublished}}
+        <button class="button button_view_primary post-editor__button" type="submit" form="post-editor-form" data-intent="save">{{saveLabel}}</button>
+      {{else}}
+        <button class="button button_view_secondary post-editor__button" type="submit" form="post-editor-form" data-intent="save">{{saveLabel}}</button>
+        <button class="button button_view_primary post-editor__button" type="submit" form="post-editor-form" data-intent="publish">Опубликовать</button>
+      {{/if}}
+    </div>
+  </header>
+
+  <form class="post-editor__card" id="post-editor-form" novalidate>
+    {{> alert className="post-editor__alert"}}
+    <input
+      class="post-editor__title"
+      name="title"
+      type="text"
+      value="{{title}}"
+      placeholder="Заголовок поста"
+      aria-label="Заголовок поста"
+      aria-describedby="post-editor-title-error"
+      autocomplete="off"
+    />
+    <p class="form-field__error post-editor__title-error" id="post-editor-title-error" data-error-for="title" aria-live="polite"></p>
+    {{> richEditor id="post-editor-body" name="body" label="Текст поста" placeholder="Начните писать…" errorPlaceholder="Текст поста"}}
+    <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
+  </form>
+
+  {{> linkDialog}}
+
+  {{#> modal id="leave-dialog" title=leaveTitle className="post-editor__leave"}}
+    <p class="post-editor__leave-text">В посте есть несохранённые изменения. Сохраните их, чтобы вернуться к работе позже</p>
+    <div class="post-editor__leave-actions">
+      <button class="button button_view_primary post-editor__leave-button" type="button" data-leave="save">Сохранить и выйти</button>
+      <button class="button button_view_secondary post-editor__leave-button" type="button" data-modal-close>Продолжить писать</button>
+      <button class="post-editor__leave-link" type="button" data-leave="discard">Выйти без сохранения</button>
+    </div>
+  {{/modal}}
+</section>
+{{/if}}

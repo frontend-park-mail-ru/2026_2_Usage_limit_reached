@@ -8,7 +8,7 @@
 <section class="profile" aria-labelledby="profile-name">
   <div class="profile__summary">
     <div class="profile__identity">
-      <img class="profile__avatar" src="{{avatarUrl}}" alt="Заглушка аватара" />
+      <img class="profile__avatar" src="{{avatarUrl}}" alt="Фото профиля" />
       <div class="profile__info">
         <div class="profile__heading">
           <h1 class="profile__name" id="profile-name">{{name}}</h1>
@@ -17,37 +17,42 @@
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
           <p class="profile__bio">{{bio}}</p>
-          <p class="profile__post-count">{{postCountLabel}}</p>
         {{/if}}
       </div>
     </div>
     <div class="profile__actions">
+      <a class="button button_view_secondary profile__button profile__button-edit" href="/settings" data-link>Редактировать профиль</a>
       {{#if hasAuthor}}
-        <button class="button button_view_primary button_borderless profile__button profile__button-statistics" type="button" aria-disabled="true" title="Будет доступно позже">Статистика</button>
+        <a class="button button_view_secondary profile__button profile__button-donations" href="/donations" data-link>Пожертвования</a>
       {{/if}}
-      <button class="button button_view_secondary profile__button profile__button-edit" type="button" aria-disabled="true" title="Будет доступно позже">Редактировать профиль</button>
     </div>
   </div>
 
-  {{#if hasAuthor}}
-  <section class="profile__posts" aria-labelledby="profile-posts-title">
-    <div class="profile__toolbar">
-      <h2 class="profile__title" id="profile-posts-title">Посты</h2>
-      {{#if hasPosts}}
-        <div class="profile__controls">
-          <button class="button button_view_accent button_borderless profile__button profile__button-add" type="button" aria-disabled="true" title="Будет доступно позже">
-            <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
-            Добавить пост
-          </button>
-          <label class="profile__sort-label" for="profile-sort">Порядок постов</label>
-          <select class="profile__sort" id="profile-sort" name="profile-sort">
-            <option value="newest">Сначала новые</option>
-          </select>
-        </div>
-      {{/if}}
-    </div>
+  {{#if needsPayout}}
+    <section class="profile__payout" aria-labelledby="profile-payout-title">
+      <div class="profile__payout-content">
+        <h2 class="profile__payout-title" id="profile-payout-title">Настройте получение пожертвований</h2>
+        <p class="profile__payout-text">Публиковать можно сразу. Чтобы получать пожертвования, настройте оплату</p>
+      </div>
+      <a class="button button_view_primary button_borderless profile__payout-button" href="/settings" data-link>Настроить оплату</a>
+    </section>
+  {{/if}}
 
-    {{> postsList}}
+  {{#if hasAuthor}}
+  <section class="profile__posts" aria-label="Публикации">
+    <div class="profile__toolbar">
+      {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs}}
+      <div class="profile__controls">
+        <a class="button button_view_accent button_borderless profile__button profile__button-add" href="/posts/new" data-link data-create-post>
+          <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+          Создать пост
+        </a>
+        <div class="profile__sort" data-profile-sort></div>
+      </div>
+    </div>
+    <div class="profile__panel" id="profile-panel" role="tabpanel" data-profile-panel></div>
+    {{> confirmDialog id="draft-delete" title="Удалить черновик?" text="Черновик исчезнет из списка. Восстановить его не получится"
+        errorTitle="Не удалось удалить" cancelLabel="Отмена" confirmLabel="Удалить черновик"}}
   </section>
   {{else}}
     <section class="profile__author-invite" aria-labelledby="profile-author-title">

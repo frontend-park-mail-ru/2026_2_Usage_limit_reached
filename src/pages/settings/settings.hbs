@@ -1,0 +1,71 @@
+{{#if message}}
+  <section class="settings" aria-label="Настройки профиля">
+    <p class="{{#if isError}}settings__load-error{{else}}settings__loading{{/if}}" role="status">{{message}}</p>
+  </section>
+{{else}}
+<section class="settings" aria-labelledby="settings-title">
+  <a class="settings__back" href="/profile" data-link>← Мой профиль</a>
+  <div class="settings__container">
+    <h1 class="settings__title" id="settings-title">Настройки профиля</h1>
+
+    {{> alert title="Не удалось сохранить изменения" className="settings__save-error"}}
+
+    <form class="settings__card" id="settings-form" novalidate>
+      <div class="settings__photo">
+        <img class="settings__avatar" src="{{avatarUrl}}" alt="Фото профиля" data-avatar>
+        <div class="settings__photo-info">
+          <p class="settings__label">Фото профиля</p>
+          <div class="settings__photo-actions">
+            <button class="button button_view_secondary settings__button settings__button-photo" type="button" data-avatar-change>Изменить фото</button>
+            <button class="settings__text-button" type="button" data-avatar-delete{{#unless hasAvatar}} hidden{{/unless}}>Удалить фото</button>
+          </div>
+          <p class="settings__hint" data-avatar-hint>JPG, PNG или WebP · до 5 МБ</p>
+        </div>
+      </div>
+
+      <hr class="settings__divider">
+
+      {{> formField id="settings-nickname" name="nickname" type="text" label="Отображаемое имя" autocomplete="name" placeholder="Иван Петров" value=nickname}}
+      {{> formField id="settings-username" name="username" type="text" label="Имя пользователя" autocomplete="username" placeholder="ivan_petrov" value=username hint="Используйте латинские буквы, цифры и _"}}
+
+      {{#if isAuthor}}
+        {{> select id="settings-category" name="category" label="Категория контента" placeholder="Выберите категорию" value=category options=categories}}
+
+        <div class="form-field">
+          <label class="form-field__label" for="settings-bio">Описание деятельности</label>
+          <textarea class="form-field__input form-field__input-textarea" id="settings-bio" name="bio" rows="3" aria-describedby="settings-bio-hint settings-bio-error">{{bio}}</textarea>
+          <p class="form-field__hint" id="settings-bio-hint">Максимальная длина описания — 200 символов</p>
+          <p class="form-field__error" id="settings-bio-error" data-error-for="bio" aria-live="polite"></p>
+        </div>
+      {{/if}}
+
+      <hr class="settings__divider">
+
+      <div class="settings__actions">
+        <button class="button button_view_primary settings__button settings__button-submit" type="submit">Сохранить изменения</button>
+        <a class="button button_view_secondary settings__button settings__button-cancel" href="/profile" data-link>Отмена</a>
+      </div>
+    </form>
+  </div>
+
+  {{#> modal id="avatar-picker" title="Изменить фото" className="settings__modal settings__modal-picker"}}
+    {{> alert title="Не удалось загрузить фото" className="settings__picker-error"}}
+    <div class="settings__picker">
+      <p class="settings__picker-title">Выберите изображение для аватара</p>
+      <p class="settings__hint">JPG, PNG или WebP · до 5 МБ</p>
+      <label class="button button_view_primary settings__button settings__button-file">
+        Выбрать файл
+        <input class="settings__file" type="file" accept="image/jpeg,image/png,image/webp" data-avatar-file>
+      </label>
+    </div>
+  {{/modal}}
+
+  {{#> modal id="avatar-crop" title="Обрезать фото" className="settings__modal settings__modal-crop"}}
+    {{> avatarCropper}}
+    <div class="settings__modal-actions">
+      <button class="button button_view_secondary settings__button settings__button-crop-cancel" type="button" data-modal-close>Отмена</button>
+      <button class="button button_view_primary settings__button settings__button-apply" type="button" data-avatar-apply>Применить фото</button>
+    </div>
+  {{/modal}}
+</section>
+{{/if}}
