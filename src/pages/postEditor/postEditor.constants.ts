@@ -1,9 +1,9 @@
 import type { EditorMode, EditorModeView } from './postEditor.types.ts';
 
 export const EDITOR_MODES: Readonly<Record<EditorMode, EditorModeView>> = {
-  create: { heading: 'Создание поста', backLabel: '← Мой профиль', saveLabel: 'Сохранить черновик' },
-  draft: { heading: 'Редактирование черновика', backLabel: '← Мой профиль', saveLabel: 'Сохранить черновик' },
-  published: { heading: 'Редактирование поста', backLabel: '← К посту', saveLabel: 'Сохранить изменения' },
+  create: { heading: 'Создание поста', backLabel: '← Мой профиль', saveLabel: 'Сохранить черновик', leaveTitle: 'Сохранить черновик?' },
+  draft: { heading: 'Редактирование черновика', backLabel: '← Мой профиль', saveLabel: 'Сохранить черновик', leaveTitle: 'Сохранить черновик?' },
+  published: { heading: 'Редактирование поста', backLabel: '← К посту', saveLabel: 'Сохранить изменения', leaveTitle: 'Сохранить изменения?' },
 };
 
 export const CLEAN_STATUS: Readonly<Record<EditorMode, string>> = {

@@ -2,7 +2,8 @@ import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
 import type { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
-import { BLOCK_LABELS, FORMAT_COMMANDS } from './richEditor.constants.ts';
+import { createTextRange, getTextOffset, isInlineTagActive, toggleInlineTag } from './inlineTag.ts';
+import { BLOCK_LABELS, FORMAT_COMMANDS, INLINE_TAGS, TEXT_BLOCKS } from './richEditor.constants.ts';
 import type { BlockType } from './richEditor.types.ts';
 
 /** Редактор текста поста с панелью форматирования. */
@@ -145,7 +146,7 @@ export class RichEditor {
     }
     const command = event.target.closest<HTMLElement>('[data-command]')?.dataset.command;
     if (command && FORMAT_COMMANDS.includes(command)) {
-      this.run(command);
+      this.format(command);
     } else if (event.target.closest('[data-link-button]')) {
       this.openLinkDialog();
     }
@@ -167,8 +168,14 @@ export class RichEditor {
 
   /** Показывает, какое оформление стоит под курсором. */
   private updateToolbar(): void {
+    const range = this.savedRange;
     for (const tool of this.tools) {
-      tool.setAttribute('aria-pressed', String(document.queryCommandState(tool.dataset.command ?? '')));
+      const command = tool.dataset.command ?? '';
+      const tag = INLINE_TAGS[command];
+      const isActive = tag && range && !range.collapsed
+        ? isInlineTagActive(this.content, range, tag)
+        : document.queryCommandState(command);
+      tool.setAttribute('aria-pressed', String(isActive));
     }
     const block: BlockType = document.queryCommandValue('formatBlock').toLowerCase() === 'h3' ? 'h3' : 'p';
     this.blockLabel.textContent = BLOCK_LABELS[block];
@@ -179,8 +186,11 @@ export class RichEditor {
 
   /** Возвращает фокус и выделение в поле. */
   private restoreSelection(): void {
-    this.content.focus();
     const selection = document.getSelection();
+    if (document.activeElement === this.content && selection?.rangeCount && this.content.contains(selection.anchorNode)) {
+      return;
+    }
+    this.content.focus();
     let range = this.savedRange;
     if (!range) {
       range = document.createRange();
@@ -200,6 +210,49 @@ export class RichEditor {
     this.restoreSelection();
     document.execCommand(command, false, value);
     this.updateToolbar();
+  }
+
+  /**
+   * Применяет кнопку оформления: подчёркивание и зачёркивание без execCommand.
+   * @param command
+   */
+  private format(command: string): void {
+    const tag = INLINE_TAGS[command];
+    const range = this.savedRange;
+    if (!tag || !range || range.collapsed) {
+      this.run(command);
+      return;
+    }
+    const start = getTextOffset(this.content, range.startContainer, range.startOffset);
+    const end = getTextOffset(this.content, range.endContainer, range.endOffset);
+    const draft = this.content.cloneNode(true) as HTMLElement;
+    toggleInlineTag(draft, createTextRange(draft, start, end), tag);
+    const drafts = [...draft.querySelectorAll<HTMLElement>(TEXT_BLOCKS)];
+    const blocks = [...this.content.querySelectorAll<HTMLElement>(TEXT_BLOCKS)];
+    this.content.focus();
+    blocks.forEach((block, index) => {
+      const html = drafts[index]?.innerHTML;
+      if (html !== undefined && html !== block.innerHTML) {
+        this.replaceBlockContent(block, html);
+      }
+    });
+    this.savedRange = createTextRange(this.content, start, end);
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(this.savedRange);
+    this.updateToolbar();
+  }
+
+  /**
+   * Заменяет содержимое блока через insertHTML, чтобы правку отменял Ctrl+Z.
+   * @param block
+   * @param html
+   */
+  private replaceBlockContent(block: HTMLElement, html: string): void {
+    const range = document.createRange();
+    range.selectNodeContents(block);
+    document.getSelection()?.removeAllRanges();
+    document.getSelection()?.addRange(range);
+    document.execCommand('insertHTML', false, html);
   }
 
   /**
