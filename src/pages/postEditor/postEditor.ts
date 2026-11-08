@@ -59,6 +59,7 @@ function buildViewModel(post: Post | null) {
   const mode = getMode(post);
   return {
     ...EDITOR_MODES[mode],
+    isPublished: mode === 'published',
     backHref: post && mode === 'published' ? postRoute(post.id) : ROUTES.profile,
     title: post?.title ?? '',
     statusText: CLEAN_STATUS[mode],
