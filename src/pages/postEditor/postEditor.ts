@@ -105,7 +105,7 @@ function getErrorTitle(status: PostStatus, intent: EditorIntent): string {
  * @param err
  */
 function getErrorText(err: ApiError): string {
-  if (err.isCsrfError) {
+  if (err.isCsrfError || err.isMutationTimeout) {
     return err.text;
   }
   const texts: Record<number, string> = { 403: AUTHOR_ONLY_ERROR, 404: NOT_FOUND_ERROR, 409: CONFLICT_ERROR };
@@ -152,7 +152,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const setBusy = (busy: boolean) => {
     isSaving = busy;
     for (const button of buttons) {
-      button.disabled = busy;
+      button.disabled = busy || !isSessionCurrent(context);
     }
   };
 
@@ -194,7 +194,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         post = await getPost(id).catch(() => post);
       }
     } catch (err) {
-      if (!form.isConnected || !isSessionCurrent(context)) {
+      if (!form.isConnected || (!isSessionCurrent(context) && !(err instanceof ApiError && err.isMutationResponseTimeout))) {
         return;
       }
       if (!(err instanceof ApiError)) {

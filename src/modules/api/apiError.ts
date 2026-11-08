@@ -24,6 +24,17 @@ export class ApiError extends Error {
     return this.source === 'csrf' || this.isCsrfFailure;
   }
 
+  /** Запрос изменения был прерван по тайм-ауту. */
+  get isMutationTimeout(): boolean {
+    return this.source === 'api' && this.code === 'mutation_timeout'
+      && (this.status === 0 || (this.status >= 200 && this.status < 300));
+  }
+
+  /** Сервер вернул успешный статус, но тело ответа не загрузилось вовремя. */
+  get isMutationResponseTimeout(): boolean {
+    return this.isMutationTimeout && this.status !== 0;
+  }
+
   /** Ошибка подготовки запроса не подтверждает отсутствие сессии. */
   get isUnauthorized(): boolean {
     return this.source === 'api' && this.status === 401;
@@ -33,6 +44,11 @@ export class ApiError extends Error {
   get text(): string {
     if (this.source === 'csrf') {
       return CSRF_PREPARATION_ERROR;
+    }
+    if (this.isMutationTimeout) {
+      return this.status === 0
+        ? 'Сервер не ответил вовремя. Проверьте, выполнилось ли действие, прежде чем повторять его'
+        : 'Сервер принял запрос, но ответ не загрузился полностью. Обновите страницу и проверьте результат';
     }
     return this.isCsrfFailure ? CSRF_ERROR_MESSAGE : API_ERROR_MESSAGES[this.status] ?? UNKNOWN_API_ERROR;
   }

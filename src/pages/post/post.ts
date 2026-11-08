@@ -106,7 +106,7 @@ async function removePost(id: string, navigate: Navigate, context: SessionContex
     if (err.isUnauthorized) {
       return null;
     }
-    if (err.isCsrfError) {
+    if (err.isCsrfError || err.isMutationTimeout) {
       return err.text;
     }
     if (err.status !== 404) {
@@ -186,7 +186,7 @@ async function sendLike(
       throw err;
     }
     if (!err.isUnauthorized) {
-      showToast(err.isCsrfError || err.status === 0 ? err.text : LIKE_ERROR);
+      showToast(err.isCsrfError || err.isMutationTimeout || err.status === 0 ? err.text : LIKE_ERROR);
     }
     return null;
   }

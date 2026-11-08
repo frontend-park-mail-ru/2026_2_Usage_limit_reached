@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './config.ts';
 import { ApiError } from './apiError.ts';
-import { API_READ_TIMEOUT } from './request.constants.ts';
+import { API_READ_TIMEOUT, API_WRITE_TIMEOUT } from './request.constants.ts';
 import type { RequestOptions } from './request.types.ts';
 
 interface HttpOptions extends RequestOptions {
@@ -40,16 +40,17 @@ export async function sendRequest<T>(path: string, {
     headers.set('Content-Type', 'application/json');
     body = JSON.stringify(data);
   }
-  const controller = method === 'GET' ? new AbortController() : undefined;
-  const timer = controller ? setTimeout(() => controller.abort(), API_READ_TIMEOUT) : undefined;
+  const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(method);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), isRead ? API_READ_TIMEOUT : API_WRITE_TIMEOUT);
   try {
     let response: Response;
     try {
       response = await fetch(url, {
-        method, credentials: 'include', signal: controller?.signal, headers, body, cache, redirect,
+        method, credentials: 'include', signal: controller.signal, headers, body, cache, redirect,
       });
     } catch {
-      throw new ApiError(0, 'network error');
+      throw new ApiError(0, controller.signal.aborted && !isRead ? 'mutation_timeout' : 'network error');
     }
     if (response.ok && responseType === 'empty') {
       return undefined as T;
@@ -62,7 +63,12 @@ export async function sendRequest<T>(path: string, {
       if (!response.ok) {
         throw new ApiError(response.status, 'unknown error');
       }
-      throw new ApiError(controller?.signal.aborted ? 0 : response.status, 'invalid JSON response');
+      if (controller.signal.aborted) {
+        throw isRead
+          ? new ApiError(0, 'network error')
+          : new ApiError(response.status, 'mutation_timeout');
+      }
+      throw new ApiError(response.status, 'invalid JSON response');
     }
     if (!response.ok) {
       const code = typeof json === 'object' && json !== null

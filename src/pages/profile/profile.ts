@@ -183,7 +183,7 @@ function bindPosts(
       if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
         return null;
       }
-      if (error instanceof ApiError && error.isCsrfError) {
+      if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout)) {
         return error.text;
       }
       if (!(error instanceof ApiError) || error.status !== 404) {

@@ -174,19 +174,22 @@ export async function runSessionMutation<T>(context: SessionContext, request: ()
   if (!isSessionCurrent(context)) {
     return undefined;
   }
-  let result: T;
+  let result: T | undefined;
+  let responseError: ApiError | undefined;
   try {
     result = await request();
   } catch (error) {
-    if (!isSessionCurrent(context)) {
-      return undefined;
-    }
-    if (error instanceof ApiError && error.isUnauthorized) {
-      if (!await expireSession(context.offlineToken)) {
+    if (error instanceof ApiError && error.isMutationResponseTimeout) {
+      responseError = error;
+    } else {
+      if (!isSessionCurrent(context)) {
         return undefined;
       }
+      if (error instanceof ApiError && error.isUnauthorized && !await expireSession(context.offlineToken)) {
+        return undefined;
+      }
+      throw error;
     }
-    throw error;
   }
   // Успех меняет данные владельца даже после сброса памяти другой вкладкой.
   const cleared = await invalidateOfflineCopy(context.userId, context.offlineToken);
@@ -201,6 +204,9 @@ export async function runSessionMutation<T>(context: SessionContext, request: ()
   sessionVersion += 1;
   invalidateCsrfRequests();
   confirmedSession = Object.freeze({ userId: context.userId, offlineToken: token });
+  if (responseError) {
+    throw responseError;
+  }
   return result;
 }
 

@@ -43,7 +43,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<
     if (kind === 'data' && valuesChanged) {
       return;
     }
-    setFormError(form, err.isCsrfError ? err.text : FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
+    setFormError(form, err.isCsrfError || err.isMutationTimeout ? err.text : FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     if (form.isConnected) {
       button.disabled = false;

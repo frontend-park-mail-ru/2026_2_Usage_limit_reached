@@ -95,7 +95,7 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
     showToast(SAVED_MESSAGE);
     navigate(ROUTES.profile);
   } catch (err) {
-    if (!form.isConnected || !isSessionCurrent(context)) {
+    if (!form.isConnected || (!isSessionCurrent(context) && !(err instanceof ApiError && err.isMutationResponseTimeout))) {
       return;
     }
     if (!(err instanceof ApiError)) {
@@ -104,10 +104,10 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
     if (err.isUnauthorized) {
       return;
     }
-    setAlert(alert, err.isCsrfError ? err.text : err.status === 0 ? SAVE_NETWORK_ERROR : err.text);
+    setAlert(alert, err.status === 0 && !err.isCsrfError && !err.isMutationTimeout ? SAVE_NETWORK_ERROR : err.text);
   } finally {
     if (form.isConnected) {
-      button.disabled = false;
+      button.disabled = !isSessionCurrent(context);
     }
   }
 }
