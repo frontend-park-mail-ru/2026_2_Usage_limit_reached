@@ -186,8 +186,11 @@ export class RichEditor {
 
   /** Возвращает фокус и выделение в поле. */
   private restoreSelection(): void {
-    this.content.focus();
     const selection = document.getSelection();
+    if (document.activeElement === this.content && selection?.rangeCount && this.content.contains(selection.anchorNode)) {
+      return;
+    }
+    this.content.focus();
     let range = this.savedRange;
     if (!range) {
       range = document.createRange();
