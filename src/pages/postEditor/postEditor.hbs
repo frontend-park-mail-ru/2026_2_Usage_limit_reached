@@ -16,8 +16,12 @@
     <a class="post-editor__back" href="{{backHref}}" data-link>{{backLabel}}</a>
     <h1 class="post-editor__heading" id="post-editor-heading">{{heading}}</h1>
     <div class="post-editor__actions">
-      <button class="button button_view_secondary post-editor__button" type="submit" form="post-editor-form" data-intent="save">{{saveLabel}}</button>
-      <button class="button button_view_primary post-editor__button" type="submit" form="post-editor-form" data-intent="publish">Опубликовать</button>
+      {{#if isPublished}}
+        <button class="button button_view_primary post-editor__button" type="submit" form="post-editor-form" data-intent="save">{{saveLabel}}</button>
+      {{else}}
+        <button class="button button_view_secondary post-editor__button" type="submit" form="post-editor-form" data-intent="save">{{saveLabel}}</button>
+        <button class="button button_view_primary post-editor__button" type="submit" form="post-editor-form" data-intent="publish">Опубликовать</button>
+      {{/if}}
     </div>
   </header>
 
@@ -40,7 +44,7 @@
 
   {{> linkDialog}}
 
-  {{#> modal id="leave-dialog" title="Сохранить черновик?" className="post-editor__leave"}}
+  {{#> modal id="leave-dialog" title=leaveTitle className="post-editor__leave"}}
     <p class="post-editor__leave-text">В посте есть несохранённые изменения. Сохраните их, чтобы вернуться к работе позже</p>
     <div class="post-editor__leave-actions">
       <button class="button button_view_primary post-editor__leave-button" type="button" data-leave="save">Сохранить и выйти</button>

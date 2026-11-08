@@ -6,6 +6,7 @@ export interface EditorModeView {
   heading: string;
   backLabel: string;
   saveLabel: string;
+  leaveTitle: string;
 }
 
 export interface EditorSnapshot {
