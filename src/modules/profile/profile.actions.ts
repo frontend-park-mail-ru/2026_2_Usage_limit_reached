@@ -11,14 +11,11 @@ import type { SessionContext } from '@/modules/auth/auth.types.ts';
  * @throws {ApiError}
  */
 export async function saveProfile(data: ProfileUpdate, context: SessionContext): Promise<boolean> {
-  const saved = await runSessionMutation(context, async () => {
-    await profileApi.updateProfile(data);
-    return true;
-  });
+  const saved = await runSessionMutation(context, () => profileApi.updateProfile(data));
   if (!saved) {
     return false;
   }
-  updateSession({ username: data.user.username, nickname: data.user.nickname });
+  updateSession({ nickname: saved.user.nickname });
   return true;
 }
 

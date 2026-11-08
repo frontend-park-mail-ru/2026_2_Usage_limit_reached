@@ -9,9 +9,9 @@ export interface ProfileUser {
 
 export interface ProfileAuthor {
   bio: string;
-  category: string;
-  payout_provider: string | null;
-  payout_account_id: string | null;
+  category?: string | null;
+  payout_provider?: string | null;
+  payout_account_id?: string | null;
 }
 
 export interface Profile {
@@ -19,15 +19,9 @@ export interface Profile {
   author?: ProfileAuthor;
 }
 
-export interface ProfileUserUpdate {
-  username: string;
-  nickname: string;
-  email: string;
-}
-
 export interface ProfileUpdate {
-  user: ProfileUserUpdate;
-  author?: ProfileAuthor;
+  nickname: string;
+  author?: { bio: string; category: string | null };
 }
 
 export interface AvatarResponse {

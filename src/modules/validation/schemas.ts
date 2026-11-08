@@ -45,14 +45,18 @@ export const userSettingsSchema: Schema = {
     required('Введите имя'),
     maxLength(NICKNAME_MAX, 'Максимальная длина отображаемого имени — 64 символа'),
   ],
-  username: usernameRules,
 };
 
-export const authorSettingsSchema: Schema = {
+const requireBio = required('Введите описание деятельности');
+
+/** Проверяет описание при изменении данных автора. */
+export const authorSettingsSchema = (author: { bio: string; category?: string | null }): Schema => ({
   ...userSettingsSchema,
-  category: [required('Укажите категорию контента')],
-  bio: [maxLength(BIO_MAX, 'Сократите описание до 200 символов')],
-};
+  bio: [
+    (bio, values) => bio === author.bio && values?.category === (author.category ?? '') ? null : requireBio(bio),
+    maxLength(BIO_MAX, `Сократите описание до ${BIO_MAX} символов`),
+  ],
+});
 
 export const postSchema: Schema = {
   title: [

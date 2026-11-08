@@ -14,7 +14,7 @@ export const getProfile = () => request<Profile>('/profile/me');
  * @throws {ApiError}
  */
 export const updateProfile = (data: ProfileUpdate) =>
-  request<void>('/profile/me', { method: 'PUT', data, responseType: 'empty' });
+  request<Profile>('/profile/me', { method: 'PUT', data });
 
 /**
  * Загружает аватар.

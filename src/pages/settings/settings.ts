@@ -6,7 +6,7 @@ import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import type { Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { bindValidation, setFieldError } from '@/modules/validation/bindForm.ts';
+import { bindValidation } from '@/modules/validation/bindForm.ts';
 import { authorSettingsSchema, userSettingsSchema } from '@/modules/validation/schemas.ts';
 import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { validateAvatar } from '@/modules/validation/avatar.ts';
@@ -28,7 +28,6 @@ import {
   PROFILE_CATEGORIES,
   SAVED_MESSAGE,
   SAVE_NETWORK_ERROR,
-  USERNAME_TAKEN,
 } from './settings.constants.ts';
 
 /** Возвращает каркас с текстом загрузки. */
@@ -42,6 +41,7 @@ export function renderSettings(): string {
  */
 function buildSettingsViewModel(profile: Profile) {
   const category = profile.author?.category ?? '';
+  const categories = [...new Set([...(category ? [category] : []), ...PROFILE_CATEGORIES])];
   return {
     nickname: profile.user.nickname,
     username: profile.user.username,
@@ -50,7 +50,7 @@ function buildSettingsViewModel(profile: Profile) {
     isAuthor: !!profile.author,
     category,
     bio: profile.author?.bio ?? '',
-    categories: PROFILE_CATEGORIES.map((value) => ({ value, selected: value === category })),
+    categories: categories.map((value) => ({ value, selected: value === category })),
   };
 }
 
@@ -60,11 +60,11 @@ function buildSettingsViewModel(profile: Profile) {
  * @param values
  */
 function buildProfileUpdate(profile: Profile, values: FormValues): ProfileUpdate {
-  const data: ProfileUpdate = {
-    user: { username: values.username, nickname: values.nickname, email: profile.user.email },
-  };
-  if (profile.author) {
-    data.author = { ...profile.author, category: values.category, bio: values.bio };
+  const data: ProfileUpdate = { nickname: values.nickname };
+  const author = profile.author;
+  const category = values.category || null;
+  if (author && (values.bio !== author.bio || category !== (author.category ?? null))) {
+    data.author = { bio: values.bio, category };
   }
   return data;
 }
@@ -102,11 +102,6 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
       throw err;
     }
     if (err.isUnauthorized) {
-      return;
-    }
-    if (!err.isCsrfError && err.status === 409) {
-      setFieldError(form, 'username', USERNAME_TAKEN);
-      form.querySelector<HTMLElement>('[name="username"]')?.focus();
       return;
     }
     setAlert(alert, err.isCsrfError ? err.text : err.status === 0 ? SAVE_NETWORK_ERROR : err.text);
@@ -250,7 +245,7 @@ function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, c
   if (category) {
     new Select(category);
   }
-  const schema = profile.author ? authorSettingsSchema : userSettingsSchema;
+  const schema = profile.author ? authorSettingsSchema(profile.author) : userSettingsSchema;
   bindValidation(form, schema, (values) => submitSettings(root, profile, values, navigate, context));
   bindAvatar(root, context);
 }
