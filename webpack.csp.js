@@ -6,7 +6,7 @@ const directives = {
   'style-src-attr': ["'none'"],
   'font-src': ["'self'"],
   'img-src': ["'self'", 'blob:'],
-  'connect-src': ["'self'", 'https://161.104.105.124:8080'],
+  'connect-src': ["'self'"],
   'worker-src': ["'self'"],
   'base-uri': ["'none'"],
   'form-action': ["'none'"],
