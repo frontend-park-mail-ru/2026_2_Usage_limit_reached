@@ -19,7 +19,7 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { ROUTES, postEditRoute } from '@/app/paths.ts';
+import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import {
@@ -46,6 +46,7 @@ function buildViewModel(post: Post, isOwner: boolean) {
   const publishedAt = post.published_at ?? '';
   return {
     authorName: post.author.nickname,
+    authorHref: publicProfileRoute(post.author.username),
     avatarUrl: post.author.avatar_url ?? AVATAR_PLACEHOLDER,
     publishedAt,
     dateLabel: publishedAt ? formatPostDate(publishedAt) : '',
@@ -63,7 +64,10 @@ function buildViewModel(post: Post, isOwner: boolean) {
  */
 function bindBackLink(root: HTMLElement): void {
   requireElement(root, '[data-back]').addEventListener('click', (event) => {
-    if (history.state?.from === ROUTES.profile) {
+    const from = history.state?.from;
+    if (typeof from === 'string' && [ROUTES.profile, ROUTES.publicProfile].some((route) =>
+      route === matchRoute(from.split('?')[0])?.pattern
+    )) {
       event.preventDefault();
       history.back();
     }

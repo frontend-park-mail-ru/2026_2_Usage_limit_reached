@@ -2,6 +2,7 @@ import { renderLogin, initLogin } from '@/pages/login/login.ts';
 import { renderHome, initHome } from '@/pages/home/home.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
+import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
 import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
 import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
 import { renderPost, initPost } from '@/pages/post/post.ts';
@@ -30,6 +31,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
+  [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },

@@ -33,6 +33,26 @@
   box-sizing: border-box;
 }
 
+.profile__summary-public {
+  align-items: center;
+  min-height: 194px;
+  padding: 32px;
+}
+
+.profile__summary-public .profile__avatar {
+  width: 112px;
+  height: 112px;
+}
+
+.profile__summary-public [data-donate][hidden],
+.profile [data-list-retry][hidden] {
+  display: none;
+}
+
+.profile__title {
+  margin: 0;
+}
+
 .profile__identity {
   display: flex;
   flex-wrap: wrap;
@@ -292,6 +312,10 @@
 
 @media (max-width: 720px) {
   .profile {
+    padding: 16px;
+  }
+
+  .profile__summary-public {
     padding: 16px;
   }
 

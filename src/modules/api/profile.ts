@@ -1,5 +1,5 @@
 import { request } from './request.ts';
-import type { AvatarResponse, Profile, ProfilePosts, ProfilePostsQuery, ProfileUpdate } from './profile.types.ts';
+import type { AvatarResponse, Profile, ProfilePosts, ProfilePostsQuery, ProfileUpdate, PublicProfile } from './profile.types.ts';
 import { DEFAULT_PROFILE_POSTS_QUERY } from './profile.constants.ts';
 
 /**
@@ -7,6 +7,10 @@ import { DEFAULT_PROFILE_POSTS_QUERY } from './profile.constants.ts';
  * @throws {ApiError}
  */
 export const getProfile = () => request<Profile>('/profile/me');
+
+/** Получает публичный профиль по имени пользователя. */
+export const getPublicProfile = (username: string) =>
+  request<PublicProfile>(`/users/${encodeURIComponent(username)}`);
 
 /**
  * Сохраняет профиль.

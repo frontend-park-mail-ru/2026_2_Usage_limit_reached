@@ -19,6 +19,11 @@ export interface Profile {
   author?: ProfileAuthor;
 }
 
+export interface PublicProfile {
+  user: Omit<ProfileUser, 'email'>;
+  author?: Pick<ProfileAuthor, 'bio' | 'category'>;
+}
+
 export interface ProfileUpdate {
   nickname: string;
   author?: { bio: string; category: string | null };

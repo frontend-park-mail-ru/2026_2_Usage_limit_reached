@@ -97,7 +97,7 @@ export function buildProfileViewModel(
  * @param item
  * @param tab
  */
-function buildCard(item: PostPreview, tab: ProfileTab) {
+export function buildProfilePostCard(item: PostPreview, tab: ProfileTab) {
   const isDraft = tab === 'drafts';
   const date = item.published_or_updated_at ?? '';
   return {
@@ -241,7 +241,7 @@ function bindPosts(
       }
       cursor = page.next_cursor;
       const holder = document.createElement('div');
-      holder.innerHTML = page.items.map((item) => postCardTemplate(buildCard(item, tab))).join('');
+      holder.innerHTML = page.items.map((item) => postCardTemplate(buildProfilePostCard(item, tab))).join('');
       bindCards(holder);
       grid.append(...holder.children);
       text.textContent = '';
@@ -293,7 +293,7 @@ function bindPosts(
     panel.innerHTML = postsListTemplate({
       isEmpty,
       isDrafts: tab === 'drafts',
-      cards: page.items.map((item) => buildCard(item, tab)),
+      cards: page.items.map((item) => buildProfilePostCard(item, tab)),
       hasMore: !!cursor,
     });
     createButton.hidden = isEmpty && tab === 'posts';

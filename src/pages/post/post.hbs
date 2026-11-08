@@ -17,7 +17,7 @@
     <header class="post-page__header">
       <img class="post-page__avatar" src="{{avatarUrl}}" alt="" />
       <div class="post-page__meta">
-        <p class="post-page__author">{{authorName}}</p>
+        <a class="post-page__author post-page__author-link" href="{{authorHref}}" data-link>{{authorName}}</a>
         {{#if publishedAt}}
           <time class="post-page__date" datetime="{{publishedAt}}">{{dateLabel}}</time>
         {{/if}}
