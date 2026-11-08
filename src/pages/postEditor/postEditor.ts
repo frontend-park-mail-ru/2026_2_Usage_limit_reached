@@ -132,13 +132,13 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
   let isSaving = false;
 
   editor.setValue(loaded?.body ?? '');
-  let saved: EditorSnapshot = { title: titleInput.value, body: editor.getValue() };
+  let saved: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
 
   const leaveModal = new Modal(requireElement<HTMLDialogElement>(root, '.post-editor__leave'), () => {
     leave = null;
   });
 
-  const isDirty = () => titleInput.value !== saved.title || editor.getValue() !== saved.body;
+  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body;
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -155,6 +155,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
     if (isSaving) {
       return;
     }
+    const body = editor.getHtml();
     const status = getTargetStatus(mode, intent);
     const action = intent;
     const afterSave = leave;
@@ -172,7 +173,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
       if (!form.isConnected || !id) {
         return;
       }
-      saved = { title: titleInput.value, body: values.body };
+      saved = { title: titleInput.value, body };
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();
