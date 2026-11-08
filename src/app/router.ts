@@ -17,11 +17,9 @@ import {
 } from '@/components/sidebar/sidebar.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { bindLinks } from '@/utils/helpers/bindLinks.ts';
-import { checkSession, invalidateSessionMemory } from '@/modules/auth/auth.actions.ts';
-import { initOfflineSync } from '@/modules/offline/offline.storage.ts';
-import { initCsrfSync } from '@/modules/api/csrf.ts';
+import { checkSession } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
-import { initRefreshNotice } from '@/components/refreshNotice/refreshNotice.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import { ROUTES, matchRoute } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath, RoutePattern } from './paths.ts';
 import type { Layout, LeaveGuard, Route } from './router.types.ts';
@@ -45,7 +43,7 @@ const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, RO
 
 let currentLayout: Layout | undefined;
 let disposePage: (() => void) | undefined;
-let refreshNotice: ReturnType<typeof initRefreshNotice> | undefined;
+let setRefreshNotice: SetRefreshNotice | undefined;
 let pageVersion = 0;
 let currentPath = '';
 let leaveGuard: LeaveGuard | undefined;
@@ -121,7 +119,7 @@ function renderCurrentRoute(): void {
   disposePage?.();
   disposePage = undefined;
   const version = ++pageVersion;
-  refreshNotice?.update(null);
+  setRefreshNotice?.(null);
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
   updateSidebarProfileState(path);
@@ -133,7 +131,7 @@ function renderCurrentRoute(): void {
     match?.params ?? {},
     (state, retry) => {
       if (version === pageVersion) {
-        refreshNotice?.update(state, retry);
+        setRefreshNotice?.(state, retry);
       }
     }
   );
@@ -190,19 +188,9 @@ function handleBeforeUnload(event: BeforeUnloadEvent): void {
 }
 
 /** Запускает роутер и возвращает функцию отключения его обработчиков. */
-export function initRouter(): () => void {
+export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
   let active = true;
-  refreshNotice = initRefreshNotice(requireElement<HTMLElement>(document, '#refresh-notice'));
-  const stopOfflineSync = initOfflineSync(() => {
-    if (active) {
-      invalidateSessionMemory();
-    }
-  });
-  const stopCsrfSync = initCsrfSync(() => {
-    if (active) {
-      invalidateSessionMemory();
-    }
-  });
+  setRefreshNotice = updateRefreshNotice;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   let lastStatus = authStore.getState().status;
   const unsubscribeAuth = authStore.subscribe(() => {
@@ -236,10 +224,7 @@ export function initRouter(): () => void {
     disposePage?.();
     disposePage = undefined;
     pageVersion += 1;
-    refreshNotice?.destroy();
-    refreshNotice = undefined;
-    stopOfflineSync();
-    stopCsrfSync();
+    setRefreshNotice = undefined;
     unbindLinks();
     unsubscribeAuth();
     window.removeEventListener('popstate', handlePopState);
