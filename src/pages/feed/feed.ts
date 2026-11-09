@@ -24,11 +24,11 @@ export function renderFeed(): string {
  */
 export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
-  if (authStore.getState().status === 'unknown') {
-    void checkSession().catch(() => {});
-  }
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
   const posts = bindPublicPosts(root, async (query) => {
+    if (authStore.getState().status === 'unknown') {
+      await checkSession().catch(() => {});
+    }
     const context = getSessionContext();
     const pending = [...pendingLikes].filter(([, owner]) => owner === context);
     if (pending.length > 0) {
@@ -69,9 +69,6 @@ export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
     previous = current;
     if (changed) {
       posts.reload();
-      if (current.status === 'unknown') {
-        void checkSession().catch(() => {});
-      }
     }
   });
   return () => {

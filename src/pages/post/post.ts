@@ -69,12 +69,13 @@ function bindBackLink(root: HTMLElement): void {
   const from = history.state?.from;
   const origin = typeof from === 'string' ? matchRoute(from.split('?')[0])?.pattern : undefined;
   const fromFeed = origin === ROUTES.home || origin === ROUTES.feed;
-  if (fromFeed) {
-    link.href = origin;
+  const fromProfile = origin === ROUTES.profile || origin === ROUTES.publicProfile;
+  if (!fromProfile) {
+    link.href = fromFeed ? origin : ROUTES.home;
     link.textContent = '← Лента';
   }
   link.addEventListener('click', (event) => {
-    if (origin === ROUTES.profile || origin === ROUTES.publicProfile || fromFeed) {
+    if (fromProfile || fromFeed) {
       event.preventDefault();
       history.back();
     }
