@@ -12,7 +12,7 @@ import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { LOAD_ERROR, LOADING_MESSAGE } from './profile.constants.ts';
-import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
+import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
 
 /** Показывает состояние загрузки публичного профиля. */
 export function renderPublicProfile(): string {
@@ -45,7 +45,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       });
       disposeBio = bindProfileBio(root);
       if (author) {
-        disposePosts = bindPublicPosts(root, (query) => getPublicPosts(params.username, query)).destroy;
+        disposePosts = bindLikedPosts(root, (query) => getPublicPosts(params.username, query), navigate);
         const donate = requireElement<HTMLButtonElement>(root, '[data-donate]');
         const donateDialog = new DonateDialog(requireElement(root, '.donate-dialog'));
         dialog = donateDialog;

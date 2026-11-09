@@ -13,14 +13,15 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  * Подключает сортировку и подгрузку опубликованных постов.
  * @param root
  * @param loadPage
- * @param bindFeedLike
+ * @param bindLike
+ * @param feed
  */
 export function bindPublicPosts(
   root: HTMLElement,
   loadPage: (query: PostsQuery) => Promise<PostsPage>,
-  bindFeedLike?: (button: HTMLButtonElement, item: PostPreview) => void
+  bindLike?: (button: HTMLButtonElement, item: PostPreview) => void,
+  feed = false
 ) {
-  const feed = !!bindFeedLike;
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const retry = requireElement<HTMLButtonElement>(root, '[data-list-retry]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
@@ -64,7 +65,7 @@ export function bindPublicPosts(
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
         locked: item.locked,
-        canLike: feed && !item.locked,
+        canLike: !!bindLike && !item.locked,
         liked: item.liked_by_user,
         feedAuthor: feed ? {
           name: item.author.nickname, avatarUrl: item.author.avatar_url ?? AVATAR_PLACEHOLDER, href: publicProfileRoute(item.author.username),
@@ -85,12 +86,12 @@ export function bindPublicPosts(
           publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && !cursor, hasMore: !!cursor,
         });
       }
-      if (bindFeedLike && cards.length > 0) {
+      if (bindLike && cards.length > 0) {
         const grid = requireElement(panel, '[data-posts-grid]');
         page.items.forEach((item, index) => {
           const button = grid.children[previousCount + index]?.querySelector<HTMLButtonElement>('.post-card__like');
           if (button) {
-            bindFeedLike(button, item);
+            bindLike(button, item);
           }
         });
       }
