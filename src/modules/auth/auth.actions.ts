@@ -9,7 +9,7 @@ import type { Profile, ProfilePostsQuery } from '@/modules/api/profile.types.ts'
 import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, invalidateOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '@/modules/offline/offline.storage.ts';
 import type { OfflineClearToken } from '@/modules/offline/offline.types.ts';
 import { DEFAULT_PROFILE_POSTS_QUERY } from '@/modules/api/profile.constants.ts';
-import './auth.store.ts';
+import { authStore } from './auth.store.ts';
 
 let sessionVersion = 0;
 let confirmedSession: SessionContext | undefined;
@@ -17,7 +17,10 @@ let pendingChangeVersion: number | undefined;
 let profileRequest: { version: number; promise: Promise<Profile | undefined> } | undefined;
 
 /** Очищает копию актуальной сессии и сохраняет состояние гостя. */
-export async function expireSession(expected: OfflineClearToken | undefined = confirmedSession?.offlineToken): Promise<boolean> {
+export async function expireSession(
+  expected: OfflineClearToken | undefined = confirmedSession?.offlineToken,
+  notifyTabs = true,
+): Promise<boolean> {
   const version = sessionVersion;
   const cleared = await clearOfflineCopy(expected, () => version === sessionVersion);
   if (cleared === false || version !== sessionVersion) {
@@ -29,7 +32,9 @@ export async function expireSession(expected: OfflineClearToken | undefined = co
   sessionVersion += 1;
   confirmedSession = undefined;
   resetCsrfToken();
-  notifyCsrfSessionChange();
+  if (notifyTabs) {
+    notifyCsrfSessionChange();
+  }
   authDispatcher.dispatch({ type: 'auth/guest' });
   return true;
 }
@@ -94,7 +99,9 @@ async function loadSessionProfile(): Promise<Profile | undefined> {
         return undefined;
       }
     }
-    if (error instanceof ApiError && error.isUnauthorized && !await expireSession(token ?? fallback)) {
+    // Проверка после межвкладочного уведомления не должна отправлять его обратно.
+    const wasAuthenticated = authStore.getState().status === 'authenticated';
+    if (error instanceof ApiError && error.isUnauthorized && !await expireSession(token ?? fallback, wasAuthenticated)) {
       return undefined;
     }
     throw error;

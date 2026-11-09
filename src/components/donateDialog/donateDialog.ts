@@ -36,6 +36,7 @@ export class DonateDialog {
   private readonly onClick: (event: MouseEvent) => void;
   private readonly onInput: () => void;
   private readonly onSubmit: (event: SubmitEvent) => void;
+  private readonly isSessionValid: () => boolean;
   private author: PostAuthor | null = null;
   private requestKey: string | null = null;
   private sendLabel = '';
@@ -44,9 +45,11 @@ export class DonateDialog {
 
   /**
    * @param dialog
+   * @param isSessionValid
    */
-  constructor(dialog: HTMLDialogElement) {
+  constructor(dialog: HTMLDialogElement, isSessionValid: () => boolean = () => true) {
     this.dialog = dialog;
+    this.isSessionValid = isSessionValid;
     this.modal = new Modal(dialog);
     this.title = requireElement<HTMLElement>(dialog, '.modal__title');
     this.form = requireElement<HTMLFormElement>(dialog, '.donate-dialog__form');
@@ -204,7 +207,7 @@ export class DonateDialog {
 
   /** Отправляет пожертвование и показывает итог. */
   private async send(): Promise<void> {
-    if (!this.author || this.isSending) {
+    if (!this.author || this.isSending || !this.isSessionValid()) {
       return;
     }
     const { amount, message } = this.values();
@@ -220,6 +223,9 @@ export class DonateDialog {
         message: message || null,
         is_anonymous: false,
       });
+      if (!this.isSessionValid()) {
+        return;
+      }
       if (!this.dialog.open || this.requestKey !== requestKey) {
         if (result.status === 'paid') {
           showToast(SENT_MESSAGE);

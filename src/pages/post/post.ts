@@ -4,10 +4,12 @@ import { formatPostDate } from '@/utils/helpers/posts.ts';
 import {
   checkSession,
   getSessionContext,
+  getSessionVersion,
   isSessionCurrent,
   runSessionMutation,
   runSessionRequest,
 } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost, setPostLike } from '@/modules/api/posts.ts';
 import type { Post, PostLikes } from '@/modules/api/posts.types.ts';
@@ -123,8 +125,9 @@ async function removePost(id: string, navigate: Navigate, context: SessionContex
  * @param root
  * @param post
  * @param navigate
+ * @param beforeAction
  */
-function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate): void {
+function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate, beforeAction: () => boolean): (() => void) | undefined {
   const context = getSessionContext();
   if (!context || context.userId !== post.author.id) {
     return;
@@ -132,31 +135,37 @@ function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate): vo
   const page = root.firstElementChild;
   const isActive = () => root.firstElementChild === page;
   const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '.confirm-dialog'));
-  new ActionMenu(requireElement<HTMLElement>(root, '.post-page__menu'), (action) => {
+  const menu = new ActionMenu(requireElement<HTMLElement>(root, '.post-page__menu'), (action) => {
+    if (!beforeAction()) {
+      return;
+    }
     if (action === 'edit') {
       navigate(postEditRoute(post.id));
     } else if (action === 'delete') {
       dialog.open(post.title, () => removePost(post.id, navigate, context, isActive));
     }
   });
+  return () => {
+    menu.destroy();
+    dialog.destroy();
+  };
 }
 
 /**
  * Подключает кнопку «Пожертвовать».
  * @param root
  * @param post
- * @param isGuest
- * @param navigate
+ * @param beforeAction
+ * @param isSessionValid
  */
-function bindDonate(root: HTMLElement, post: Post, isGuest: boolean, navigate: Navigate): void {
-  const dialog = new DonateDialog(requireElement<HTMLDialogElement>(root, '.donate-dialog'));
+function bindDonate(root: HTMLElement, post: Post, beforeAction: () => boolean, isSessionValid: () => boolean): () => void {
+  const dialog = new DonateDialog(requireElement<HTMLDialogElement>(root, '.donate-dialog'), isSessionValid);
   requireElement(root, '[data-donate]').addEventListener('click', () => {
-    if (isGuest) {
-      navigate(ROUTES.login);
-    } else {
+    if (beforeAction()) {
       dialog.open(post.author);
     }
   });
+  return () => dialog.destroy();
 }
 
 /**
@@ -196,18 +205,13 @@ async function sendLike(
  * Подключает кнопку лайка.
  * @param root
  * @param post
- * @param isGuest
- * @param navigate
+ * @param beforeAction
  */
-function bindLike(root: HTMLElement, post: Post, isGuest: boolean, navigate: Navigate): void {
+function bindLike(root: HTMLElement, post: Post, beforeAction: () => boolean): void {
   const button = requireElement<HTMLButtonElement>(root, '.like-button');
-  if (isGuest) {
-    button.addEventListener('click', () => navigate(ROUTES.login));
-    return;
-  }
   const context = getSessionContext();
   if (!context) {
-    button.disabled = true;
+    button.addEventListener('click', beforeAction);
     return;
   }
   const page = root.firstElementChild;
@@ -216,7 +220,9 @@ function bindLike(root: HTMLElement, post: Post, isGuest: boolean, navigate: Nav
     likes_count: post.likes_count,
     liked_by_user: post.liked_by_user,
   };
-  new LikeButton(button, state, (liked) => sendLike(post.id, liked, context, isActive));
+  new LikeButton(button, state, (liked) => beforeAction()
+    ? sendLike(post.id, liked, context, isActive)
+    : Promise.resolve(null));
 }
 
 /**
@@ -225,44 +231,97 @@ function bindLike(root: HTMLElement, post: Post, isGuest: boolean, navigate: Nav
  * @param navigate
  * @param params
  */
-export async function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): Promise<void> {
-  const loadingPage = root.firstElementChild;
-  let post: Post;
-  let isOwner = false;
-  let isGuest = true;
-  try {
-    const [loaded, profile] = await Promise.all([getPost(params.id ?? ''), checkSession().catch(() => undefined)]);
-    post = loaded;
-    isOwner = !!profile && profile.user.id === post.author.id;
-    isGuest = !profile;
-  } catch (err) {
-    if (root.firstElementChild !== loadingPage) {
+export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+  let active = true;
+  let request = 0;
+  let disposeActions: (() => void) | undefined;
+  let renderedSession: string | undefined;
+  const sessionKey = () => {
+    const { status, user } = authStore.getState();
+    return status + (user?.id ?? '');
+  };
+
+  const load = async () => {
+    const id = ++request;
+    const isCurrent = () => active && request === id;
+    disposeActions?.();
+    disposeActions = undefined;
+    renderedSession = undefined;
+    root.innerHTML = renderPost();
+
+    await checkSession().catch(() => undefined);
+    if (!isCurrent()) {
       return;
     }
-    const isMissing = err instanceof ApiError && (err.status === 400 || err.status === 404);
-    root.innerHTML = isMissing
-      ? postTemplate({ unavailable: true })
-      : postTemplate({ message: err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR, isError: true });
-    if (isMissing) {
-      bindBackLink(root);
+    const version = getSessionVersion();
+    let post: Post;
+    try {
+      post = await getPost(params.id ?? '');
+    } catch (error) {
+      if (!isCurrent()) {
+        return;
+      }
+      const isMissing = error instanceof ApiError && (error.status === 400 || error.status === 404);
+      root.innerHTML = isMissing
+        ? postTemplate({ unavailable: true })
+        : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
+      if (isMissing) {
+        bindBackLink(root);
+      }
+      return;
     }
-    return;
-  }
-  if (root.firstElementChild !== loadingPage) {
-    return;
-  }
-  if (isOwner && post.status !== 'published') {
-    navigate(postEditRoute(post.id), { replace: true });
-    return;
-  }
-  document.title = post.title;
-  root.innerHTML = postTemplate(buildViewModel(post, isOwner));
-  requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
-  bindBackLink(root);
-  bindLike(root, post, isGuest, navigate);
-  if (isOwner) {
-    bindOwnerActions(root, post, navigate);
-  } else {
-    bindDonate(root, post, isGuest, navigate);
-  }
+    if (!isCurrent()) {
+      return;
+    }
+    if (version !== getSessionVersion()) {
+      void load();
+      return;
+    }
+
+    const context = getSessionContext();
+    const isOwner = context?.userId === post.author.id;
+    if (isOwner && post.status !== 'published') {
+      navigate(postEditRoute(post.id), { replace: true });
+      return;
+    }
+    const beforeAction = () => {
+      if (!isCurrent()) {
+        return false;
+      }
+      if (authStore.getState().status === 'guest') {
+        navigate(ROUTES.login);
+        return false;
+      }
+      if (context && isSessionCurrent(context)) {
+        return true;
+      }
+      showToast('Не удалось подтвердить сессию. Проверяем её ещё раз');
+      void load();
+      return false;
+    };
+
+    renderedSession = sessionKey();
+    document.title = post.title;
+    root.innerHTML = postTemplate(buildViewModel(post, isOwner));
+    requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
+    bindBackLink(root);
+    bindLike(root, post, beforeAction);
+    disposeActions = isOwner
+      ? bindOwnerActions(root, post, navigate, beforeAction)
+      : bindDonate(root, post, beforeAction, () => !!context && isSessionCurrent(context));
+  };
+
+  const unsubscribe = authStore.subscribe(() => {
+    if (active && (authStore.getState().status === 'unknown'
+      || (renderedSession !== undefined && renderedSession !== sessionKey()))) {
+      void load();
+    }
+  });
+  void load();
+
+  return () => {
+    active = false;
+    unsubscribe();
+    disposeActions?.();
+  };
 }
