@@ -38,7 +38,7 @@ function updateMoreLinks(list: HTMLElement): void {
     const text = card.querySelector<HTMLElement>('.donation-card__message');
     const button = card.querySelector<HTMLElement>('[data-donation-more]');
     if (text && button) {
-      button.hidden = text.scrollWidth <= text.clientWidth;
+      button.hidden = text.scrollWidth <= text.clientWidth && !text.textContent?.includes('\n');
     }
   }
 }

@@ -102,6 +102,11 @@
   width: auto;
 }
 
+.donation-message__window {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
 .donation-message__header {
   display: flex;
   align-items: flex-start;
