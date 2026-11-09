@@ -18,7 +18,7 @@
     />
     <ul class="select__list" id="{{id}}-list" role="listbox" aria-labelledby="{{id}}-label" hidden>
       {{#each options}}
-        <li class="select__option" id="{{../id}}-option-{{@index}}" role="option" data-value="{{value}}" aria-selected="{{#if selected}}true{{else}}false{{/if}}">{{value}}</li>
+        <li class="select__option" id="{{../id}}-option-{{@index}}" role="option" data-value="{{value}}" aria-selected="{{#if selected}}true{{else}}false{{/if}}">{{#if label}}{{label}}{{else}}{{value}}{{/if}}</li>
       {{/each}}
     </ul>
   </div>

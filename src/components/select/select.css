@@ -42,6 +42,10 @@
   background: var(--color-toggle-hover-background);
 }
 
+.select__option:active {
+  background: var(--color-toggle-pressed-background);
+}
+
 .select__option_active {
   outline: 2px solid var(--color-primary);
   outline-offset: -2px;

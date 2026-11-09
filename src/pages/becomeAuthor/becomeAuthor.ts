@@ -364,7 +364,10 @@ export function initBecomeAuthor(
         navigate(ROUTES.profile, { replace: true, force: true });
         return;
       }
-      const categories = PROFILE_CATEGORIES.map((value) => ({ value, selected: false }));
+      const categories = [
+        { value: '', label: 'Не выбрано', selected: false },
+        ...PROFILE_CATEGORIES.map((value) => ({ value, selected: false })),
+      ];
       root.innerHTML = becomeAuthorTemplate({
         nickname: profile.user.nickname,
         username: profile.user.username,
