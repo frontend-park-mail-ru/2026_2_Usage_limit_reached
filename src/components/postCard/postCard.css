@@ -98,6 +98,21 @@
   gap: 4px;
 }
 
+.post-card__footer > .post-card__like {
+  position: relative;
+  z-index: 1;
+  gap: 4px;
+  height: 32px;
+  padding: 0 6px;
+  font-size: inherit;
+}
+
+.post-card__footer > .post-card__like::before {
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+}
+
 .post-card__stat::before {
   content: '';
   width: 16px;

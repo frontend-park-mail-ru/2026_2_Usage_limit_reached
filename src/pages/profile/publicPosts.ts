@@ -3,7 +3,7 @@ import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
-import type { PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
+import type { PostPreview, PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildProfilePostCard } from './profile.ts';
@@ -13,8 +13,14 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, SORT_OPTIONS } from './profile.consta
  * Подключает сортировку и подгрузку опубликованных постов.
  * @param root
  * @param loadPage
+ * @param bindFeedLike
  */
-export function bindPublicPosts(root: HTMLElement, loadPage: (query: PostsQuery) => Promise<PostsPage>, feed = false) {
+export function bindPublicPosts(
+  root: HTMLElement,
+  loadPage: (query: PostsQuery) => Promise<PostsPage>,
+  bindFeedLike?: (button: HTMLButtonElement, item: PostPreview) => void
+) {
+  const feed = !!bindFeedLike;
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const retry = requireElement<HTMLButtonElement>(root, '[data-list-retry]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
@@ -56,12 +62,19 @@ export function bindPublicPosts(root: HTMLElement, loadPage: (query: PostsQuery)
       }
       cursor = page.next_cursor;
       const cards = page.items.map((item) => ({
-        ...buildProfilePostCard(item, 'posts'), locked: item.locked, feedAuthor: feed ? {
+        ...buildProfilePostCard(item, 'posts'),
+        locked: item.locked,
+        canLike: feed && !item.locked,
+        liked: item.liked_by_user,
+        feedAuthor: feed ? {
           name: item.author.nickname, avatarUrl: item.author.avatar_url ?? AVATAR_PLACEHOLDER, href: publicProfileRoute(item.author.username),
         } : undefined,
       }));
+      let previousCount = 0;
       if (append) {
-        requireElement(panel, '[data-posts-grid]').insertAdjacentHTML(
+        const grid = requireElement(panel, '[data-posts-grid]');
+        previousCount = grid.children.length;
+        grid.insertAdjacentHTML(
           'beforeend', cards.map((card) => postCardTemplate(card)).join('')
         );
         if (moreText) {
@@ -70,6 +83,15 @@ export function bindPublicPosts(root: HTMLElement, loadPage: (query: PostsQuery)
       } else {
         panel.innerHTML = postsListTemplate({
           publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && !cursor, hasMore: !!cursor,
+        });
+      }
+      if (bindFeedLike && cards.length > 0) {
+        const grid = requireElement(panel, '[data-posts-grid]');
+        page.items.forEach((item, index) => {
+          const button = grid.children[previousCount + index]?.querySelector<HTMLButtonElement>('.post-card__like');
+          if (button) {
+            bindFeedLike(button, item);
+          }
         });
       }
       const more = panel.querySelector<HTMLElement>('[data-posts-more]');

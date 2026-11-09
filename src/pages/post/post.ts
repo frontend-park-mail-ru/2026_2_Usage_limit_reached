@@ -7,12 +7,11 @@ import {
   getSessionVersion,
   isSessionCurrent,
   runSessionMutation,
-  runSessionRequest,
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
-import { deletePost, getPost, setPostLike } from '@/modules/api/posts.ts';
-import type { Post, PostLikes } from '@/modules/api/posts.types.ts';
+import { deletePost, getPost } from '@/modules/api/posts.ts';
+import type { Post } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
@@ -20,6 +19,7 @@ import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
 import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
@@ -28,7 +28,6 @@ import {
   DELETED_MESSAGE,
   DELETE_ERROR,
   DELETE_NETWORK_ERROR,
-  LIKE_ERROR,
   LOADING_MESSAGE,
   LOAD_ERROR,
   POST_MENU_ITEMS,
@@ -171,39 +170,6 @@ function bindDonate(root: HTMLElement, post: Post, beforeAction: () => boolean, 
     }
   });
   return () => dialog.destroy();
-}
-
-/**
- * Отправляет лайк только для актуальной сессии и страницы.
- * @param id
- * @param liked
- * @param context
- * @param isActive
- */
-async function sendLike(
-  id: string,
-  liked: boolean,
-  context: SessionContext,
-  isActive: () => boolean
-): Promise<PostLikes | null> {
-  if (!isActive() || !isSessionCurrent(context)) {
-    return null;
-  }
-  try {
-    const result = await runSessionRequest(context, () => setPostLike(id, liked));
-    return isActive() && isSessionCurrent(context) ? result ?? null : null;
-  } catch (err) {
-    if (!isActive() || !isSessionCurrent(context)) {
-      return null;
-    }
-    if (!(err instanceof ApiError)) {
-      throw err;
-    }
-    if (!err.isUnauthorized) {
-      showToast(err.isCsrfError || err.isMutationTimeout || err.status === 0 ? err.text : LIKE_ERROR);
-    }
-    return null;
-  }
 }
 
 /**
