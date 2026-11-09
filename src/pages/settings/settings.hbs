@@ -34,7 +34,7 @@
         <div class="form-field">
           <label class="form-field__label" for="settings-bio">Описание деятельности</label>
           <textarea class="form-field__input form-field__input-textarea" id="settings-bio" name="bio" rows="3" aria-describedby="settings-bio-hint settings-bio-error">{{bio}}</textarea>
-          <p class="form-field__hint" id="settings-bio-hint">Максимальная длина описания — 1000 символов</p>
+          <p class="form-field__hint" id="settings-bio-hint">Максимальная длина описания — {{bioMax}} символов</p>
           <p class="form-field__error" id="settings-bio-error" data-error-for="bio" aria-live="polite"></p>
         </div>
       {{/if}}

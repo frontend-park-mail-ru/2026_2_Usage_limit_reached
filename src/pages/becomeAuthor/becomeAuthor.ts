@@ -369,6 +369,7 @@ export function initBecomeAuthor(
         ...PROFILE_CATEGORIES.map((value) => ({ value, selected: false })),
       ];
       root.innerHTML = becomeAuthorTemplate({
+        bioMax: BIO_MAX,
         nickname: profile.user.nickname,
         username: profile.user.username,
         avatarUrl: profile.user.avatar_url ?? AVATAR_PLACEHOLDER,

@@ -121,6 +121,87 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.profile__bio-toggle {
+  padding: 0;
+  margin-top: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.profile__bio-toggle:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.profile__bio-toggle:active {
+  color: var(--color-primary-pressed);
+}
+
+.profile__bio-toggle:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+.profile__bio-dialog {
+  width: 720px;
+}
+
+.profile__bio-window {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border-radius: 16px;
+}
+
+.profile__bio-close:hover {
+  background-color: var(--color-toggle-hover-background);
+}
+
+.profile__bio-close:active {
+  background-color: var(--color-toggle-pressed-background);
+}
+
+.profile__bio-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.profile__bio-author img {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile__bio-name,
+.profile__bio-label,
+.profile__bio-full {
+  margin: 0;
+}
+
+.profile__bio-label {
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.profile__bio-description {
+  padding-top: 24px;
+  border-top: 1px solid var(--color-input-border);
+}
+
+.profile__bio-full {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .profile__actions {

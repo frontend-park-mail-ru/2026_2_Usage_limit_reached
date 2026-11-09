@@ -3,9 +3,12 @@ import { ProfileMenu } from '@/components/profileMenu/profileMenu.ts';
 import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
 
 let profileMenu: ProfileMenu | null = null;
 let unsubscribeAvatar: (() => void) | null = null;
+let unbindLogo: (() => void) | undefined;
 
 /** Аватар из store. */
 function getAvatarUrl(): string | undefined {
@@ -54,6 +57,7 @@ function updateSidebarMenu(): void {
  */
 export function initSidebar(navigate: Navigate): void {
   profileMenu = new ProfileMenu(navigate);
+  unbindLogo = bindLinks(requireElement<HTMLElement>(document, '.sidebar__top'), navigate);
   updateSidebarMenu();
   unsubscribeAvatar = authStore.subscribe(() => {
     updateSidebarAvatar();
@@ -63,6 +67,8 @@ export function initSidebar(navigate: Navigate): void {
 
 /** Снимает обработчики сайдбара. */
 export function destroySidebar(): void {
+  unbindLogo?.();
+  unbindLogo = undefined;
   profileMenu?.destroy();
   profileMenu = null;
   unsubscribeAvatar?.();
@@ -74,6 +80,12 @@ export function destroySidebar(): void {
  * @param path
  */
 export function updateSidebarProfileState(path: string): void {
+  const logo = document.querySelector('.sidebar__logo-link');
+  if (path === ROUTES.home || path === ROUTES.feed) {
+    logo?.setAttribute('aria-current', 'page');
+  } else {
+    logo?.removeAttribute('aria-current');
+  }
   const profileButton = document.querySelector('.sidebar__item-profile');
   if (!profileButton) {
     return;

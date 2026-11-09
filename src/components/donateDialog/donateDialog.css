@@ -1,3 +1,8 @@
+.donate-dialog__window {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
 .donate-dialog__step {
   display: flex;
   flex-direction: column;

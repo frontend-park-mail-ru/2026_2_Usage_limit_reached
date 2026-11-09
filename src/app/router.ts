@@ -1,5 +1,5 @@
 import { renderLogin, initLogin } from '@/pages/login/login.ts';
-import { renderHome, initHome } from '@/pages/home/home.ts';
+import { renderFeed, initFeed } from '@/pages/feed/feed.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
 import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
@@ -25,8 +25,11 @@ import { ROUTES, matchRoute } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath, RoutePattern } from './paths.ts';
 import type { Layout, LeaveGuard, Route } from './router.types.ts';
 
+const feedRoute: Route = { title: 'Лента', render: renderFeed, init: initFeed, layout: 'sidebar' };
+
 const routes: Record<RoutePattern, Route> = {
-  [ROUTES.home]: { title: 'Главная', render: renderHome, init: initHome },
+  [ROUTES.home]: feedRoute,
+  [ROUTES.feed]: feedRoute,
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
@@ -41,7 +44,7 @@ const routes: Record<RoutePattern, Route> = {
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
-const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
+const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
 
 let currentLayout: Layout | undefined;
 let disposePage: (() => void) | undefined;
@@ -62,7 +65,7 @@ export function setLeaveGuard(guard: LeaveGuard): void {
 function getAuthRedirect(path: string): RoutePath | undefined {
   const { status } = authStore.getState();
   const isAuthPage = path === ROUTES.login || path === ROUTES.register;
-  if (status === 'authenticated' && (path === ROUTES.home || isAuthPage)) {
+  if (status === 'authenticated' && isAuthPage) {
     return ROUTES.profile;
   }
   const pattern = matchRoute(path)?.pattern;
@@ -205,7 +208,7 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
     if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
     } else if (status === 'unknown'
-      && (window.location.pathname === ROUTES.home || window.location.pathname === ROUTES.profile || window.location.pathname === ROUTES.settings)) {
+      && (window.location.pathname === ROUTES.profile || window.location.pathname === ROUTES.settings)) {
       renderCurrentRoute();
     } else {
       redirectByAuth();

@@ -7,19 +7,20 @@ import {
   getSessionVersion,
   isSessionCurrent,
   runSessionMutation,
-  runSessionRequest,
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
-import { deletePost, getPost, setPostLike } from '@/modules/api/posts.ts';
-import type { Post, PostLikes } from '@/modules/api/posts.types.ts';
+import { deletePost, getPost } from '@/modules/api/posts.ts';
+import type { Post } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
 import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
@@ -28,7 +29,6 @@ import {
   DELETED_MESSAGE,
   DELETE_ERROR,
   DELETE_NETWORK_ERROR,
-  LIKE_ERROR,
   LOADING_MESSAGE,
   LOAD_ERROR,
   POST_MENU_ITEMS,
@@ -61,15 +61,21 @@ function buildViewModel(post: Post, isOwner: boolean) {
 }
 
 /**
- * Возвращает назад по истории, если на страницу пришли из профиля.
+ * Возвращает назад по истории, если на страницу пришли из профиля или ленты.
  * @param root
  */
 function bindBackLink(root: HTMLElement): void {
-  requireElement(root, '[data-back]').addEventListener('click', (event) => {
-    const from = history.state?.from;
-    if (typeof from === 'string' && [ROUTES.profile, ROUTES.publicProfile].some((route) =>
-      route === matchRoute(from.split('?')[0])?.pattern
-    )) {
+  const link = requireElement<HTMLAnchorElement>(root, '[data-back]');
+  const from = history.state?.from;
+  const origin = typeof from === 'string' ? matchRoute(from.split('?')[0])?.pattern : undefined;
+  const fromFeed = origin === ROUTES.home || origin === ROUTES.feed;
+  const fromProfile = origin === ROUTES.profile || origin === ROUTES.publicProfile;
+  if (!fromProfile) {
+    link.href = fromFeed ? origin : ROUTES.home;
+    link.textContent = '← Лента';
+  }
+  link.addEventListener('click', (event) => {
+    if (fromProfile || fromFeed) {
       event.preventDefault();
       history.back();
     }
@@ -169,39 +175,6 @@ function bindDonate(root: HTMLElement, post: Post, beforeAction: () => boolean, 
 }
 
 /**
- * Отправляет лайк только для актуальной сессии и страницы.
- * @param id
- * @param liked
- * @param context
- * @param isActive
- */
-async function sendLike(
-  id: string,
-  liked: boolean,
-  context: SessionContext,
-  isActive: () => boolean
-): Promise<PostLikes | null> {
-  if (!isActive() || !isSessionCurrent(context)) {
-    return null;
-  }
-  try {
-    const result = await runSessionRequest(context, () => setPostLike(id, liked));
-    return isActive() && isSessionCurrent(context) ? result ?? null : null;
-  } catch (err) {
-    if (!isActive() || !isSessionCurrent(context)) {
-      return null;
-    }
-    if (!(err instanceof ApiError)) {
-      throw err;
-    }
-    if (!err.isUnauthorized) {
-      showToast(err.isCsrfError || err.isMutationTimeout || err.status === 0 ? err.text : LIKE_ERROR);
-    }
-    return null;
-  }
-}
-
-/**
  * Подключает кнопку лайка.
  * @param root
  * @param post
@@ -232,6 +205,7 @@ function bindLike(root: HTMLElement, post: Post, beforeAction: () => boolean): v
  * @param params
  */
 export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+  const unbindAvatarFallback = bindAvatarFallback(root);
   let active = true;
   let request = 0;
   let disposeActions: (() => void) | undefined;
@@ -261,11 +235,14 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       if (!isCurrent()) {
         return;
       }
-      const isMissing = error instanceof ApiError && (error.status === 400 || error.status === 404);
-      root.innerHTML = isMissing
-        ? postTemplate({ unavailable: true })
+      const status = error instanceof ApiError ? error.status : undefined;
+      const restricted = status === 403;
+      const unavailable = restricted || status === 400 || status === 404;
+      root.innerHTML = unavailable
+        ? postTemplate({ unavailable: true, restricted })
         : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
-      if (isMissing) {
+      if (unavailable) {
+        renderedSession = sessionKey();
         bindBackLink(root);
       }
       return;
@@ -302,6 +279,11 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
     renderedSession = sessionKey();
     document.title = post.title;
+    if (post.locked) {
+      root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+      bindBackLink(root);
+      return;
+    }
     root.innerHTML = postTemplate(buildViewModel(post, isOwner));
     requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
     bindBackLink(root);
@@ -322,6 +304,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   return () => {
     active = false;
     unsubscribe();
+    unbindAvatarFallback();
     disposeActions?.();
   };
 }

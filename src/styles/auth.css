@@ -19,6 +19,23 @@
   box-sizing: border-box;
 }
 
+.auth-form__logo-link > .logo {
+  display: block;
+}
+
+.auth-form__logo-link:hover {
+  opacity: 0.86;
+}
+
+.auth-form__logo-link:active {
+  opacity: 0.74;
+}
+
+.auth-form__logo-link:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
 .auth-form__header {
   display: flex;
   flex-direction: column;

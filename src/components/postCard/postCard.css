@@ -26,6 +26,39 @@
   outline-offset: 2px;
 }
 
+.post-card__author {
+  position: relative;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 14px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.post-card__author:hover {
+  text-decoration: underline;
+}
+
+.post-card__author:active {
+  color: var(--color-primary-pressed);
+}
+
+.post-card__author:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.post-card__author-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .post-card__excerpt {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -63,6 +96,21 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.post-card__footer > .post-card__like {
+  position: relative;
+  z-index: 1;
+  gap: 4px;
+  height: 32px;
+  padding: 0 6px;
+  font-size: inherit;
+}
+
+.post-card__footer > .post-card__like::before {
+  width: 16px;
+  height: 16px;
+  background-size: contain;
 }
 
 .post-card__stat::before {

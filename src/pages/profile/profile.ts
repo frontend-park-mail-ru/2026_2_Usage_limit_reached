@@ -1,9 +1,15 @@
+import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
 import profileTemplate from './profile.hbs';
+import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
+import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { sendLike } from '@/components/likeButton/sendLike.ts';
+import { POST_MENU_ITEMS } from '@/components/postCard/postCard.constants.ts';
+import { profileStore } from '@/modules/profile/profile.store.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
-import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
 import {
   checkSession,
   getSessionContext,
@@ -11,6 +17,7 @@ import {
   isSessionCurrent,
   loadProfilePosts,
   runSessionRequest,
+  runSessionMutation,
 } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getMyDrafts } from '@/modules/api/posts.ts';
@@ -27,14 +34,15 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute, postRoute } from '@/app/paths.ts';
+import { postEditRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
+  POST_DELETED_MESSAGE,
+  POST_DELETE_ERROR,
   DRAFT_DELETED_MESSAGE,
   DRAFT_DELETE_ERROR,
-  DRAFT_MENU_ITEMS,
   LIST_ERROR,
   LIST_LOADING_MESSAGE,
   LOADING_MESSAGE,
@@ -93,28 +101,6 @@ export function buildProfileViewModel(
 }
 
 /**
- * Данные карточки поста или черновика.
- * @param item
- * @param tab
- */
-export function buildProfilePostCard(item: PostPreview, tab: ProfileTab) {
-  const isDraft = tab === 'drafts';
-  const date = item.published_or_updated_at ?? '';
-  return {
-    id: item.id,
-    href: isDraft ? postEditRoute(item.id) : postRoute(item.id),
-    preview: item.locked ? '' : htmlToText(item.body_preview),
-    title: item.title,
-    isDraft,
-    likesCount: item.likes_count,
-    date,
-    dateLabel: date ? (isDraft ? formatDraftDate(date) : formatPostDate(date)) : '',
-    menuId: `draft-menu-${item.id}`,
-    menuItems: DRAFT_MENU_ITEMS,
-  };
-}
-
-/**
  * Подключает вкладки и списки аккаунта, возвращает очистку обработчиков.
  * Первая страница уже загружена, повторно запрашивать её не нужно.
  * @param root
@@ -133,7 +119,8 @@ function bindPosts(
   const panel = requireElement<HTMLElement>(root, '[data-profile-panel]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-profile-sort]');
   const createButton = requireElement<HTMLElement>(root, '[data-create-post]');
-  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '.confirm-dialog'));
+  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#draft-delete-dialog'), true);
+  const postDialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#post-delete-dialog'), true);
   let active = true;
   let tab: ProfileTab = 'posts';
   let sort: PostsSort = 'new';
@@ -144,6 +131,7 @@ function bindPosts(
   let sortMenu: SortMenu | undefined;
   let cardMenus: ActionMenu[] = [];
   let observer: IntersectionObserver | undefined;
+  const pendingLikes = new Set<ReturnType<typeof sendLike>>();
   const isActive = () => active && panel.isConnected && isSessionCurrent(context);
   const setRetry = (action?: () => void) => {
     retryAction = action;
@@ -160,47 +148,90 @@ function bindPosts(
   const fetchPage = async (pageCursor: string | null, id: number) => {
     const current = () => isActive() && id === request;
     const query = { sort, ...(pageCursor ? { cursor: pageCursor } : {}) };
+    if (pendingLikes.size > 0) {
+      await Promise.allSettled([...pendingLikes]);
+    }
+    if (!current()) {
+      return undefined;
+    }
     const page = tab === 'posts'
       ? await loadProfilePosts(query, current)
       : await runSessionRequest(context, () => getMyDrafts(query));
     return current() ? page : undefined;
   };
 
-  const removeDraft = async (card: HTMLElement): Promise<string | null> => {
+  const buildCard = (item: PostPreview) => ({
+    ...buildPostCard(item, tab === 'drafts'),
+    canLike: tab === 'posts' && !item.locked,
+    liked: item.liked_by_user,
+    canManage: tab === 'posts' && item.author.id === context.userId,
+    ...(tab === 'posts' ? { menuId: `post-menu-${item.id}`, menuItems: POST_MENU_ITEMS } : {}),
+  });
+  const removeCard = async (card: HTMLElement, isDraft: boolean): Promise<string | null> => {
     if (!isActive()) {
       return null;
     }
-    const id = request;
+    const previous = context;
+    const listVersion = request;
     try {
-      const deleted = await runSessionRequest(context, async () => {
-        await deletePost(card.dataset.postId ?? '');
+      const deleted = await runSessionMutation(previous, async () => {
+        try {
+          await deletePost(card.dataset.postId ?? '');
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.isCsrfError || error.status !== 404) {
+            throw error;
+          }
+        }
         return true;
       });
-      if (!deleted) {
+      const current = getSessionContext();
+      if (!deleted || !active || !panel.isConnected || !current || current.userId !== previous.userId) {
         return null;
       }
+      context = current;
+      showToast(isDraft ? DRAFT_DELETED_MESSAGE : POST_DELETED_MESSAGE);
+      if (listVersion !== request || !card.isConnected) {
+        await load(true);
+      } else {
+        card.remove();
+        if (!panel.querySelector('.post-card')) {
+          await load();
+        }
+      }
+      return null;
     } catch (error) {
-      if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
+      if (!active || !panel.isConnected) {
         return null;
       }
-      if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout)) {
+      const current = getSessionContext();
+      if (current && current.userId === previous.userId && error instanceof ApiError && error.isMutationResponseTimeout) {
+        context = current;
+      } else if (!isSessionCurrent(previous)) {
+        return null;
+      }
+      if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout || error.status === 0)) {
         return error.text;
       }
-      if (!(error instanceof ApiError) || error.status !== 404) {
-        return DRAFT_DELETE_ERROR;
-      }
+      return isDraft ? DRAFT_DELETE_ERROR : POST_DELETE_ERROR;
     }
-    if (!isActive() || id !== request || !card.isConnected) {
-      return null;
-    }
-    card.remove();
-    showToast(DRAFT_DELETED_MESSAGE);
-    if (!panel.querySelector('.post-card')) {
-      void load();
-    }
-    return null;
   };
-  const bindCards = (container: ParentNode) => {
+  const bindCards = (container: ParentNode, items: PostPreview[]) => {
+    const cards = container.querySelectorAll<HTMLElement>('.post-card');
+    items.forEach((item, index) => {
+      const card = cards[index];
+      const button = card?.querySelector<HTMLButtonElement>('.post-card__like');
+      if (button) {
+        new LikeButton(button, item, async (liked) => {
+          const request = sendLike(item.id, liked, context, () => isActive() && card.isConnected);
+          pendingLikes.add(request);
+          try {
+            return await request;
+          } finally {
+            pendingLikes.delete(request);
+          }
+        });
+      }
+    });
     for (const menuRoot of container.querySelectorAll<HTMLElement>('.post-card__menu')) {
       const card = menuRoot.closest<HTMLElement>('.post-card');
       if (!card) {
@@ -213,7 +244,12 @@ function bindPosts(
         if (action === 'edit') {
           navigate(postEditRoute(card.dataset.postId ?? ''));
         } else if (action === 'delete') {
-          dialog.open(requireElement(card, '.post-card__title').textContent ?? '', () => removeDraft(card));
+          const title = requireElement(card, '.post-card__title').textContent ?? '';
+          if (tab === 'drafts') {
+            dialog.open(title, () => removeCard(card, true));
+          } else {
+            postDialog.open(title, () => removeCard(card, false));
+          }
         }
       }));
     }
@@ -237,12 +273,17 @@ function bindPosts(
     try {
       const page = await fetchPage(cursor, id);
       if (!page) {
+        if (isActive() && id === request) {
+          text.textContent = LIST_ERROR;
+          retryButton.hidden = false;
+          setRetry(() => { void loadMore(); });
+        }
         return;
       }
       cursor = page.next_cursor;
       const holder = document.createElement('div');
-      holder.innerHTML = page.items.map((item) => postCardTemplate(buildProfilePostCard(item, tab))).join('');
-      bindCards(holder);
+      holder.innerHTML = page.items.map((item) => postCardTemplate(buildCard(item))).join('');
+      bindCards(holder, page.items);
       grid.append(...holder.children);
       text.textContent = '';
       more.hidden = !cursor;
@@ -293,11 +334,11 @@ function bindPosts(
     panel.innerHTML = postsListTemplate({
       isEmpty,
       isDrafts: tab === 'drafts',
-      cards: page.items.map((item) => buildProfilePostCard(item, tab)),
+      cards: page.items.map(buildCard),
       hasMore: !!cursor,
     });
     createButton.hidden = false;
-    bindCards(panel);
+    bindCards(panel, page.items);
     watchMore();
   };
 
@@ -375,6 +416,7 @@ function bindPosts(
     sortMenu?.destroy();
     tabs.destroy();
     dialog.destroy();
+    postDialog.destroy();
     unbindRecovery();
     setRefreshNotice(null);
   };
@@ -398,6 +440,12 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   let needsRetry = false;
   let displayedOwnerId: string | undefined;
   let disposePosts: (() => void) | undefined;
+  let disposeBio: (() => void) | undefined;
+  const render = (html: string) => {
+    disposeBio?.();
+    root.innerHTML = html;
+    disposeBio = bindProfileBio(root);
+  };
   const retry = () => { void load(); };
   const showRetry = () => {
     needsRetry = true;
@@ -406,11 +454,11 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   const showError = (message: string) => {
     disposePosts?.();
     disposePosts = undefined;
-    root.innerHTML = profileTemplate({ message, isError: true });
+    render(profileTemplate({ message, isError: true }));
     displayedOwnerId = undefined;
     showRetry();
   };
-  const load = async () => {
+  const load = async (savedProfile?: Profile) => {
     if (!active || busy) {
       return;
     }
@@ -421,7 +469,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     let version = getSessionVersion();
     let profile: Profile | undefined;
     try {
-      profile = await checkSession();
+      profile = savedProfile ?? await checkSession();
       if (!active) {
         return;
       }
@@ -433,7 +481,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       if (displayedOwnerId && displayedOwnerId !== context.userId) {
         disposePosts?.();
         disposePosts = undefined;
-        root.innerHTML = renderProfile();
+        render(renderProfile());
         displayedOwnerId = undefined;
       }
       const posts = profile.author ? await loadProfilePosts(undefined, () => active) : undefined;
@@ -446,7 +494,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       }
       disposePosts?.();
       disposePosts = undefined;
-      root.innerHTML = profileTemplate(buildProfileViewModel(profile));
+      render(profileTemplate(buildProfileViewModel(profile)));
       displayedOwnerId = context.userId;
       needsRetry = false;
       setRefreshNotice(null);
@@ -475,7 +523,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       const saved = copy && token?.generation === copy.generation ? copy : undefined;
       disposePosts?.();
       disposePosts = undefined;
-      root.innerHTML = profileTemplate(buildProfileViewModel(profile ?? saved?.profile, saved?.posts, true));
+      render(profileTemplate(buildProfileViewModel(profile ?? saved?.profile, saved?.posts, true)));
       displayedOwnerId = profile?.user.id ?? saved?.ownerId;
       showRetry();
     } finally {
@@ -489,10 +537,12 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     }
   };
   const unbind = bindOfflineRecovery(retry, () => active && needsRetry);
-  void load();
+  const saved = profileStore.getSavedNavigation();
+  void load(saved && isSessionCurrent(saved.context) ? saved.profile : undefined);
   return () => {
     active = false;
     disposePosts?.();
+    disposeBio?.();
     unbind();
     setRefreshNotice(null);
   };

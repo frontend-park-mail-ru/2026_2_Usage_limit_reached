@@ -19,7 +19,7 @@
         </div>
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
-          <p class="profile__bio">{{bio}}</p>
+{{> profileBio}}
           {{#if offline}}
             {{#unless postsMissing}}
               <p class="profile__post-count">{{postCountLabel}}{{#if hasMorePosts}}. Есть ещё посты, они не загружены.{{/if}}</p>
@@ -76,6 +76,8 @@
       <div class="profile__panel" id="profile-panel" role="tabpanel" data-profile-panel></div>
       {{> confirmDialog id="draft-delete" title="Удалить черновик?" text="Черновик исчезнет из списка. Восстановить его не получится"
           errorTitle="Не удалось удалить" cancelLabel="Отмена" confirmLabel="Удалить черновик"}}
+      {{> confirmDialog id="post-delete" title="Удалить пост?" text="Пост исчезнет из профиля. Восстановить его не получится"
+          errorTitle="Не удалось удалить пост" cancelLabel="Отмена" confirmLabel="Удалить"}}
     {{/if}}
   </section>
   {{else}}

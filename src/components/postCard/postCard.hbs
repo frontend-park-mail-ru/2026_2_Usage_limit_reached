@@ -1,7 +1,13 @@
 <article class="post-card" aria-labelledby="post-card-title-{{id}}" data-post-id="{{id}}">
   {{#unless offline}}
-    <a class="post-card__link" href="{{href}}" data-link aria-labelledby="post-card-title-{{id}}"></a>
+    <a class="post-card__link" href="{{href}}"{{#if feedAuthor}} target="_blank" rel="noopener noreferrer"{{/if}} data-link aria-labelledby="post-card-title-{{id}}"></a>
   {{/unless}}
+  {{#if feedAuthor}}
+    <a class="post-card__author" href="{{feedAuthor.href}}" data-link>
+      <img class="post-card__author-avatar" src="{{feedAuthor.avatarUrl}}" alt="" data-avatar>
+      <span>{{feedAuthor.name}}</span>
+    </a>
+  {{/if}}
   <p class="post-card__excerpt">{{preview}}</p>
   <h3 class="post-card__title" id="post-card-title-{{id}}">{{title}}</h3>
   {{#if locked}}<p class="post-card__excerpt">Недоступно</p>{{/if}}
@@ -11,11 +17,18 @@
       {{> actionMenu id=menuId label="Действия с черновиком" items=menuItems className="post-card__menu"}}
     {{else}}
       {{#unless offline}}
-        <span class="post-card__stat post-card__stat-likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+        {{#if canLike}}
+          {{> likeButton liked=liked count=likesCount className="post-card__like"}}
+        {{else}}
+          <span class="post-card__stat post-card__stat-likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+        {{/if}}
         <span class="post-card__stat post-card__stat-comments" aria-label="Комментариев: 0">0</span>
       {{/unless}}
       {{#if date}}
         <time class="post-card__time" datetime="{{date}}">{{dateLabel}}</time>
+      {{/if}}
+      {{#if canManage}}
+        {{> actionMenu id=menuId label="Действия с постом" items=menuItems className="post-card__menu"}}
       {{/if}}
     {{/if}}
   </div>

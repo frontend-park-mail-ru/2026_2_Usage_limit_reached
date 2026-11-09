@@ -7,7 +7,11 @@
     <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
     <div class="post-page__card post-page__card-unavailable">
       <h1 class="post-page__title" id="post-page-unavailable">Публикация недоступна</h1>
-      <p class="post-page__unavailable-text">Автор удалил публикацию или ссылка больше не работает. Вернитесь в профиль автора</p>
+      {{#if restricted}}
+        <p class="post-page__unavailable-text">У вас нет доступа к этой публикации</p>
+      {{else}}
+        <p class="post-page__unavailable-text">Автор удалил публикацию или ссылка больше не работает. Вернитесь в профиль автора</p>
+      {{/if}}
     </div>
   </section>
 {{else}}
@@ -15,7 +19,7 @@
   <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
   <article class="post-page__card">
     <header class="post-page__header">
-      <img class="post-page__avatar" src="{{avatarUrl}}" alt="" />
+      <img class="post-page__avatar" src="{{avatarUrl}}" alt="" data-avatar />
       <div class="post-page__meta">
         <a class="post-page__author post-page__author-link" href="{{authorHref}}" data-link>{{authorName}}</a>
         {{#if publishedAt}}

@@ -1,0 +1,38 @@
+.feed {
+  padding: 64px;
+}
+
+.feed__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.feed__title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.feed__retry {
+  margin-top: 16px;
+}
+
+.feed__retry[hidden] {
+  display: none;
+}
+
+@media (max-width: 1280px) {
+  .feed {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 720px) {
+  .feed {
+    padding: 24px 16px;
+  }
+}

@@ -12,4 +12,3 @@ export function updateSession(changes: Partial<SessionUser>): void {
     authDispatcher.dispatch({ type: 'auth/authenticated', user: { ...user, ...changes } });
   }
 }
-

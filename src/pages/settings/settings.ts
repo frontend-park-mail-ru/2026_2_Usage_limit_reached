@@ -1,13 +1,14 @@
 import settingsTemplate from './settings.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
-import { saveProfile, uploadAvatar, deleteAvatar } from '@/modules/profile/profile.actions.ts';
+import { saveProfile, uploadAvatar, deleteAvatar, openSavedProfile } from '@/modules/profile/profile.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import type { Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { bindValidation } from '@/modules/validation/bindForm.ts';
 import { authorSettingsSchema, userSettingsSchema } from '@/modules/validation/schemas.ts';
+import { BIO_MAX } from '@/modules/validation/schemas.constants.ts';
 import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { validateAvatar } from '@/modules/validation/avatar.ts';
 import { AVATAR_ERROR } from '@/modules/validation/avatar.constants.ts';
@@ -16,7 +17,6 @@ import { Modal } from '@/components/modal/modal.ts';
 import { AvatarCropper } from '@/components/avatarCropper/avatarCropper.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { setAlert } from '@/components/alert/alert.ts';
-import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import {
   AVATAR_DELETED_MESSAGE,
@@ -50,6 +50,7 @@ function buildSettingsViewModel(profile: Profile) {
     isAuthor: !!profile.author,
     category,
     bio: profile.author?.bio ?? '',
+    bioMax: BIO_MAX,
     categories: categories.map((value) => ({ value, selected: value === category })),
   };
 }
@@ -89,11 +90,11 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
 
   try {
     const saved = await saveProfile(buildProfileUpdate(profile, values), context);
-    if (!saved || !form.isConnected) {
+    if (!saved || !form.isConnected || !isSessionCurrent(saved.context)) {
       return;
     }
     showToast(SAVED_MESSAGE);
-    navigate(ROUTES.profile);
+    openSavedProfile(saved, navigate);
   } catch (err) {
     if (!form.isConnected || (!isSessionCurrent(context) && !(err instanceof ApiError && err.isMutationResponseTimeout))) {
       return;

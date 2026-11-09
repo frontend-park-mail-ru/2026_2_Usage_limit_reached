@@ -1,0 +1,17 @@
+{{#if bio}}
+  <p class="profile__bio" data-profile-bio tabindex="-1">{{bio}}</p>
+  <button class="profile__bio-toggle" type="button" data-profile-bio-open aria-haspopup="dialog" aria-controls="profile-bio-dialog" aria-expanded="false" hidden>Показать ещё</button>
+  {{#> modal id="profile-bio" title="Об авторе" className="profile__bio-dialog" windowClass="profile__bio-window" closeClass="profile__bio-close"}}
+    <div class="profile__bio-author">
+      <img src="{{avatarUrl}}" alt="">
+      <div>
+        <p class="profile__bio-name">{{name}}</p>
+        <p class="profile__bio-label">{{username}}</p>
+      </div>
+    </div>
+    <div class="profile__bio-description">
+      <p class="profile__bio-label">Описание профиля</p>
+      <p class="profile__bio-full">{{bio}}</p>
+    </div>
+  {{/modal}}
+{{/if}}

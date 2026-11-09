@@ -11,6 +11,7 @@ import { sendDonation } from '@/modules/api/donations.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import type { PostAuthor } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import {
   DEFAULT_AMOUNT,
   DONATE_ERROR,
@@ -37,6 +38,7 @@ export class DonateDialog {
   private readonly onInput: () => void;
   private readonly onSubmit: (event: SubmitEvent) => void;
   private readonly isSessionValid: () => boolean;
+  private readonly unbindAvatarFallback: () => void;
   private author: PostAuthor | null = null;
   private requestKey: string | null = null;
   private sendLabel = '';
@@ -49,6 +51,7 @@ export class DonateDialog {
    */
   constructor(dialog: HTMLDialogElement, isSessionValid: () => boolean = () => true) {
     this.dialog = dialog;
+    this.unbindAvatarFallback = bindAvatarFallback(dialog);
     this.isSessionValid = isSessionValid;
     this.modal = new Modal(dialog);
     this.title = requireElement<HTMLElement>(dialog, '.modal__title');
@@ -87,6 +90,7 @@ export class DonateDialog {
 
   /** Снимает обработчики. */
   destroy(): void {
+    this.unbindAvatarFallback();
     this.dialog.removeEventListener('click', this.onClick);
     this.form.removeEventListener('input', this.onInput);
     this.form.removeEventListener('submit', this.onSubmit);
