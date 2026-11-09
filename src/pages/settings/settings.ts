@@ -153,27 +153,32 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
     if (!file || !isActive()) {
       return;
     }
-    const error = validateAvatar(file);
-    if (error) {
-      fileInput.value = '';
-      setAlert(pickerAlert, error);
-      return;
-    }
+    fileInput.disabled = true;
+    const isCurrentFile = () => isActive() && fileInput.files?.[0] === file;
     try {
+      const error = await validateAvatar(file);
+      if (!isCurrentFile()) {
+        return;
+      }
+      if (error) {
+        fileInput.value = '';
+        setAlert(pickerAlert, error);
+        return;
+      }
       await cropper.load(file);
+      if (isCurrentFile()) {
+        picker.close();
+        crop.open();
+      }
     } catch {
-      if (!isActive()) {
+      if (!isCurrentFile()) {
         return;
       }
       fileInput.value = '';
       setAlert(pickerAlert, AVATAR_OPEN_ERROR);
-      return;
+    } finally {
+      fileInput.disabled = false;
     }
-    if (!isActive()) {
-      return;
-    }
-    picker.close();
-    crop.open();
   };
 
   const handleApply = async () => {
