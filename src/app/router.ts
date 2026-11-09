@@ -1,5 +1,6 @@
 import { renderLogin, initLogin } from '@/pages/login/login.ts';
 import { renderHome, initHome } from '@/pages/home/home.ts';
+import { renderFeed, initFeed } from '@/pages/feed/feed.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
 import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
@@ -27,6 +28,7 @@ import type { Layout, LeaveGuard, Route } from './router.types.ts';
 
 const routes: Record<RoutePattern, Route> = {
   [ROUTES.home]: { title: 'Главная', render: renderHome, init: initHome },
+  [ROUTES.feed]: { title: 'Лента', render: renderFeed, init: initFeed, layout: 'sidebar' },
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },

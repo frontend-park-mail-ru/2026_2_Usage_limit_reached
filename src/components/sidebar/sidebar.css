@@ -54,6 +54,23 @@
   display: block;
 }
 
+.sidebar__logo-link {
+  border-radius: 8px;
+}
+
+.sidebar__logo-link:hover {
+  background: var(--color-sidebar-hover);
+}
+
+.sidebar__logo-link:active {
+  background: var(--color-sidebar-pressed);
+}
+
+.sidebar__logo-link:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
 .sidebar__items {
   display: flex;
   flex-direction: column;

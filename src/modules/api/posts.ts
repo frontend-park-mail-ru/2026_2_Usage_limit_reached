@@ -26,6 +26,9 @@ const postPath = (id: string): string => `/posts/${encodeURIComponent(id)}`;
  */
 export const getMyPosts = (query: PostsQuery) => request<PostsPage>(`/profile/me/posts?${buildPostsQuery(query)}`);
 
+/** Получает страницу общей ленты опубликованных постов. */
+export const getFeed = (query: PostsQuery) => request<PostsPage>(`/feed?${buildPostsQuery(query)}`);
+
 /** Получает опубликованные посты пользователя для публичного профиля. */
 export const getPublicPosts = (username: string, query: PostsQuery) =>
   request<PostsPage>(`/users/${encodeURIComponent(username)}/posts?${buildPostsQuery(query)}`);

@@ -65,11 +65,15 @@ function buildViewModel(post: Post, isOwner: boolean) {
  * @param root
  */
 function bindBackLink(root: HTMLElement): void {
-  requireElement(root, '[data-back]').addEventListener('click', (event) => {
-    const from = history.state?.from;
-    if (typeof from === 'string' && [ROUTES.profile, ROUTES.publicProfile].some((route) =>
-      route === matchRoute(from.split('?')[0])?.pattern
-    )) {
+  const link = requireElement<HTMLAnchorElement>(root, '[data-back]');
+  const from = history.state?.from;
+  const origin = typeof from === 'string' ? matchRoute(from.split('?')[0])?.pattern : undefined;
+  if (origin === ROUTES.feed) {
+    link.href = ROUTES.feed;
+    link.textContent = '← Лента';
+  }
+  link.addEventListener('click', (event) => {
+    if (origin === ROUTES.profile || origin === ROUTES.publicProfile || origin === ROUTES.feed) {
       event.preventDefault();
       history.back();
     }
@@ -261,11 +265,14 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       if (!isCurrent()) {
         return;
       }
-      const isMissing = error instanceof ApiError && (error.status === 400 || error.status === 404);
-      root.innerHTML = isMissing
-        ? postTemplate({ unavailable: true })
+      const status = error instanceof ApiError ? error.status : undefined;
+      const restricted = status === 403;
+      const unavailable = restricted || status === 400 || status === 404;
+      root.innerHTML = unavailable
+        ? postTemplate({ unavailable: true, restricted })
         : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
-      if (isMissing) {
+      if (unavailable) {
+        renderedSession = sessionKey();
         bindBackLink(root);
       }
       return;
@@ -302,6 +309,11 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
     renderedSession = sessionKey();
     document.title = post.title;
+    if (post.locked) {
+      root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+      bindBackLink(root);
+      return;
+    }
     root.innerHTML = postTemplate(buildViewModel(post, isOwner));
     requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
     bindBackLink(root);
