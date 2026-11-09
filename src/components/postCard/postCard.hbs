@@ -1,6 +1,6 @@
 <article class="post-card" aria-labelledby="post-card-title-{{id}}" data-post-id="{{id}}">
   {{#unless offline}}
-    <a class="post-card__link" href="{{href}}" data-link aria-labelledby="post-card-title-{{id}}"></a>
+    <a class="post-card__link" href="{{href}}"{{#if feedAuthor}} target="_blank" rel="noopener noreferrer"{{/if}} data-link aria-labelledby="post-card-title-{{id}}"></a>
   {{/unless}}
   {{#if feedAuthor}}
     <a class="post-card__author" href="{{feedAuthor.href}}" data-link>
