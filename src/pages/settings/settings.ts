@@ -9,6 +9,7 @@ import type { Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { bindValidation } from '@/modules/validation/bindForm.ts';
 import { authorSettingsSchema, userSettingsSchema } from '@/modules/validation/schemas.ts';
+import { BIO_MAX } from '@/modules/validation/schemas.constants.ts';
 import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { validateAvatar } from '@/modules/validation/avatar.ts';
 import { AVATAR_ERROR } from '@/modules/validation/avatar.constants.ts';
@@ -50,6 +51,7 @@ function buildSettingsViewModel(profile: Profile) {
     isAuthor: !!profile.author,
     category,
     bio: profile.author?.bio ?? '',
+    bioMax: BIO_MAX,
     categories: categories.map((value) => ({ value, selected: value === category })),
   };
 }

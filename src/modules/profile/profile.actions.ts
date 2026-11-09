@@ -23,11 +23,11 @@ export async function saveProfile(data: ProfileUpdate, context: SessionContext) 
     return undefined;
   }
   const stored = await saveOfflineProfile(current.offlineToken, saved, () => isSessionCurrent(current));
-  if (stored === null || !isSessionCurrent(current)) {
+  if (!isSessionCurrent(current)) {
     return undefined;
   }
   updateSession({ nickname: saved.user.nickname });
-  return { profile: saved, context: current };
+  return { profile: stored === null ? undefined : saved, context: current };
 }
 
 /**

@@ -1,4 +1,5 @@
 import profileTemplate from './profile.hbs';
+import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
@@ -398,6 +399,12 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   let needsRetry = false;
   let displayedOwnerId: string | undefined;
   let disposePosts: (() => void) | undefined;
+  let disposeBio: (() => void) | undefined;
+  const render = (html: string) => {
+    disposeBio?.();
+    root.innerHTML = html;
+    disposeBio = bindProfileBio(root);
+  };
   const retry = () => { void load(); };
   const showRetry = () => {
     needsRetry = true;
@@ -406,7 +413,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   const showError = (message: string) => {
     disposePosts?.();
     disposePosts = undefined;
-    root.innerHTML = profileTemplate({ message, isError: true });
+    render(profileTemplate({ message, isError: true }));
     displayedOwnerId = undefined;
     showRetry();
   };
@@ -433,7 +440,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       if (displayedOwnerId && displayedOwnerId !== context.userId) {
         disposePosts?.();
         disposePosts = undefined;
-        root.innerHTML = renderProfile();
+        render(renderProfile());
         displayedOwnerId = undefined;
       }
       const posts = profile.author ? await loadProfilePosts(undefined, () => active) : undefined;
@@ -446,7 +453,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       }
       disposePosts?.();
       disposePosts = undefined;
-      root.innerHTML = profileTemplate(buildProfileViewModel(profile));
+      render(profileTemplate(buildProfileViewModel(profile)));
       displayedOwnerId = context.userId;
       needsRetry = false;
       setRefreshNotice(null);
@@ -475,7 +482,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       const saved = copy && token?.generation === copy.generation ? copy : undefined;
       disposePosts?.();
       disposePosts = undefined;
-      root.innerHTML = profileTemplate(buildProfileViewModel(profile ?? saved?.profile, saved?.posts, true));
+      render(profileTemplate(buildProfileViewModel(profile ?? saved?.profile, saved?.posts, true)));
       displayedOwnerId = profile?.user.id ?? saved?.ownerId;
       showRetry();
     } finally {
@@ -495,12 +502,13 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   return () => {
     active = false;
     disposePosts?.();
+    disposeBio?.();
     unbind();
     setRefreshNotice(null);
   };
 }
 
-let profileOnNavigation: { profile: Profile; context: SessionContext } | undefined;
+let profileOnNavigation: { profile: Profile | undefined; context: SessionContext } | undefined;
 
 /** Передаёт ответ сохранения только ближайшему открытию профиля. */
 export function openSavedProfile(saved: NonNullable<typeof profileOnNavigation>, navigate: Navigate): void {

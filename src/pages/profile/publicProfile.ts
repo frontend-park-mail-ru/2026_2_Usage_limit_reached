@@ -1,4 +1,5 @@
 import profileTemplate from './publicProfile.hbs';
+import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
@@ -134,6 +135,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
   let active = true;
   let disposePosts: (() => void) | undefined;
   let dialog: DonateDialog | undefined;
+  let disposeBio: (() => void) | undefined;
 
   async function load(): Promise<void> {
     root.innerHTML = renderPublicProfile();
@@ -147,6 +149,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
         name: user.nickname, username: `@${user.username}`, avatarUrl: user.avatar_url ?? AVATAR_PLACEHOLDER,
         bio: author?.bio, isAuthor: !!author,
       });
+      disposeBio = bindProfileBio(root);
       if (author) {
         disposePosts = bindPublicPosts(root, params.username);
         const donate = requireElement<HTMLButtonElement>(root, '[data-donate]');
@@ -182,6 +185,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       }
     } catch (error) {
       if (active) {
+        disposeBio?.();
         const missing = error instanceof ApiError && error.status === 404;
         root.innerHTML = profileTemplate({
           message: missing ? 'Профиль не найден' : LOAD_ERROR, isError: true, canRetry: !missing,
@@ -193,6 +197,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
   void load();
   return () => {
     active = false;
+    disposeBio?.();
     disposePosts?.();
     dialog?.destroy();
   };

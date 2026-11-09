@@ -16,7 +16,7 @@
             {{#if isAuthor}}<span class="profile__badge">Автор</span>{{/if}}
           </div>
           <p class="profile__username">{{username}}</p>
-          {{#if bio}}<p class="profile__bio">{{bio}}</p>{{/if}}
+          {{> profileBio}}
         </div>
       </div>
       {{#if isAuthor}}

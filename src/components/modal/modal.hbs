@@ -1,8 +1,8 @@
-<dialog class="modal{{#if className}} {{className}}{{/if}}" aria-labelledby="{{id}}-title" tabindex="-1">
-  <div class="modal__window">
+<dialog id="{{id}}-dialog" class="modal{{#if className}} {{className}}{{/if}}" aria-labelledby="{{id}}-title" tabindex="-1">
+  <div class="modal__window{{#if windowClass}} {{windowClass}}{{/if}}">
     <div class="modal__header">
       <h2 class="modal__title" id="{{id}}-title">{{title}}</h2>
-      <button class="modal__close" type="button" aria-label="Закрыть" data-modal-close></button>
+      <button class="modal__close{{#if closeClass}} {{closeClass}}{{/if}}" type="button" aria-label="Закрыть" data-modal-close></button>
     </div>
     {{> @partial-block}}
   </div>
