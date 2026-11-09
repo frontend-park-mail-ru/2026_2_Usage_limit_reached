@@ -1,8 +1,8 @@
 import sidebarTemplate from './sidebar.hbs';
-import { ProfileMenu } from '../profileMenu/profileMenu.ts';
-import { ROUTES } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import { authStore } from '../../modules/auth/auth.store.ts';
+import { ProfileMenu } from '@/components/profileMenu/profileMenu.ts';
+import { ROUTES } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
 
 let profileMenu: ProfileMenu | null = null;
 let unsubscribeAvatar: (() => void) | null = null;
@@ -20,6 +20,7 @@ export function renderSidebar(): string {
 /** Закрывает меню профиля. */
 export function closeSidebarProfileMenu(): void {
   profileMenu?.close();
+  profileMenu?.closeLogoutConfirmation();
 }
 
 /** Показывает аватар или иконку. */

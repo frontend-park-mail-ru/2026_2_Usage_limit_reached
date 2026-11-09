@@ -1,4 +1,4 @@
-import { requireElement } from '../../utils/helpers/dom.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
 import {
   CROP_DIAMETER,
   CROP_HEIGHT,

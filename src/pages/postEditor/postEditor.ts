@@ -1,21 +1,22 @@
 import postEditorTemplate from './postEditor.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { checkSession } from '../../modules/auth/auth.actions.ts';
-import { createPost, getPost, updatePost } from '../../modules/api/posts.ts';
-import type { Post, PostStatus } from '../../modules/api/posts.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { bindValidation } from '../../modules/validation/bindForm.ts';
-import { postSchema } from '../../modules/validation/schemas.ts';
-import type { FormValues } from '../../modules/validation/validation.types.ts';
-import { RichEditor } from '../../components/richEditor/richEditor.ts';
-import { LinkDialog } from '../../components/linkDialog/linkDialog.ts';
-import { Modal } from '../../components/modal/modal.ts';
-import { setAlert } from '../../components/alert/alert.ts';
-import { showToast } from '../../components/toast/toast.ts';
-import { setLeaveGuard } from '../../app/router.ts';
-import { ROUTES, postEditRoute, postRoute } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { RouteParams } from '../../app/router.types.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { checkSession, getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
+import { createPost, getPost, updatePost } from '@/modules/api/posts.ts';
+import type { Post, PostStatus } from '@/modules/api/posts.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { bindValidation } from '@/modules/validation/bindForm.ts';
+import { postSchema } from '@/modules/validation/schemas.ts';
+import type { FormValues } from '@/modules/validation/validation.types.ts';
+import { RichEditor } from '@/components/richEditor/richEditor.ts';
+import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { setAlert } from '@/components/alert/alert.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { setLeaveGuard } from '@/app/router.ts';
+import { ROUTES, postEditRoute, postRoute } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 import {
   AUTHOR_ONLY_ERROR,
   CHANGES_ERROR_TITLE,
@@ -104,6 +105,9 @@ function getErrorTitle(status: PostStatus, intent: EditorIntent): string {
  * @param err
  */
 function getErrorText(err: ApiError): string {
+  if (err.isCsrfError || err.isMutationTimeout) {
+    return err.text;
+  }
   const texts: Record<number, string> = { 403: AUTHOR_ONLY_ERROR, 404: NOT_FOUND_ERROR, 409: CONFLICT_ERROR };
   if (err.status === 400) {
     return err.text;
@@ -116,8 +120,9 @@ function getErrorText(err: ApiError): string {
  * @param root
  * @param loaded
  * @param navigate
+ * @param context
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext): void {
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
@@ -147,12 +152,12 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
   const setBusy = (busy: boolean) => {
     isSaving = busy;
     for (const button of buttons) {
-      button.disabled = busy;
+      button.disabled = busy || !isSessionCurrent(context);
     }
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving) {
+    if (isSaving || !isSessionCurrent(context)) {
       return;
     }
     const body = editor.getHtml();
@@ -164,12 +169,16 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
     setAlert(alert, null);
     const data = { title: values.title.trim(), body: values.body, status };
     try {
-      let id = post?.id;
-      if (post) {
-        await updatePost(post.id, { ...data, last_updated_at: post.updated_at });
-      } else {
-        id = (await createPost(data)).id;
-      }
+      const save = async () => {
+        if (post) {
+          await updatePost(post.id, { ...data, last_updated_at: post.updated_at });
+          return post.id;
+        }
+        return (await createPost(data)).id;
+      };
+      const id = status === 'published'
+        ? await runSessionMutation(context, save)
+        : await runSessionRequest(context, save);
       if (!form.isConnected || !id) {
         return;
       }
@@ -186,13 +195,13 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
         post = await getPost(id).catch(() => post);
       }
     } catch (err) {
-      if (!form.isConnected) {
+      if (!form.isConnected || (!isSessionCurrent(context) && !(err instanceof ApiError && err.isMutationResponseTimeout))) {
         return;
       }
       if (!(err instanceof ApiError)) {
         throw err;
       }
-      if (err.status === 401) {
+      if (err.isUnauthorized) {
         return;
       }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));
@@ -248,11 +257,13 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate):
 export async function initPostEditor(root: HTMLElement, navigate: Navigate, params: RouteParams): Promise<void> {
   const loadingPage = root.firstElementChild;
   let post: Post | null = null;
+  let context: SessionContext | undefined;
   try {
     const profile = await checkSession();
     if (!profile) {
       return;
     }
+    context = getSessionContext();
     if (params.id) {
       post = await getPost(params.id);
       if (post.author.id !== profile.user.id) {
@@ -261,7 +272,7 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
       }
     }
   } catch (err) {
-    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.status === 401)) {
+    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
       return;
     }
     if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
@@ -275,6 +286,9 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
   if (root.firstElementChild !== loadingPage) {
     return;
   }
+  if (!context || !isSessionCurrent(context)) {
+    return;
+  }
   root.innerHTML = postEditorTemplate(buildViewModel(post));
-  bindEditor(root, post, navigate);
+  bindEditor(root, post, navigate, context);
 }

@@ -1,11 +1,11 @@
 import loginTemplate from './login.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { initPasswordToggles } from '../../components/formField/formField.ts';
-import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
-import { loginSchema } from '../../modules/validation/schemas.ts';
-import { login } from '../../modules/auth/auth.actions.ts';
-import type { LoginData } from '../../modules/api/auth.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { initPasswordToggles } from '@/components/formField/formField.ts';
+import { bindValidation, setFormError } from '@/modules/validation/bindForm.ts';
+import { loginSchema } from '@/modules/validation/schemas.ts';
+import { login } from '@/modules/auth/auth.actions.ts';
+import type { LoginData } from '@/modules/api/auth.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './login.constants.ts';
 
 /** Возвращает HTML страницы входа. */
@@ -37,7 +37,7 @@ async function submitLogin(form: HTMLFormElement, data: LoginData): Promise<void
       throw err;
     }
 
-    const kind = err.status === 400 || err.status === 401 ? 'data' : 'server';
+    const kind = !err.isCsrfError && (err.status === 400 || err.isUnauthorized) ? 'data' : 'server';
     const currentValues = new FormData(form);
     const valuesChanged = [...submittedValues].some(
       ([name, value]) => currentValues.get(name) !== value
@@ -46,7 +46,7 @@ async function submitLogin(form: HTMLFormElement, data: LoginData): Promise<void
     if (kind === 'data' && valuesChanged) {
       return;
     }
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
+    setFormError(form, err.isCsrfError || err.isMutationTimeout ? err.text : FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     if (form.isConnected) {
       button.disabled = false;

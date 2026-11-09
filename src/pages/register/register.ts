@@ -1,11 +1,11 @@
 import registerTemplate from './register.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { initPasswordToggles } from '../../components/formField/formField.ts';
-import { bindValidation, setFormError } from '../../modules/validation/bindForm.ts';
-import { registerSchema } from '../../modules/validation/schemas.ts';
-import { signup } from '../../modules/auth/auth.actions.ts';
-import type { SignupData } from '../../modules/api/auth.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { initPasswordToggles } from '@/components/formField/formField.ts';
+import { bindValidation, setFormError } from '@/modules/validation/bindForm.ts';
+import { registerSchema } from '@/modules/validation/schemas.ts';
+import { signup } from '@/modules/auth/auth.actions.ts';
+import type { SignupData } from '@/modules/api/auth.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
 import { FORM_ERRORS, UNKNOWN_ERROR } from './register.constants.ts';
 
 /** Возвращает HTML страницы регистрации. */
@@ -34,7 +34,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<
       throw err;
     }
 
-    const kind = err.status === 400 || err.status === 409 ? 'data' : 'server';
+    const kind = !err.isCsrfError && (err.status === 400 || err.status === 409) ? 'data' : 'server';
     const currentValues = new FormData(form);
     const valuesChanged = [...submittedValues].some(
       ([name, value]) => currentValues.get(name) !== value
@@ -43,7 +43,7 @@ async function submitRegister(form: HTMLFormElement, data: SignupData): Promise<
     if (kind === 'data' && valuesChanged) {
       return;
     }
-    setFormError(form, FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
+    setFormError(form, err.isCsrfError || err.isMutationTimeout ? err.text : FORM_ERRORS[err.status] ?? UNKNOWN_ERROR, kind);
   } finally {
     if (form.isConnected) {
       button.disabled = false;

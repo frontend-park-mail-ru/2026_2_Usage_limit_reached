@@ -1,6 +1,6 @@
 import headerTemplate from './header.hbs';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
-import type { Navigate } from '../../app/paths.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import type { Navigate } from '@/app/paths.ts';
 
 export function renderHeader(): string {
   return headerTemplate();

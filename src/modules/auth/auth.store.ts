@@ -9,13 +9,14 @@ authDispatcher.register((action) => {
     state = Object.freeze({
       status: 'authenticated',
       user: Object.freeze({
+        id: action.user.id,
         username: action.user.username,
         nickname: action.user.nickname,
         avatar_url: action.user.avatar_url,
       }),
     });
   } else {
-    state = Object.freeze({ status: 'guest', user: null });
+    state = Object.freeze({ status: action.type === 'auth/guest' ? 'guest' : 'unknown', user: null });
   }
   for (const listener of listeners) {
     listener();

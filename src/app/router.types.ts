@@ -1,4 +1,5 @@
 import type { Navigate, RoutePattern } from './paths.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
 export type Layout = 'plain' | 'sidebar';
 
@@ -7,7 +8,12 @@ export type RouteParams = Record<string, string>;
 export interface Route {
   title: string;
   render: () => string;
-  init?: (root: HTMLElement, navigate: Navigate, params: RouteParams) => void;
+  init?: (
+    root: HTMLElement,
+    navigate: Navigate,
+    params: RouteParams,
+    setRefreshNotice: SetRefreshNotice
+  ) => void | (() => void) | Promise<void>;
   layout?: Layout;
 }
 

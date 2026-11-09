@@ -27,6 +27,12 @@ export default defineConfig([
     },
   },
   {
+    files: ['src/worker/**/*.ts'],
+    languageOptions: {
+      globals: globals.serviceworker,
+    },
+  },
+  {
     files: ['webpack.*.js'],
     languageOptions: {
       globals: globals.node,

@@ -1,73 +1,35 @@
-import { API_BASE_URL } from './config.ts';
-import { API_ERROR_MESSAGES, UNKNOWN_API_ERROR } from './request.constants.ts';
+import { ApiError } from './apiError.ts';
+import { getCachedCsrfToken, getCsrfToken, getCsrfVersion, resetCsrfToken } from './csrf.ts';
+import { sendRequest } from './http.ts';
 import type { RequestOptions } from './request.types.ts';
 
-export class ApiError extends Error {
-  status: number;
-
-  /**
-   * @param status - HTTP-статус ответа или 0 при сетевой ошибке.
-   */
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
-
-  /** Сообщение для показа пользователю. */
-  get text(): string {
-    return API_ERROR_MESSAGES[this.status] ?? UNKNOWN_API_ERROR;
-  }
-}
+export { ApiError } from './apiError.ts';
 
 /**
- * Тело и заголовки запроса.
- * @param data
- */
-const buildBody = (data?: object | FormData): Pick<RequestInit, 'headers' | 'body'> => {
-  if (data instanceof FormData) {
-    return { body: data };
-  }
-  if (data) {
-    return { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
-  }
-  return {};
-};
-
-/**
- * Выполняет запрос к backend с cookie.
+ * Выполняет запрос к backend с cookie и CSRF-токеном для изменяющих действий.
  * По умолчанию ожидает JSON; при responseType="empty" возвращает undefined.
  * @param path
  * @param options
- * @throws {ApiError} При ошибке сети, HTTP или разбора JSON.
+ * @throws {ApiError} При ошибке подготовки запроса, сети, HTTP или разбора JSON.
  */
-export const request = async <T>(path: string, { method = 'GET', data, responseType = 'json' }: RequestOptions = {}): Promise<T> => {
-  let response: Response;
+export async function request<T>(path: string, { method = 'GET', ...options }: RequestOptions = {}): Promise<T> {
+  method = method.toUpperCase();
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    return sendRequest<T>(path, { ...options, method });
+  }
+  const version = getCsrfVersion();
+  const token = getCachedCsrfToken() ?? await getCsrfToken();
+  if (version !== getCsrfVersion()) {
+    throw new ApiError(0, 'csrf_context_changed', 'csrf');
+  }
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      method,
-      credentials: 'include',
-      ...buildBody(data),
+    return await sendRequest<T>(path, {
+      ...options, method, headers: { 'X-CSRF-Token': token.value }, redirect: 'error',
     });
-  } catch {
-    throw new ApiError(0, 'network error');
+  } catch (error) {
+    if (error instanceof ApiError && error.isCsrfFailure) {
+      resetCsrfToken(token.version);
+    }
+    throw error;
   }
-
-  if (response.ok && responseType === 'empty') {
-    return undefined as T;
-  }
-
-  let json: unknown;
-  try {
-    json = await response.json();
-  } catch {
-    throw new ApiError(response.status, response.ok ? 'invalid JSON response' : 'unknown error');
-  }
-
-  if (!response.ok) {
-    const message = typeof json === 'object' && json !== null
-      && 'error' in json && typeof json.error === 'string' ? json.error : 'unknown error';
-    throw new ApiError(response.status, message);
-  }
-  return json as T;
-};
+}

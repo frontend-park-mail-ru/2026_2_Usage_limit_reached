@@ -54,11 +54,3 @@
   opacity: 0.6;
   cursor: wait;
 }
-
-.profile-menu__error {
-  margin: 4px 12px;
-  color: var(--color-error);
-  font-size: 14px;
-  line-height: 20px;
-  overflow-wrap: anywhere;
-}

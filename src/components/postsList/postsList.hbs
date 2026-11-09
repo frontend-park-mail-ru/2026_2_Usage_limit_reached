@@ -1,7 +1,9 @@
 {{#if message}}
   <p class="{{#if isError}}posts-list__error{{else}}posts-list__loading{{/if}}" role="status">{{message}}</p>
 {{else if isEmpty}}
-  {{#if isDrafts}}
+  {{#if publicProfile}}
+    <p class="posts-list__empty-title" role="status">У автора пока нет опубликованных постов</p>
+  {{else if isDrafts}}
     <div class="posts-list__empty posts-list__empty-drafts">
       <h3 class="posts-list__empty-title">Черновиков пока нет</h3>
       <p class="posts-list__empty-text">Вы можете создать пост и сохранить его, как черновик, чтобы вернуться к нему позднее</p>
@@ -12,7 +14,9 @@
       <div class="posts-list__empty-content">
         <h3 class="posts-list__empty-title">Создайте первый пост</h3>
         <p class="posts-list__empty-text">Расскажите о себе или поделитесь идеей<br>После публикации пост появится здесь</p>
-        <a class="button button_view_primary button_borderless posts-list__empty-button" href="/posts/new" data-link>Создать пост</a>
+        {{#unless offline}}
+          <a class="button button_view_primary button_borderless posts-list__empty-button" href="/posts/new" data-link>Создать пост</a>
+        {{/unless}}
       </div>
       <img class="posts-list__empty-image" src="/assets/profile/img-author.svg" alt="" />
     </div>

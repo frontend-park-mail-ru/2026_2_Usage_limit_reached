@@ -1,12 +1,15 @@
 {{#if message}}
-  <section class="profile" aria-label="Профиль">
+  <section class="profile" aria-label="Профиль"{{#if loading}} data-profile-loading{{/if}}>
     <div class="profile__summary">
       <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
     </div>
   </section>
 {{else}}
-<section class="profile" aria-labelledby="profile-name">
+<section class="profile" aria-label="Профиль"{{#if offline}} data-offline-copy{{/if}}>
   <div class="profile__summary">
+    {{#if profileMissing}}
+      <p class="profile__error">Сохранённый профиль отсутствует. Загрузите его при доступном сервере.</p>
+    {{else}}
     <div class="profile__identity">
       <img class="profile__avatar" src="{{avatarUrl}}" alt="Фото профиля" />
       <div class="profile__info">
@@ -17,42 +20,63 @@
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
           <p class="profile__bio">{{bio}}</p>
+          {{#if offline}}
+            {{#unless postsMissing}}
+              <p class="profile__post-count">{{postCountLabel}}{{#if hasMorePosts}}. Есть ещё посты, они не загружены.{{/if}}</p>
+            {{/unless}}
+          {{/if}}
         {{/if}}
       </div>
     </div>
+    {{#unless offline}}
     <div class="profile__actions">
       <a class="button button_view_secondary profile__button profile__button-edit" href="/settings" data-link>Редактировать профиль</a>
       {{#if hasAuthor}}
         <a class="button button_view_secondary profile__button profile__button-donations" href="/donations" data-link>Пожертвования</a>
       {{/if}}
     </div>
+    {{/unless}}
+    {{/if}}
   </div>
 
-  {{#if needsPayout}}
-    <section class="profile__payout" aria-labelledby="profile-payout-title">
-      <div class="profile__payout-content">
-        <h2 class="profile__payout-title" id="profile-payout-title">Настройте получение пожертвований</h2>
-        <p class="profile__payout-text">Публиковать можно сразу. Чтобы получать пожертвования, настройте оплату</p>
-      </div>
-      <a class="button button_view_primary button_borderless profile__payout-button" href="/settings" data-link>Настроить оплату</a>
-    </section>
-  {{/if}}
+  {{#unless offline}}
+    {{#if needsPayout}}
+      <section class="profile__payout" aria-labelledby="profile-payout-title">
+        <div class="profile__payout-content">
+          <h2 class="profile__payout-title" id="profile-payout-title">Настройте получение пожертвований</h2>
+          <p class="profile__payout-text">Публиковать можно сразу. Чтобы получать пожертвования, настройте оплату</p>
+        </div>
+        <a class="button button_view_primary button_borderless profile__payout-button" href="/settings" data-link>Настроить оплату</a>
+      </section>
+    {{/if}}
+  {{/unless}}
 
-  {{#if hasAuthor}}
+  {{#if showPosts}}
   <section class="profile__posts" aria-label="Публикации">
-    <div class="profile__toolbar">
-      {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs}}
-      <div class="profile__controls">
-        <a class="button button_view_accent button_borderless profile__button profile__button-add" href="/posts/new" data-link data-create-post>
-          <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
-          Создать пост
-        </a>
-        <div class="profile__sort" data-profile-sort></div>
+    {{#if offline}}
+      <div class="profile__toolbar">
+        <h2 class="profile__title">Посты</h2>
       </div>
-    </div>
-    <div class="profile__panel" id="profile-panel" role="tabpanel" data-profile-panel></div>
-    {{> confirmDialog id="draft-delete" title="Удалить черновик?" text="Черновик исчезнет из списка. Восстановить его не получится"
-        errorTitle="Не удалось удалить" cancelLabel="Отмена" confirmLabel="Удалить черновик"}}
+      {{#if postsMissing}}
+        <p class="profile__error">Сохранённые посты отсутствуют. Загрузите список при доступном сервере.</p>
+      {{else}}
+        {{> postsList}}
+      {{/if}}
+    {{else}}
+      <div class="profile__toolbar">
+        {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs}}
+        <div class="profile__controls">
+          <a class="button button_view_accent button_borderless profile__button profile__button-add" href="/posts/new" data-link data-create-post>
+            <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
+            Создать пост
+          </a>
+          <div class="profile__sort" data-profile-sort></div>
+        </div>
+      </div>
+      <div class="profile__panel" id="profile-panel" role="tabpanel" data-profile-panel></div>
+      {{> confirmDialog id="draft-delete" title="Удалить черновик?" text="Черновик исчезнет из списка. Восстановить его не получится"
+          errorTitle="Не удалось удалить" cancelLabel="Отмена" confirmLabel="Удалить черновик"}}
+    {{/if}}
   </section>
   {{else}}
     <section class="profile__author-invite" aria-labelledby="profile-author-title">

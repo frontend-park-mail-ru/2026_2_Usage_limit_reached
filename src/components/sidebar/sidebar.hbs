@@ -21,3 +21,6 @@
     {{> profileMenu className="sidebar__profile-menu"}}
   </div>
 </nav>
+{{> confirmDialog id="logout-confirm" title="Выйти из аккаунта?" hideSubject=true
+    text="Вы выйдете из аккаунта на этом устройстве. Чтобы продолжить работу, войдите снова"
+    errorTitle="Не удалось выйти" cancelLabel="Отмена" confirmLabel="Выйти"}}

@@ -11,7 +11,7 @@ export interface LoginData {
 }
 
 export interface AuthUser {
-  email: string;
   username: string;
   nickname: string;
+  avatar_url?: string;
 }

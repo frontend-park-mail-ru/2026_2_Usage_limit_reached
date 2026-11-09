@@ -1,7 +1,7 @@
-import { ActionMenu } from '../actionMenu/actionMenu.ts';
-import type { LinkDialog } from '../linkDialog/linkDialog.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import type { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import { createTextRange, getTextOffset, isInlineTagActive, toggleInlineTag } from './inlineTag.ts';
 import { BLOCK_LABELS, FORMAT_COMMANDS, INLINE_TAGS, TEXT_BLOCKS } from './richEditor.constants.ts';
 import type { BlockType } from './richEditor.types.ts';
@@ -278,11 +278,16 @@ export class RichEditor {
 
   /** Открывает окно ссылки с выделенным текстом. */
   private openLinkDialog(): void {
-    this.linkDialog.open(this.savedRange?.toString() ?? '', (text, href) => {
+    const range = this.savedRange?.cloneRange() ?? null;
+    this.linkDialog.open(range?.toString() ?? '', (text, href) => {
+      this.savedRange = range;
       const link = document.createElement('a');
       link.href = href;
       link.textContent = text;
-      this.run('insertHTML', link.outerHTML);
+      this.run('insertHTML', sanitizeHtml(link.outerHTML));
+    }, () => {
+      this.savedRange = range;
+      this.restoreSelection();
     });
   }
 }

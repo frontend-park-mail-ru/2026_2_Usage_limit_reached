@@ -1,5 +1,5 @@
-import { requireElement } from '../../utils/helpers/dom.ts';
-import type { PostLikes } from '../../modules/api/posts.types.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import type { PostLikes } from '@/modules/api/posts.types.ts';
 
 /** Кнопка лайка */
 export class LikeButton {

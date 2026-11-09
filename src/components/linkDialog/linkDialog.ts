@@ -1,9 +1,9 @@
-import { Modal } from '../modal/modal.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { validate } from '../../modules/validation/validate.ts';
-import { linkSchema } from '../../modules/validation/schemas.ts';
-import { setFieldError, showErrors } from '../../modules/validation/bindForm.ts';
-import { normalizeUrl } from '../../modules/sanitize/sanitize.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { validate } from '@/modules/validation/validate.ts';
+import { linkSchema } from '@/modules/validation/schemas.ts';
+import { setFieldError, showErrors } from '@/modules/validation/bindForm.ts';
+import { normalizeUrl } from '@/modules/sanitize/sanitize.ts';
 import type { LinkInsert } from './linkDialog.types.ts';
 
 /** Окно «Добавить ссылку». */
@@ -16,13 +16,17 @@ export class LinkDialog {
   private readonly onInput: (event: Event) => void;
   private readonly onSubmit: (event: SubmitEvent) => void;
   private onInsert: LinkInsert | null = null;
+  private onCancel: (() => void) | null = null;
 
   /**
    * @param dialog
    */
   constructor(dialog: HTMLDialogElement) {
     this.modal = new Modal(dialog, () => {
+      const cancel = this.onCancel;
       this.onInsert = null;
+      this.onCancel = null;
+      cancel?.();
     });
     this.form = requireElement<HTMLFormElement>(dialog, '.link-dialog__form');
     this.textInput = requireElement<HTMLInputElement>(this.form, '[name="text"]');
@@ -38,9 +42,11 @@ export class LinkDialog {
    * Открывает пустое окно с подставленным текстом.
    * @param text
    * @param onInsert
+   * @param onCancel
    */
-  open(text: string, onInsert: LinkInsert): void {
+  open(text: string, onInsert: LinkInsert, onCancel: () => void): void {
     this.onInsert = onInsert;
+    this.onCancel = onCancel;
     this.form.reset();
     this.textInput.value = text.trim();
     setFieldError(this.form, 'text', null);
@@ -88,6 +94,7 @@ export class LinkDialog {
       return;
     }
     const insert = this.onInsert;
+    this.onCancel = null;
     this.modal.close();
     insert?.(values.text.trim(), href);
   }

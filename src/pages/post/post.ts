@@ -1,20 +1,27 @@
 import postTemplate from './post.hbs';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { formatPostDate } from '../../utils/helpers/posts.ts';
-import { checkSession, expireSession } from '../../modules/auth/auth.actions.ts';
-import { deletePost, getPost, setPostLike } from '../../modules/api/posts.ts';
-import type { Post, PostLikes } from '../../modules/api/posts.types.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { sanitizeHtml } from '../../modules/sanitize/sanitize.ts';
-import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
-import { ActionMenu } from '../../components/actionMenu/actionMenu.ts';
-import { ConfirmDialog } from '../../components/confirmDialog/confirmDialog.ts';
-import { DonateDialog } from '../../components/donateDialog/donateDialog.ts';
-import { LikeButton } from '../../components/likeButton/likeButton.ts';
-import { showToast } from '../../components/toast/toast.ts';
-import { ROUTES, postEditRoute } from '../../app/paths.ts';
-import type { Navigate } from '../../app/paths.ts';
-import type { RouteParams } from '../../app/router.types.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
+import {
+  checkSession,
+  getSessionContext,
+  isSessionCurrent,
+  runSessionMutation,
+  runSessionRequest,
+} from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
+import { deletePost, getPost, setPostLike } from '@/modules/api/posts.ts';
+import type { Post, PostLikes } from '@/modules/api/posts.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
+import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
+import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
+import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 import {
   DELETED_MESSAGE,
   DELETE_ERROR,
@@ -39,6 +46,7 @@ function buildViewModel(post: Post, isOwner: boolean) {
   const publishedAt = post.published_at ?? '';
   return {
     authorName: post.author.nickname,
+    authorHref: publicProfileRoute(post.author.username),
     avatarUrl: post.author.avatar_url ?? AVATAR_PLACEHOLDER,
     publishedAt,
     dateLabel: publishedAt ? formatPostDate(publishedAt) : '',
@@ -56,7 +64,10 @@ function buildViewModel(post: Post, isOwner: boolean) {
  */
 function bindBackLink(root: HTMLElement): void {
   requireElement(root, '[data-back]').addEventListener('click', (event) => {
-    if (history.state?.from === ROUTES.profile) {
+    const from = history.state?.from;
+    if (typeof from === 'string' && [ROUTES.profile, ROUTES.publicProfile].some((route) =>
+      route === matchRoute(from.split('?')[0])?.pattern
+    )) {
       event.preventDefault();
       history.back();
     }
@@ -67,16 +78,36 @@ function bindBackLink(root: HTMLElement): void {
  * Удаляет пост и возвращает текст ошибки или null.
  * @param id
  * @param navigate
+ * @param context
+ * @param isActive
  */
-async function removePost(id: string, navigate: Navigate): Promise<string | null> {
+async function removePost(id: string, navigate: Navigate, context: SessionContext, isActive: () => boolean): Promise<string | null> {
   try {
-    await deletePost(id);
+    const deleted = await runSessionMutation(context, async () => {
+      try {
+        await deletePost(id);
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.isCsrfError || error.status !== 404) {
+          throw error;
+        }
+      }
+      return true;
+    });
+    if (!deleted || !isActive()) {
+      return null;
+    }
   } catch (err) {
+    if (!isActive() || !isSessionCurrent(context)) {
+      return null;
+    }
     if (!(err instanceof ApiError)) {
       throw err;
     }
-    if (err.status === 401) {
+    if (err.isUnauthorized) {
       return null;
+    }
+    if (err.isCsrfError || err.isMutationTimeout) {
+      return err.text;
     }
     if (err.status !== 404) {
       return err.status === 0 ? DELETE_NETWORK_ERROR : DELETE_ERROR;
@@ -94,12 +125,18 @@ async function removePost(id: string, navigate: Navigate): Promise<string | null
  * @param navigate
  */
 function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate): void {
+  const context = getSessionContext();
+  if (!context || context.userId !== post.author.id) {
+    return;
+  }
+  const page = root.firstElementChild;
+  const isActive = () => root.firstElementChild === page;
   const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '.confirm-dialog'));
   new ActionMenu(requireElement<HTMLElement>(root, '.post-page__menu'), (action) => {
     if (action === 'edit') {
       navigate(postEditRoute(post.id));
     } else if (action === 'delete') {
-      dialog.open(post.title, () => removePost(post.id, navigate));
+      dialog.open(post.title, () => removePost(post.id, navigate, context, isActive));
     }
   });
 }
@@ -123,23 +160,33 @@ function bindDonate(root: HTMLElement, post: Post, isGuest: boolean, navigate: N
 }
 
 /**
- * Отправляет лайк и возвращает ответ сервера или null.
+ * Отправляет лайк только для актуальной сессии и страницы.
  * @param id
  * @param liked
- * @param navigate
+ * @param context
+ * @param isActive
  */
-async function sendLike(id: string, liked: boolean, navigate: Navigate): Promise<PostLikes | null> {
+async function sendLike(
+  id: string,
+  liked: boolean,
+  context: SessionContext,
+  isActive: () => boolean
+): Promise<PostLikes | null> {
+  if (!isActive() || !isSessionCurrent(context)) {
+    return null;
+  }
   try {
-    return await setPostLike(id, liked);
+    const result = await runSessionRequest(context, () => setPostLike(id, liked));
+    return isActive() && isSessionCurrent(context) ? result ?? null : null;
   } catch (err) {
+    if (!isActive() || !isSessionCurrent(context)) {
+      return null;
+    }
     if (!(err instanceof ApiError)) {
       throw err;
     }
-    if (err.status === 401) {
-      expireSession();
-      navigate(ROUTES.login);
-    } else {
-      showToast(err.status === 0 ? err.text : LIKE_ERROR);
+    if (!err.isUnauthorized) {
+      showToast(err.isCsrfError || err.isMutationTimeout || err.status === 0 ? err.text : LIKE_ERROR);
     }
     return null;
   }
@@ -156,10 +203,20 @@ function bindLike(root: HTMLElement, post: Post, isGuest: boolean, navigate: Nav
   const button = requireElement<HTMLButtonElement>(root, '.like-button');
   if (isGuest) {
     button.addEventListener('click', () => navigate(ROUTES.login));
-  } else {
-    const state = { likes_count: post.likes_count, liked_by_user: post.liked_by_user };
-    new LikeButton(button, state, (liked) => sendLike(post.id, liked, navigate));
+    return;
   }
+  const context = getSessionContext();
+  if (!context) {
+    button.disabled = true;
+    return;
+  }
+  const page = root.firstElementChild;
+  const isActive = () => root.firstElementChild === page;
+  const state = {
+    likes_count: post.likes_count,
+    liked_by_user: post.liked_by_user,
+  };
+  new LikeButton(button, state, (liked) => sendLike(post.id, liked, context, isActive));
 }
 
 /**

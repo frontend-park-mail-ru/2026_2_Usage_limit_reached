@@ -1,0 +1,38 @@
+<section class="profile" aria-label="Публичный профиль">
+  {{#if message}}
+    <div class="profile__summary">
+      <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+      {{#if canRetry}}
+        <button class="button button_view_secondary profile__button" type="button" data-profile-retry>Повторить</button>
+      {{/if}}
+    </div>
+  {{else}}
+    <div class="profile__summary profile__summary-public">
+      <div class="profile__identity">
+        <img class="profile__avatar" src="{{avatarUrl}}" alt="Фото профиля" />
+        <div class="profile__info">
+          <div class="profile__heading">
+            <h1 class="profile__name">{{name}}</h1>
+            {{#if isAuthor}}<span class="profile__badge">Автор</span>{{/if}}
+          </div>
+          <p class="profile__username">{{username}}</p>
+          {{#if bio}}<p class="profile__bio">{{bio}}</p>{{/if}}
+        </div>
+      </div>
+      {{#if isAuthor}}
+        <button class="button button_view_primary button_borderless profile__button" type="button" data-donate hidden>Пожертвовать</button>
+      {{/if}}
+    </div>
+    {{#if isAuthor}}
+      <section class="profile__posts" aria-labelledby="public-profile-posts">
+        <div class="profile__toolbar">
+          <h2 class="profile__title" id="public-profile-posts">Посты</h2>
+          <div class="profile__sort" data-public-sort></div>
+        </div>
+        <div data-public-posts></div>
+        <button class="button button_view_secondary profile__button" type="button" data-list-retry hidden>Повторить</button>
+      </section>
+      {{> donateDialog}}
+    {{/if}}
+  {{/if}}
+</section>

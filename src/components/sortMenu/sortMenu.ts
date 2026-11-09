@@ -1,5 +1,5 @@
-import { ActionMenu } from '../actionMenu/actionMenu.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
+import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
 
 /** Список «Сначала новые / старые / популярные». */
 export class SortMenu {

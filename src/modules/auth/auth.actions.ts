@@ -1,31 +1,148 @@
-import * as authApi from '../api/auth.ts';
-import { getProfile } from '../api/profile.ts';
-import type { LoginData, SignupData } from '../api/auth.types.ts';
-import { ApiError } from '../api/request.ts';
+import * as authApi from '@/modules/api/auth.ts';
+import { getProfile, getProfilePosts } from '@/modules/api/profile.ts';
+import type { LoginData, SignupData } from '@/modules/api/auth.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { invalidateCsrfRequests, notifyCsrfSessionChange, resetCsrfToken } from '@/modules/api/csrf.ts';
 import { authDispatcher } from './auth.dispatcher.ts';
-import type { SessionUser } from './auth.types.ts';
+import type { SessionContext } from './auth.types.ts';
+import type { Profile, ProfilePostsQuery } from '@/modules/api/profile.types.ts';
+import { captureOfflineToken, captureOfflineClearFallback, clearOfflineCopy, invalidateOfflineCopy, saveOfflineProfile, saveOfflinePosts } from '@/modules/offline/offline.storage.ts';
+import type { OfflineClearToken } from '@/modules/offline/offline.types.ts';
+import { DEFAULT_PROFILE_POSTS_QUERY } from '@/modules/api/profile.constants.ts';
 import './auth.store.ts';
 
 let sessionVersion = 0;
+let confirmedSession: SessionContext | undefined;
 let pendingChangeVersion: number | undefined;
+let profileRequest: { version: number; promise: Promise<Profile | undefined> } | undefined;
 
-/** Сохраняет состояние гостя после ответа backend об отсутствии сессии. */
-export function expireSession(): void {
-  if (pendingChangeVersion === sessionVersion) {
+/** Очищает копию актуальной сессии и сохраняет состояние гостя. */
+export async function expireSession(expected: OfflineClearToken | undefined = confirmedSession?.offlineToken): Promise<boolean> {
+  const version = sessionVersion;
+  const cleared = await clearOfflineCopy(expected, () => version === sessionVersion);
+  if (cleared === false || version !== sessionVersion) {
+    return false;
+  }
+  if (pendingChangeVersion === version) {
     pendingChangeVersion = undefined;
   }
   sessionVersion += 1;
+  confirmedSession = undefined;
+  resetCsrfToken();
+  notifyCsrfSessionChange();
   authDispatcher.dispatch({ type: 'auth/guest' });
+  return true;
 }
 
-/**
- * Выполняет запрос с проверкой актуальности сессии.
- * Старые ответы и ошибки возвращают undefined, ошибки сети не меняют store.
- */
-async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) => SessionUser) {
+/** Объединяет одновременные проверки одной сессии, не сохраняя завершённый ответ. */
+export function checkSession(): Promise<Profile | undefined> {
+  const version = sessionVersion;
+  if (profileRequest?.version === version) {
+    return profileRequest.promise;
+  }
+  const promise = loadSessionProfile().finally(() => {
+    if (profileRequest?.promise === promise) {
+      profileRequest = undefined;
+    }
+  });
+  profileRequest = { version, promise };
+  return promise;
+}
+
+/** Проверяет профиль онлайн, сохраняет минимальную копию и подтверждает владельца. */
+async function loadSessionProfile(): Promise<Profile | undefined> {
   const version = sessionVersion;
   const canUpdate = pendingChangeVersion === undefined;
-  const isCurrent = () => canUpdate && version === sessionVersion;
+  const isCurrent = () => canUpdate && version === sessionVersion && pendingChangeVersion === undefined;
+  const fallback = confirmedSession?.offlineToken ?? captureOfflineClearFallback();
+  const token = await captureOfflineToken();
+  if (!isCurrent()) {
+    return undefined;
+  }
+  try {
+    const profile = await getProfile();
+    if (!isCurrent()) {
+      return undefined;
+    }
+    if (typeof profile.user.id !== 'string' || !profile.user.id) {
+      throw new ApiError(200, 'invalid profile user id');
+    }
+    const saved = await saveOfflineProfile(token, profile, isCurrent);
+    if (saved === null || !isCurrent()) {
+      return undefined;
+    }
+    if (confirmedSession?.userId !== profile.user.id
+      || confirmedSession?.offlineToken?.generation !== saved?.generation) {
+      if (confirmedSession?.userId !== profile.user.id) {
+        resetCsrfToken();
+      }
+      if (confirmedSession) {
+        sessionVersion += 1;
+        invalidateCsrfRequests();
+      }
+      confirmedSession = Object.freeze({ userId: profile.user.id, offlineToken: saved });
+    }
+    authDispatcher.dispatch({ type: 'auth/authenticated', user: profile.user });
+    return profile;
+  } catch (error) {
+    if (!isCurrent()) {
+      return undefined;
+    }
+    if (error instanceof ApiError && !error.isCsrfFailure && (error.status === 403 || error.status === 404)) {
+      const cleared = await clearOfflineCopy(token ?? fallback, isCurrent);
+      if (cleared === false || !isCurrent()) {
+        return undefined;
+      }
+    }
+    if (error instanceof ApiError && error.isUnauthorized && !await expireSession(token ?? fallback)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+/** Возвращает версию для отклонения устаревшего отображения страницы. */
+export function getSessionVersion(): number {
+  return sessionVersion;
+}
+
+/** Убирает данные из памяти по уведомлению вкладки, не подтверждая выход. */
+export function invalidateSessionMemory(): void {
+  sessionVersion += 1;
+  confirmedSession = undefined;
+  resetCsrfToken();
+  authDispatcher.dispatch({ type: 'auth/unknown' });
+}
+
+/** Инвалидирует только память вкладки после изменения ревизии в другой вкладке. */
+export async function handleOfflineSessionChange(): Promise<void> {
+  const session = confirmedSession;
+  const token = await captureOfflineToken();
+  if (session !== confirmedSession || pendingChangeVersion !== undefined) {
+    return;
+  }
+  if (session && token && session.offlineToken?.generation !== token.generation) {
+    sessionVersion += 1;
+    confirmedSession = undefined;
+    resetCsrfToken();
+    authDispatcher.dispatch({ type: 'auth/unknown' });
+  }
+}
+
+/** Возвращает контекст только после подтверждения собственного профиля. */
+export function getSessionContext(): SessionContext | undefined {
+  return pendingChangeVersion === undefined ? confirmedSession : undefined;
+}
+
+/** Проверяет, что подтверждённый аккаунт не сменился и выход не выполняется. */
+export function isSessionCurrent(context: SessionContext): boolean {
+  return context === getSessionContext();
+}
+
+/** Выполняет запрос аккаунта, устаревшие результаты и ошибки игнорируются. */
+export async function runSessionRequest<T>(context: SessionContext, request: () => Promise<T>): Promise<T | undefined> {
+  const version = sessionVersion;
+  const isCurrent = () => version === sessionVersion && isSessionCurrent(context);
   if (!isCurrent()) {
     return undefined;
   }
@@ -34,43 +151,125 @@ async function readSession<T>(request: () => Promise<T>, getUser?: (result: T) =
     if (!isCurrent()) {
       return undefined;
     }
-    if (getUser) {
-      authDispatcher.dispatch({ type: 'auth/authenticated', user: getUser(result) });
+    const token = await captureOfflineToken();
+    if (context.offlineToken && token && context.offlineToken.generation !== token.generation) {
+      return undefined;
     }
-    return result;
-  } catch (err) {
+    return isCurrent() ? result : undefined;
+  } catch (error) {
     if (!isCurrent()) {
       return undefined;
     }
-    if (err instanceof ApiError && err.status === 401) {
-      expireSession();
+    if (error instanceof ApiError && error.isUnauthorized) {
+      if (!await expireSession(context.offlineToken)) {
+        return undefined;
+      }
     }
-    throw err;
+    throw error;
   }
 }
 
-/** Проверяет сессию через профиль и сохраняет пользователя в store. */
-export function checkSession() {
-  return readSession(getProfile, (profile) => profile.user);
+/** После успешного изменения отзывает копию и отклоняет прежние GET. */
+export async function runSessionMutation<T>(context: SessionContext, request: () => Promise<T>): Promise<T | undefined> {
+  if (!isSessionCurrent(context)) {
+    return undefined;
+  }
+  let result: T | undefined;
+  let responseError: ApiError | undefined;
+  try {
+    result = await request();
+  } catch (error) {
+    if (error instanceof ApiError && error.isMutationResponseTimeout) {
+      responseError = error;
+    } else {
+      if (!isSessionCurrent(context)) {
+        return undefined;
+      }
+      if (error instanceof ApiError && error.isUnauthorized && !await expireSession(context.offlineToken)) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+  // Успех меняет данные владельца даже после сброса памяти другой вкладкой.
+  const cleared = await invalidateOfflineCopy(context.userId, context.offlineToken);
+  if (cleared === false || !isSessionCurrent(context)) {
+    return undefined;
+  }
+  // Отказ IndexedDB уже оставил отметку отзыва и уведомил другие вкладки.
+  const token = await captureOfflineToken();
+  if (!isSessionCurrent(context)) {
+    return undefined;
+  }
+  sessionVersion += 1;
+  invalidateCsrfRequests();
+  confirmedSession = Object.freeze({ userId: context.userId, offlineToken: token });
+  if (responseError) {
+    throw responseError;
+  }
+  return result;
+}
+
+/** Загружает посты, ответ от прежней сессии игнорируется. */
+export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFILE_POSTS_QUERY, isCurrent: () => boolean = () => true) {
+  const context = getSessionContext();
+  if (!context || !isCurrent()) {
+    return undefined;
+  }
+  const parameters: ProfilePostsQuery = { sort: query.sort, limit: query.limit ?? DEFAULT_PROFILE_POSTS_QUERY.limit };
+  if (query.cursor !== undefined) {
+    parameters.cursor = query.cursor;
+  }
+  let posts;
+  try {
+    posts = await runSessionRequest(context, () => getProfilePosts(parameters));
+  } catch (error) {
+    if (isCurrent() && error instanceof ApiError && error.status === 403 && !error.isCsrfFailure) {
+      const cleared = await clearOfflineCopy(context.offlineToken, () => isSessionCurrent(context));
+      if (cleared === false || !isSessionCurrent(context)) {
+        return undefined;
+      }
+    }
+    throw error;
+  }
+  if (!posts || !isCurrent() || !isSessionCurrent(context) || posts.items.some((item) => item.author.id !== context.userId)) {
+    return undefined;
+  }
+  const saved = await saveOfflinePosts(context.offlineToken, posts, parameters, () => isCurrent() && isSessionCurrent(context));
+  return saved !== false && isCurrent() && isSessionCurrent(context) ? posts : undefined;
 }
 
 /**
- * После входа или регистрации сохраняет пользователя из ответа backend.
+ * После входа или регистрации сохраняет JSON без подтверждённого ID владельца.
  * Пароль не попадает в store. Ответ старого запроса не меняет состояние.
  */
 async function authenticate(request: () => ReturnType<typeof authApi.login>): Promise<void> {
   const version = ++sessionVersion;
   pendingChangeVersion = version;
+  invalidateCsrfRequests();
   try {
+    const fallback = confirmedSession?.offlineToken ?? captureOfflineClearFallback();
+    const token = await captureOfflineToken();
+    if (version !== sessionVersion) {
+      return;
+    }
     const user = await request();
     if (version === sessionVersion) {
+      resetCsrfToken();
+    }
+    const cleared = version === sessionVersion
+      ? await clearOfflineCopy(token ?? fallback, () => version === sessionVersion) : false;
+    if (cleared !== false && version === sessionVersion) {
+      confirmedSession = undefined;
       pendingChangeVersion = undefined;
+      notifyCsrfSessionChange();
       authDispatcher.dispatch({ type: 'auth/authenticated', user });
     }
   } finally {
     if (pendingChangeVersion === version) {
       pendingChangeVersion = undefined;
     }
+    void handleOfflineSessionChange();
   }
 }
 
@@ -88,19 +287,27 @@ export function signup(data: SignupData): Promise<void> {
 export async function logout(): Promise<void> {
   const version = ++sessionVersion;
   pendingChangeVersion = version;
+  invalidateCsrfRequests();
+  const fallback = confirmedSession?.offlineToken ?? captureOfflineClearFallback();
+  const token = await captureOfflineToken();
   try {
+    if (version !== sessionVersion) {
+      return;
+    }
     await authApi.logout();
     if (version === sessionVersion) {
-      expireSession();
+      resetCsrfToken();
+      await expireSession(token ?? fallback);
     }
   } catch (err) {
-    if (version === sessionVersion && err instanceof ApiError && err.status === 401) {
-      expireSession();
+    if (version === sessionVersion && err instanceof ApiError && err.isUnauthorized) {
+      await expireSession(token ?? fallback);
     }
     throw err;
   } finally {
     if (pendingChangeVersion === version) {
       pendingChangeVersion = undefined;
     }
+    void handleOfflineSessionChange();
   }
 }

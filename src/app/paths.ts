@@ -5,6 +5,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   profile: '/profile',
+  publicProfile: '/users/:username',
   settings: '/settings',
   donations: '/donations',
   postNew: '/posts/new',
@@ -77,6 +78,9 @@ export function matchRoute(path: string): RouteMatch | undefined {
  * @param id
  */
 export const postRoute = (id: string): RoutePath => `/posts/${encodeURIComponent(id)}`;
+
+/** Адрес публичного профиля пользователя. */
+export const publicProfileRoute = (username: string): RoutePath => `/users/${encodeURIComponent(username)}`;
 
 /**
  * Адрес редактирования поста.

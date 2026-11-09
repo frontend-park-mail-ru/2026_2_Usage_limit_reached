@@ -1,16 +1,16 @@
-import { Modal } from '../modal/modal.ts';
-import { setAlert } from '../alert/alert.ts';
-import { showToast } from '../toast/toast.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import { createUuid } from '../../utils/helpers/uuid.ts';
-import { formatMoney, toMinor } from '../../utils/helpers/money.ts';
-import { validate } from '../../modules/validation/validate.ts';
-import { donationSchema } from '../../modules/validation/schemas.ts';
-import { setFieldError } from '../../modules/validation/bindForm.ts';
-import { sendDonation } from '../../modules/api/donations.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import type { PostAuthor } from '../../modules/api/posts.types.ts';
-import { AVATAR_PLACEHOLDER } from '../../modules/profile/profile.constants.ts';
+import { Modal } from '@/components/modal/modal.ts';
+import { setAlert } from '@/components/alert/alert.ts';
+import { showToast } from '@/components/toast/toast.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { createUuid } from '@/utils/helpers/uuid.ts';
+import { formatMoney, toMinor } from '@/utils/helpers/money.ts';
+import { validate } from '@/modules/validation/validate.ts';
+import { donationSchema } from '@/modules/validation/schemas.ts';
+import { setFieldError } from '@/modules/validation/bindForm.ts';
+import { sendDonation } from '@/modules/api/donations.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import type { PostAuthor } from '@/modules/api/posts.types.ts';
+import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import {
   DEFAULT_AMOUNT,
   DONATE_ERROR,
@@ -239,10 +239,10 @@ export class DonateDialog {
       if (!this.dialog.open || this.requestKey !== requestKey) {
         return;
       }
-      if (err.status === 409) {
+      if (!err.isCsrfError && err.status === 409) {
         this.requestKey = null;
       }
-      this.showError(DONATE_ERROR_MESSAGES[err.status] ?? DONATE_ERROR);
+      this.showError(err.isCsrfError || err.isMutationTimeout ? err.text : DONATE_ERROR_MESSAGES[err.status] ?? DONATE_ERROR);
     } finally {
       this.setSending(false);
     }

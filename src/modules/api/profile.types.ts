@@ -9,9 +9,9 @@ export interface ProfileUser {
 
 export interface ProfileAuthor {
   bio: string;
-  category: string;
-  payout_provider: string | null;
-  payout_account_id: string | null;
+  category?: string | null;
+  payout_provider?: string | null;
+  payout_account_id?: string | null;
 }
 
 export interface Profile {
@@ -19,17 +19,45 @@ export interface Profile {
   author?: ProfileAuthor;
 }
 
-export interface ProfileUserUpdate {
-  username: string;
-  nickname: string;
-  email: string;
+export interface PublicProfile {
+  user: Omit<ProfileUser, 'email'>;
+  author?: Pick<ProfileAuthor, 'bio' | 'category'>;
 }
 
 export interface ProfileUpdate {
-  user: ProfileUserUpdate;
-  author?: ProfileAuthor;
+  nickname: string;
+  author?: { bio: string; category: string | null };
 }
 
 export interface AvatarResponse {
   avatar_url: string;
+}
+
+export interface ProfilePostAuthor {
+  id: string;
+  username: string;
+  nickname: string;
+  avatar_url?: string;
+}
+
+export interface ProfilePost {
+  id: string;
+  author: ProfilePostAuthor;
+  locked: boolean;
+  title: string;
+  body_preview: string;
+  likes_count: number;
+  liked_by_user: boolean;
+  published_or_updated_at: string | null;
+}
+
+export interface ProfilePosts {
+  items: ProfilePost[];
+  next_cursor: string | null;
+}
+
+export interface ProfilePostsQuery {
+  sort: 'new' | 'old' | 'popular';
+  limit?: number;
+  cursor?: string;
 }

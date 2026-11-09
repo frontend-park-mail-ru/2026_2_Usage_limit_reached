@@ -1,19 +1,21 @@
-import { logout } from '../../modules/auth/auth.actions.ts';
-import { ApiError } from '../../modules/api/request.ts';
-import { bindLinks } from '../../utils/helpers/bindLinks.ts';
-import { requireElement } from '../../utils/helpers/dom.ts';
-import type { Navigate } from '../../app/paths.ts';
+import { getSessionVersion, logout } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import type { Navigate } from '@/app/paths.ts';
 
 /** Управляет меню профиля и выходом из аккаунта. */
 export class ProfileMenu {
   private readonly menuElement: HTMLElement;
   private readonly buttonElement: HTMLButtonElement;
   private readonly logoutButton: HTMLButtonElement;
-  private readonly errorElement: HTMLElement;
+  private readonly logoutDialog: ConfirmDialog;
   private readonly onToggle: () => void;
   private readonly onOutsideClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
-  private readonly onLogout: () => Promise<void>;
+  private readonly onLogout: () => void;
   private readonly unbindLinks: () => void;
   private pending = false;
   private destroyed = false;
@@ -32,12 +34,12 @@ export class ProfileMenu {
     this.menuElement = requireElement<HTMLElement>(document, menuSelector);
     this.buttonElement = requireElement<HTMLButtonElement>(document, buttonSelector);
     this.logoutButton = requireElement<HTMLButtonElement>(this.menu, '[data-logout]');
-    this.errorElement = requireElement<HTMLElement>(this.menu, '.profile-menu__error');
+    this.logoutDialog = new ConfirmDialog(requireElement(document, 'dialog[aria-labelledby="logout-confirm-title"]'), true);
 
     this.onToggle = this.toggle.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
     this.onKeydown = this.handleKeydown.bind(this);
-    this.onLogout = this.handleLogout.bind(this);
+    this.onLogout = this.confirmLogout.bind(this);
 
     this.unbindLinks = bindLinks(this.menu, (path) => {
       this.close();
@@ -133,39 +135,47 @@ export class ProfileMenu {
     items[(next + items.length) % items.length].focus();
   }
 
-  /** Блокирует повторный выход и убирает предыдущую ошибку. */
-  private resetState(): void {
-    this.pending = true;
-    this.logoutButton.disabled = true;
-    this.errorElement.hidden = true;
-    this.errorElement.textContent = '';
+  /** Закрывает подтверждение при смене страницы. */
+  closeLogoutConfirmation(): void {
+    this.logoutDialog.close();
+  }
+
+  /** Запрашивает подтверждение для текущей сессии. */
+  private confirmLogout(): void {
+    if (this.pending || this.destroyed || authStore.getState().status !== 'authenticated') {
+      return;
+    }
+    let version = getSessionVersion();
+    this.close(true);
+    this.logoutDialog.open(null, () => {
+      if (version !== getSessionVersion()) {
+        return Promise.resolve(null);
+      }
+      const result = this.handleLogout();
+      version = getSessionVersion();
+      return result;
+    });
   }
 
   /**
    * Завершает сессию или показывает ошибку выхода.
    */
-  private async handleLogout(): Promise<void> {
-    if (this.pending || this.destroyed) {
-      return;
+  private async handleLogout(): Promise<string | null> {
+    if (this.pending || this.destroyed || authStore.getState().status !== 'authenticated') {
+      return null;
     }
-    this.resetState();
-    this.close();
+    this.pending = true;
+    this.logoutButton.disabled = true;
+    const request = logout();
+    const version = getSessionVersion();
     try {
-      await logout();
+      await request;
+      return null;
     } catch (err) {
-      if (this.destroyed) {
-        return;
+      if (this.destroyed || version !== getSessionVersion() || (err instanceof ApiError && err.isUnauthorized)) {
+        return null;
       }
-      if (err instanceof ApiError && err.status === 401) {
-        return;
-      }
-      if (err instanceof ApiError) {
-        this.errorElement.textContent = err.text;
-      } else {
-        this.errorElement.textContent = 'Не удалось выйти. Попробуйте позже';
-      }
-      this.errorElement.hidden = false;
-      this.open();
+      return err instanceof ApiError ? err.text : 'Не удалось выйти. Попробуйте позже';
     } finally {
       this.pending = false;
       this.logoutButton.disabled = false;
@@ -176,6 +186,7 @@ export class ProfileMenu {
   destroy(): void {
     this.destroyed = true;
     this.close();
+    this.logoutDialog.destroy();
     this.unbindLinks();
     this.button.removeEventListener('click', this.onToggle);
     this.logoutButton.removeEventListener('click', this.onLogout);

@@ -1,23 +1,25 @@
-import { renderLogin, initLogin } from '../pages/login/login.ts';
-import { renderHome, initHome } from '../pages/home/home.ts';
-import { renderRegister, initRegister } from '../pages/register/register.ts';
-import { renderProfile, initProfile } from '../pages/profile/profile.ts';
-import { renderSettings, initSettings } from '../pages/settings/settings.ts';
-import { renderPostEditor, initPostEditor } from '../pages/postEditor/postEditor.ts';
-import { renderPost, initPost } from '../pages/post/post.ts';
-import { renderDonations, initDonations } from '../pages/donations/donations.ts';
-import { renderNotFound } from '../pages/notFound/notFound.ts';
+import { renderLogin, initLogin } from '@/pages/login/login.ts';
+import { renderHome, initHome } from '@/pages/home/home.ts';
+import { renderRegister, initRegister } from '@/pages/register/register.ts';
+import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
+import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
+import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
+import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
+import { renderPost, initPost } from '@/pages/post/post.ts';
+import { renderDonations, initDonations } from '@/pages/donations/donations.ts';
+import { renderNotFound } from '@/pages/notFound/notFound.ts';
 import {
   renderSidebar,
   initSidebar,
   destroySidebar,
   updateSidebarProfileState,
   closeSidebarProfileMenu,
-} from '../components/sidebar/sidebar.ts';
-import { requireElement } from '../utils/helpers/dom.ts';
-import { bindLinks } from '../utils/helpers/bindLinks.ts';
-import { checkSession } from '../modules/auth/auth.actions.ts';
-import { authStore } from '../modules/auth/auth.store.ts';
+} from '@/components/sidebar/sidebar.ts';
+import { requireElement } from '@/utils/helpers/dom.ts';
+import { bindLinks } from '@/utils/helpers/bindLinks.ts';
+import { checkSession } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import { ROUTES, matchRoute } from './paths.ts';
 import type { NavigateOptions, NavigationPath, RoutePath, RoutePattern } from './paths.ts';
 import type { Layout, LeaveGuard, Route } from './router.types.ts';
@@ -27,6 +29,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
+  [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
@@ -39,6 +42,9 @@ const notFoundRoute: Route = { title: 'Страница не найдена', re
 const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
 
 let currentLayout: Layout | undefined;
+let disposePage: (() => void) | undefined;
+let setRefreshNotice: SetRefreshNotice | undefined;
+let pageVersion = 0;
 let currentPath = '';
 let leaveGuard: LeaveGuard | undefined;
 
@@ -110,12 +116,28 @@ function renderCurrentRoute(): void {
   leaveGuard = undefined;
   currentPath = path + window.location.search;
 
+  disposePage?.();
+  disposePage = undefined;
+  const version = ++pageVersion;
+  setRefreshNotice?.(null);
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
   updateSidebarProfileState(path);
   document.title = route.title;
   root.innerHTML = route.render();
-  route.init?.(root, navigate, match?.params ?? {});
+  const cleanup = route.init?.(
+    root,
+    navigate,
+    match?.params ?? {},
+    (state, retry) => {
+      if (version === pageVersion) {
+        setRefreshNotice?.(state, retry);
+      }
+    }
+  );
+  if (typeof cleanup === 'function') {
+    disposePage = cleanup;
+  }
 }
 
 /**
@@ -166,8 +188,9 @@ function handleBeforeUnload(event: BeforeUnloadEvent): void {
 }
 
 /** Запускает роутер и возвращает функцию отключения его обработчиков. */
-export function initRouter(): () => void {
+export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
   let active = true;
+  setRefreshNotice = updateRefreshNotice;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
   let lastStatus = authStore.getState().status;
   const unsubscribeAuth = authStore.subscribe(() => {
@@ -179,6 +202,9 @@ export function initRouter(): () => void {
     }
     if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
+    } else if (status === 'unknown'
+      && (window.location.pathname === ROUTES.home || window.location.pathname === ROUTES.profile || window.location.pathname === ROUTES.settings)) {
+      renderCurrentRoute();
     } else {
       redirectByAuth();
     }
@@ -195,6 +221,10 @@ export function initRouter(): () => void {
 
   return () => {
     active = false;
+    disposePage?.();
+    disposePage = undefined;
+    pageVersion += 1;
+    setRefreshNotice = undefined;
     unbindLinks();
     unsubscribeAuth();
     window.removeEventListener('popstate', handlePopState);

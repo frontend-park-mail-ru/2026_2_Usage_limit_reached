@@ -4,3 +4,5 @@ declare module '*.hbs' {
 }
 
 declare module '*.css';
+
+declare const __SERVICE_WORKER_ENABLED__: boolean;
