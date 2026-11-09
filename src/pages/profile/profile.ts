@@ -1,6 +1,9 @@
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
 import profileTemplate from './profile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
+import { LikeButton } from '@/components/likeButton/likeButton.ts';
+import { sendLike } from '@/components/likeButton/sendLike.ts';
+import { POST_MENU_ITEMS } from '@/components/postCard/postCard.constants.ts';
 import { profileStore } from '@/modules/profile/profile.store.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
@@ -14,10 +17,11 @@ import {
   isSessionCurrent,
   loadProfilePosts,
   runSessionRequest,
+  runSessionMutation,
 } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getMyDrafts } from '@/modules/api/posts.ts';
-import type { PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
+import type { PostPreview, PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
 import type { Profile } from '@/modules/api/profile.types.ts';
 import type { SavedProfile, SavedPosts } from '@/modules/offline/offline.types.ts';
 import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
@@ -113,7 +117,8 @@ function bindPosts(
   const panel = requireElement<HTMLElement>(root, '[data-profile-panel]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-profile-sort]');
   const createButton = requireElement<HTMLElement>(root, '[data-create-post]');
-  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '.confirm-dialog'));
+  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#draft-delete-dialog'));
+  const postDialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#post-delete-dialog'), true);
   let active = true;
   let tab: ProfileTab = 'posts';
   let sort: PostsSort = 'new';
@@ -124,6 +129,7 @@ function bindPosts(
   let sortMenu: SortMenu | undefined;
   let cardMenus: ActionMenu[] = [];
   let observer: IntersectionObserver | undefined;
+  const pendingLikes = new Set<ReturnType<typeof sendLike>>();
   const isActive = () => active && panel.isConnected && isSessionCurrent(context);
   const setRetry = (action?: () => void) => {
     retryAction = action;
@@ -140,6 +146,12 @@ function bindPosts(
   const fetchPage = async (pageCursor: string | null, id: number) => {
     const current = () => isActive() && id === request;
     const query = { sort, ...(pageCursor ? { cursor: pageCursor } : {}) };
+    if (pendingLikes.size > 0) {
+      await Promise.allSettled([...pendingLikes]);
+    }
+    if (!current()) {
+      return undefined;
+    }
     const page = tab === 'posts'
       ? await loadProfilePosts(query, current)
       : await runSessionRequest(context, () => getMyDrafts(query));
@@ -180,7 +192,70 @@ function bindPosts(
     }
     return null;
   };
-  const bindCards = (container: ParentNode) => {
+  const buildCard = (item: PostPreview) => ({
+    ...buildPostCard(item, tab === 'drafts'),
+    canLike: tab === 'posts' && !item.locked,
+    liked: item.liked_by_user,
+    canManage: tab === 'posts' && item.author.id === context.userId,
+    ...(tab === 'posts' ? { menuId: `post-menu-${item.id}`, menuItems: POST_MENU_ITEMS } : {}),
+  });
+  const removePublishedPost = async (card: HTMLElement): Promise<string | null> => {
+    if (!isActive()) {
+      return null;
+    }
+    const previous = context;
+    try {
+      const deleted = await runSessionMutation(previous, async () => {
+        try {
+          await deletePost(card.dataset.postId ?? '');
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.isCsrfError || error.status !== 404) {
+            throw error;
+          }
+        }
+        return true;
+      });
+      const current = getSessionContext();
+      if (!deleted || !active || !panel.isConnected || !current || current.userId !== previous.userId) {
+        return null;
+      }
+      context = current;
+      showToast('Пост удалён');
+      await load(true);
+      return null;
+    } catch (error) {
+      if (!active || !panel.isConnected) {
+        return null;
+      }
+      const current = getSessionContext();
+      if (current && current.userId === previous.userId && error instanceof ApiError && error.isMutationResponseTimeout) {
+        context = current;
+      } else if (!isSessionCurrent(previous)) {
+        return null;
+      }
+      if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout || error.status === 0)) {
+        return error.text;
+      }
+      return 'Пост не удалён. Попробуйте позже';
+    }
+  };
+  const bindCards = (container: ParentNode, items: PostPreview[]) => {
+    const cards = container.querySelectorAll<HTMLElement>('.post-card');
+    items.forEach((item, index) => {
+      const card = cards[index];
+      const button = card?.querySelector<HTMLButtonElement>('.post-card__like');
+      if (button) {
+        new LikeButton(button, item, async (liked) => {
+          const request = sendLike(item.id, liked, context, () => isActive() && card.isConnected);
+          pendingLikes.add(request);
+          try {
+            return await request;
+          } finally {
+            pendingLikes.delete(request);
+          }
+        });
+      }
+    });
     for (const menuRoot of container.querySelectorAll<HTMLElement>('.post-card__menu')) {
       const card = menuRoot.closest<HTMLElement>('.post-card');
       if (!card) {
@@ -193,7 +268,12 @@ function bindPosts(
         if (action === 'edit') {
           navigate(postEditRoute(card.dataset.postId ?? ''));
         } else if (action === 'delete') {
-          dialog.open(requireElement(card, '.post-card__title').textContent ?? '', () => removeDraft(card));
+          const title = requireElement(card, '.post-card__title').textContent ?? '';
+          if (tab === 'drafts') {
+            dialog.open(title, () => removeDraft(card));
+          } else {
+            postDialog.open(title, () => removePublishedPost(card));
+          }
         }
       }));
     }
@@ -221,8 +301,8 @@ function bindPosts(
       }
       cursor = page.next_cursor;
       const holder = document.createElement('div');
-      holder.innerHTML = page.items.map((item) => postCardTemplate(buildPostCard(item, tab === 'drafts'))).join('');
-      bindCards(holder);
+      holder.innerHTML = page.items.map((item) => postCardTemplate(buildCard(item))).join('');
+      bindCards(holder, page.items);
       grid.append(...holder.children);
       text.textContent = '';
       more.hidden = !cursor;
@@ -273,11 +353,11 @@ function bindPosts(
     panel.innerHTML = postsListTemplate({
       isEmpty,
       isDrafts: tab === 'drafts',
-      cards: page.items.map((item) => buildPostCard(item, tab === 'drafts')),
+      cards: page.items.map(buildCard),
       hasMore: !!cursor,
     });
     createButton.hidden = false;
-    bindCards(panel);
+    bindCards(panel, page.items);
     watchMore();
   };
 
@@ -355,6 +435,7 @@ function bindPosts(
     sortMenu?.destroy();
     tabs.destroy();
     dialog.destroy();
+    postDialog.destroy();
     unbindRecovery();
     setRefreshNotice(null);
   };

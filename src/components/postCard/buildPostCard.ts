@@ -24,4 +24,3 @@ export function buildPostCard(item: PostPreview, isDraft = false) {
     menuItems: DRAFT_MENU_ITEMS,
   };
 }
-

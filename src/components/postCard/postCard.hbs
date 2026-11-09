@@ -27,6 +27,9 @@
       {{#if date}}
         <time class="post-card__time" datetime="{{date}}">{{dateLabel}}</time>
       {{/if}}
+      {{#if canManage}}
+        {{> actionMenu id=menuId label="Действия с постом" items=menuItems className="post-card__menu"}}
+      {{/if}}
     {{/if}}
   </div>
 </article>
