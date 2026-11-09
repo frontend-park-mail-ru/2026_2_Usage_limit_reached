@@ -47,6 +47,10 @@ export const userSettingsSchema: Schema = {
   ],
 };
 
+export const becomeAuthorSchema: Schema = {
+  bio: [required('Введите описание деятельности'), maxLength(BIO_MAX, `Сократите описание до ${BIO_MAX} символов`)],
+};
+
 const requireBio = required('Введите описание деятельности');
 
 /** Проверяет описание при изменении данных автора. */

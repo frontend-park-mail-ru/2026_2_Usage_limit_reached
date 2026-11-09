@@ -1,0 +1,58 @@
+{{#if message}}
+  <main class="become-author" aria-label="Стать автором">
+    <p class="become-author__status" role="status">{{message}}</p>
+    {{#if canRetry}}
+      <button class="button button_view_secondary" type="button" data-retry-profile>Повторить</button>
+    {{/if}}
+  </main>
+{{else}}
+<main class="become-author" aria-labelledby="become-author-title">
+  <a class="become-author__back" href="/profile" data-link>← Мой профиль</a>
+  <div class="become-author__container">
+    <h1 class="become-author__title" id="become-author-title">Стать автором</h1>
+    <div data-author-error class="alert become-author__error" role="alert" hidden>
+      <p class="alert__title" data-author-error-title>Не удалось создать профиль автора</p>
+      <p class="alert__text" data-author-error-text></p>
+      <button class="button button_view_secondary become-author__check" type="button" data-check-author hidden>Проверить профиль</button>
+    </div>
+    <section class="become-author__card" data-author-step="profile" aria-labelledby="become-author-title">
+      <p class="become-author__step">ШАГ 1 ИЗ 2 · ПРОФИЛЬ</p>
+      <div class="become-author__identity">
+        <img class="become-author__avatar" src="{{avatarUrl}}" alt="Фото профиля">
+        <div class="become-author__identity-text">
+          <p class="become-author__nickname">{{nickname}}</p>
+          <p class="become-author__username">@{{username}}</p>
+        </div>
+      </div>
+      <p class="become-author__intro">Публикуйте контент и получайте пожертвования от читателей</p>
+      <form class="become-author__form" data-author-form novalidate>
+        {{> select id="become-author-category" name="category" label="Категория контента · необязательно" placeholder="Выберите категорию" options=categories}}
+        <div class="form-field">
+          <label class="form-field__label" for="become-author-bio">Описание деятельности</label>
+          <textarea class="form-field__input form-field__input-textarea become-author__bio" id="become-author-bio" name="bio" rows="3" aria-describedby="become-author-bio-hint become-author-bio-error"></textarea>
+          <p class="form-field__hint" id="become-author-bio-hint">Максимальная длина описания — 1000 символов</p>
+          <p class="form-field__error" id="become-author-bio-error" data-error-for="bio" aria-live="polite"></p>
+        </div>
+        <button class="button button_view_primary become-author__button" type="submit" data-author-continue>Продолжить</button>
+      </form>
+    </section>
+
+    <section class="become-author__card become-author__payment" data-author-step="payment" aria-labelledby="become-author-title" hidden>
+      <p class="become-author__step">ШАГ 2 ИЗ 2 · ПОЖЕРТВОВАНИЯ</p>
+      <h2 class="become-author__payment-title">Настройте получение пожертвований</h2>
+      <p class="become-author__payment-text">Подключите приём платежей, чтобы читатели могли отправлять вам деньги. Полученные средства будут перечисляться на указанные вами реквизиты. Это можно настроить позже</p>
+      <button class="button button_view_primary become-author__button" type="button" data-payment-open>Настроить оплату</button>
+      <button class="button button_view_secondary become-author__button" type="button" data-author-finish>Начать с бесплатных публикаций</button>
+      <p class="become-author__note">Бесплатные посты можно публиковать сразу</p>
+      <button class="become-author__back become-author__back-step" type="button" data-author-back>← Назад</button>
+    </section>
+  </div>
+
+  {{#> modal id="author-payment" title="Оплата не подключена" className="become-author__modal"}}
+    <p class="become-author__modal-text">Платёжный провайдер пока не подключён. На этом этапе банковские данные не запрашиваются</p>
+    <p class="become-author__note">Вы сможете настроить приём денег позже</p>
+    <button class="button button_view_primary" type="button" data-author-finish>Начать с бесплатных публикаций</button>
+    <button class="button button_view_secondary" type="button" data-modal-close>Вернуться к выбору</button>
+  {{/modal}}
+</main>
+{{/if}}

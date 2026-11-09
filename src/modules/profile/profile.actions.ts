@@ -1,8 +1,13 @@
 import * as profileApi from '@/modules/api/profile.ts';
-import type { ProfileUpdate } from '@/modules/api/profile.types.ts';
+import type { AuthorCreationInput, Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
 import { updateSession } from '@/modules/api/session.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
+
+/** Создаёт профиль автора и отзывает устаревшую offline-копию. */
+export async function becomeAuthor(data: AuthorCreationInput, context: SessionContext): Promise<Profile | undefined> {
+  return runSessionMutation(context, () => profileApi.createAuthor(data));
+}
 
 /**
  * Сохраняет профиль.
