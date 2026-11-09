@@ -71,6 +71,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
   const modal = new Modal(dialog);
   const form = requireElement<HTMLFormElement>(root, '[data-author-form]');
   const bioInput = requireElement<HTMLTextAreaElement>(form, '[name="bio"]');
+  const bioCount = requireElement<HTMLElement>(form, '[data-bio-count]');
   const profileStep = requireElement<HTMLElement>(root, '[data-author-step="profile"]');
   const paymentStep = requireElement<HTMLElement>(root, '[data-author-step="payment"]');
   const finishButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-author-finish]')];
@@ -307,13 +308,15 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
   });
 
   bioInput.addEventListener('input', () => {
-    const characters = [...bioInput.value];
-    if (characters.length > BIO_MAX) {
-      const caret = bioInput.selectionStart;
-      bioInput.value = characters.slice(0, BIO_MAX).join('');
-      if (caret !== null) {
-        bioInput.setSelectionRange(Math.min(caret, bioInput.value.length), Math.min(caret, bioInput.value.length));
-      }
+    const characterCount = [...bioInput.value].length;
+    const limitMessage = `Сократите описание до ${BIO_MAX} символов`;
+    bioCount.textContent = `${characterCount} / ${BIO_MAX}`;
+    bioCount.classList.toggle('become-author__bio-count_over-limit', characterCount > BIO_MAX);
+    const currentError = form.querySelector<HTMLElement>('[data-error-for="bio"]')?.textContent;
+    if (characterCount > BIO_MAX) {
+      setFieldError(form, 'bio', limitMessage);
+    } else if (currentError === limitMessage) {
+      setFieldError(form, 'bio', null);
     }
   });
 

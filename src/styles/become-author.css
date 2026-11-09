@@ -113,6 +113,18 @@
   resize: vertical;
 }
 
+.become-author__bio-count {
+  margin: 0 0 -7px;
+  color: rgba(61, 64, 91, 0.6);
+  font-size: 14px;
+  line-height: 17px;
+  text-align: right;
+}
+
+.become-author__bio-count_over-limit {
+  color: var(--color-error);
+}
+
 .become-author__button {
   min-height: 44px;
   height: auto;
