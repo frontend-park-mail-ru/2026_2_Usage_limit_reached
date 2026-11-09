@@ -10,6 +10,7 @@ import type { BlockType } from './richEditor.types.ts';
 export class RichEditor {
   private readonly content: HTMLElement;
   private readonly valueInput: HTMLInputElement;
+  private readonly form: HTMLFormElement | null;
   private readonly toolbar: HTMLElement;
   private readonly tools: HTMLButtonElement[];
   private readonly blockLabel: HTMLElement;
@@ -24,6 +25,7 @@ export class RichEditor {
   private readonly onToolbarPointerDown: (event: PointerEvent) => void;
   private readonly onToolbarClick: (event: MouseEvent) => void;
   private readonly onSelectionChange: () => void;
+  private readonly onSubmit: () => void;
   private savedRange: Range | null = null;
 
   /**
@@ -34,6 +36,7 @@ export class RichEditor {
   constructor(root: HTMLElement, linkDialog: LinkDialog, onChange: () => void = () => {}) {
     this.content = requireElement<HTMLElement>(root, '.rich-editor__content');
     this.valueInput = requireElement<HTMLInputElement>(root, '[data-rich-editor-value]');
+    this.form = this.valueInput.form;
     this.toolbar = requireElement<HTMLElement>(root, '.rich-editor__toolbar');
     this.tools = [...this.toolbar.querySelectorAll<HTMLButtonElement>('[data-command]')];
     this.blockLabel = requireElement<HTMLElement>(root, '[data-block-label]');
@@ -49,6 +52,7 @@ export class RichEditor {
     this.onToolbarPointerDown = (event) => event.preventDefault();
     this.onToolbarClick = this.handleToolbarClick.bind(this);
     this.onSelectionChange = this.handleSelectionChange.bind(this);
+    this.onSubmit = this.handleSubmit.bind(this);
 
     document.execCommand('defaultParagraphSeparator', false, 'p');
     this.content.addEventListener('focus', this.onFocus);
@@ -58,11 +62,12 @@ export class RichEditor {
     this.toolbar.addEventListener('pointerdown', this.onToolbarPointerDown);
     this.toolbar.addEventListener('click', this.onToolbarClick);
     document.addEventListener('selectionchange', this.onSelectionChange);
+    this.form?.addEventListener('submit', this.onSubmit, true);
   }
 
-  /** Возвращает очищенный HTML или пустую строку. */
-  getValue(): string {
-    return this.isEmpty() ? '' : sanitizeHtml(this.content.innerHTML);
+  /** Возвращает HTML поля или пустую строку. */
+  getHtml(): string {
+    return this.isEmpty() ? '' : this.content.innerHTML;
   }
 
   /**
@@ -84,6 +89,7 @@ export class RichEditor {
     this.toolbar.removeEventListener('pointerdown', this.onToolbarPointerDown);
     this.toolbar.removeEventListener('click', this.onToolbarClick);
     document.removeEventListener('selectionchange', this.onSelectionChange);
+    this.form?.removeEventListener('submit', this.onSubmit, true);
   }
 
   /** Пусто ли поле. */
@@ -93,8 +99,13 @@ export class RichEditor {
 
   /** Обновляет скрытое поле формы и подсказку. */
   private sync(): void {
-    this.valueInput.value = this.getValue();
+    this.valueInput.value = this.getHtml();
     this.content.toggleAttribute('data-empty', this.isEmpty());
+  }
+
+  /** Кладёт в форму очищенный текст перед отправкой. */
+  private handleSubmit(): void {
+    this.valueInput.value = sanitizeHtml(this.getHtml());
   }
 
   /** Заворачивает текст без абзаца в абзац и ставит курсор в его конец. */
