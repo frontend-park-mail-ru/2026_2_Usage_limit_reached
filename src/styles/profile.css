@@ -151,14 +151,12 @@
 
 .profile__bio-dialog {
   width: 720px;
-  max-height: calc(100dvh - 32px);
-  overflow: auto;
-  border-radius: 16px;
-  box-shadow: 0 12px 16px rgba(0, 0, 0, 0.12);
 }
 
 .profile__bio-window {
-  box-shadow: none;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border-radius: 16px;
 }
 
 .profile__bio-close:hover {
