@@ -39,6 +39,8 @@ import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
+  POST_DELETED_MESSAGE,
+  POST_DELETE_ERROR,
   DRAFT_DELETED_MESSAGE,
   DRAFT_DELETE_ERROR,
   LIST_ERROR,
@@ -117,7 +119,7 @@ function bindPosts(
   const panel = requireElement<HTMLElement>(root, '[data-profile-panel]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-profile-sort]');
   const createButton = requireElement<HTMLElement>(root, '[data-create-post]');
-  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#draft-delete-dialog'));
+  const dialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#draft-delete-dialog'), true);
   const postDialog = new ConfirmDialog(requireElement<HTMLDialogElement>(root, '#post-delete-dialog'), true);
   let active = true;
   let tab: ProfileTab = 'posts';
@@ -158,40 +160,6 @@ function bindPosts(
     return current() ? page : undefined;
   };
 
-  const removeDraft = async (card: HTMLElement): Promise<string | null> => {
-    if (!isActive()) {
-      return null;
-    }
-    const id = request;
-    try {
-      const deleted = await runSessionRequest(context, async () => {
-        await deletePost(card.dataset.postId ?? '');
-        return true;
-      });
-      if (!deleted) {
-        return null;
-      }
-    } catch (error) {
-      if (!isActive() || id !== request || (error instanceof ApiError && error.isUnauthorized)) {
-        return null;
-      }
-      if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout)) {
-        return error.text;
-      }
-      if (!(error instanceof ApiError) || error.status !== 404) {
-        return DRAFT_DELETE_ERROR;
-      }
-    }
-    if (!isActive() || id !== request || !card.isConnected) {
-      return null;
-    }
-    card.remove();
-    showToast(DRAFT_DELETED_MESSAGE);
-    if (!panel.querySelector('.post-card')) {
-      void load();
-    }
-    return null;
-  };
   const buildCard = (item: PostPreview) => ({
     ...buildPostCard(item, tab === 'drafts'),
     canLike: tab === 'posts' && !item.locked,
@@ -199,11 +167,12 @@ function bindPosts(
     canManage: tab === 'posts' && item.author.id === context.userId,
     ...(tab === 'posts' ? { menuId: `post-menu-${item.id}`, menuItems: POST_MENU_ITEMS } : {}),
   });
-  const removePublishedPost = async (card: HTMLElement): Promise<string | null> => {
+  const removeCard = async (card: HTMLElement, isDraft: boolean): Promise<string | null> => {
     if (!isActive()) {
       return null;
     }
     const previous = context;
+    const listVersion = request;
     try {
       const deleted = await runSessionMutation(previous, async () => {
         try {
@@ -220,8 +189,15 @@ function bindPosts(
         return null;
       }
       context = current;
-      showToast('Пост удалён');
-      await load(true);
+      showToast(isDraft ? DRAFT_DELETED_MESSAGE : POST_DELETED_MESSAGE);
+      if (listVersion !== request || !card.isConnected) {
+        await load(true);
+      } else {
+        card.remove();
+        if (!panel.querySelector('.post-card')) {
+          await load();
+        }
+      }
       return null;
     } catch (error) {
       if (!active || !panel.isConnected) {
@@ -236,7 +212,7 @@ function bindPosts(
       if (error instanceof ApiError && (error.isCsrfError || error.isMutationTimeout || error.status === 0)) {
         return error.text;
       }
-      return 'Пост не удалён. Попробуйте позже';
+      return isDraft ? DRAFT_DELETE_ERROR : POST_DELETE_ERROR;
     }
   };
   const bindCards = (container: ParentNode, items: PostPreview[]) => {
@@ -270,9 +246,9 @@ function bindPosts(
         } else if (action === 'delete') {
           const title = requireElement(card, '.post-card__title').textContent ?? '';
           if (tab === 'drafts') {
-            dialog.open(title, () => removeDraft(card));
+            dialog.open(title, () => removeCard(card, true));
           } else {
-            postDialog.open(title, () => removePublishedPost(card));
+            postDialog.open(title, () => removeCard(card, false));
           }
         }
       }));
@@ -297,6 +273,11 @@ function bindPosts(
     try {
       const page = await fetchPage(cursor, id);
       if (!page) {
+        if (isActive() && id === request) {
+          text.textContent = LIST_ERROR;
+          retryButton.hidden = false;
+          setRetry(() => { void loadMore(); });
+        }
         return;
       }
       cursor = page.next_cursor;

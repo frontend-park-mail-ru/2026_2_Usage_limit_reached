@@ -19,3 +19,5 @@ export const LOADING_MESSAGE = 'Загрузка профиля...';
 export const LOAD_ERROR = 'Что-то пошло не так. Попробуйте позже';
 export const DRAFT_DELETED_MESSAGE = 'Черновик удалён';
 export const DRAFT_DELETE_ERROR = 'Повторите попытку позже';
+export const POST_DELETED_MESSAGE = 'Пост удалён';
+export const POST_DELETE_ERROR = 'Пост не удалён. Попробуйте позже';
