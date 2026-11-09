@@ -81,7 +81,7 @@ export function destroySidebar(): void {
  */
 export function updateSidebarProfileState(path: string): void {
   const logo = document.querySelector('.sidebar__logo-link');
-  if (path === ROUTES.feed) {
+  if (path === ROUTES.home || path === ROUTES.feed) {
     logo?.setAttribute('aria-current', 'page');
   } else {
     logo?.removeAttribute('aria-current');

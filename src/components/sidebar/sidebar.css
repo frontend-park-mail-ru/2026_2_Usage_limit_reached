@@ -58,12 +58,12 @@
   border-radius: 8px;
 }
 
-.sidebar__logo-link:hover {
-  background: var(--color-sidebar-hover);
+.sidebar__logo-link:hover .sidebar__logo {
+  filter: brightness(0.86);
 }
 
-.sidebar__logo-link:active {
-  background: var(--color-sidebar-pressed);
+.sidebar__logo-link:active .sidebar__logo {
+  filter: brightness(0.74);
 }
 
 .sidebar__logo-link:focus-visible {

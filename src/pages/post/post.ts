@@ -61,19 +61,20 @@ function buildViewModel(post: Post, isOwner: boolean) {
 }
 
 /**
- * Возвращает назад по истории, если на страницу пришли из профиля.
+ * Возвращает назад по истории, если на страницу пришли из профиля или ленты.
  * @param root
  */
 function bindBackLink(root: HTMLElement): void {
   const link = requireElement<HTMLAnchorElement>(root, '[data-back]');
   const from = history.state?.from;
   const origin = typeof from === 'string' ? matchRoute(from.split('?')[0])?.pattern : undefined;
-  if (origin === ROUTES.feed) {
-    link.href = ROUTES.feed;
+  const fromFeed = origin === ROUTES.home || origin === ROUTES.feed;
+  if (fromFeed) {
+    link.href = origin;
     link.textContent = '← Лента';
   }
   link.addEventListener('click', (event) => {
-    if (origin === ROUTES.profile || origin === ROUTES.publicProfile || origin === ROUTES.feed) {
+    if (origin === ROUTES.profile || origin === ROUTES.publicProfile || fromFeed) {
       event.preventDefault();
       history.back();
     }
