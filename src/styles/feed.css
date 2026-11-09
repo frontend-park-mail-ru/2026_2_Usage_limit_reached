@@ -21,6 +21,10 @@
   margin-top: 16px;
 }
 
+.feed__retry[hidden] {
+  display: none;
+}
+
 @media (max-width: 1280px) {
   .feed {
     padding: 40px;
