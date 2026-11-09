@@ -1,5 +1,5 @@
 import { request } from './request.ts';
-import type { AvatarResponse, Profile, ProfilePosts, ProfilePostsQuery, ProfileUpdate, PublicProfile } from './profile.types.ts';
+import type { AvatarResponse, AuthorCreationInput, Profile, ProfilePosts, ProfilePostsQuery, ProfileUpdate, PublicProfile } from './profile.types.ts';
 import { DEFAULT_PROFILE_POSTS_QUERY } from './profile.constants.ts';
 
 /**
@@ -19,6 +19,10 @@ export const getPublicProfile = (username: string) =>
  */
 export const updateProfile = (data: ProfileUpdate) =>
   request<Profile>('/profile/me', { method: 'PUT', data });
+
+/** Создаёт профиль автора для текущего пользователя. */
+export const createAuthor = (data: AuthorCreationInput) =>
+  request<Profile>('/profile/me/author', { method: 'POST', data });
 
 /**
  * Загружает аватар.

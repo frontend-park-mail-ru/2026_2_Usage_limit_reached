@@ -2,6 +2,7 @@ import { renderLogin, initLogin } from '@/pages/login/login.ts';
 import { renderHome, initHome } from '@/pages/home/home.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
+import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
 import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
 import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
 import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
@@ -29,6 +30,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
+  [ROUTES.becomeAuthor]: { title: 'Стать автором', render: renderBecomeAuthor, init: initBecomeAuthor, layout: 'sidebar' },
   [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
@@ -39,7 +41,7 @@ const routes: Record<RoutePattern, Route> = {
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
-const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
+const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.home, ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
 
 let currentLayout: Layout | undefined;
 let disposePage: (() => void) | undefined;

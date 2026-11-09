@@ -5,6 +5,7 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   profile: '/profile',
+  becomeAuthor: '/become-author',
   publicProfile: '/users/:username',
   settings: '/settings',
   donations: '/donations',

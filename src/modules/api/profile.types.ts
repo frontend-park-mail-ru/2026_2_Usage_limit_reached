@@ -29,6 +29,11 @@ export interface ProfileUpdate {
   author?: { bio: string; category: string | null };
 }
 
+export interface AuthorCreationInput {
+  bio: string;
+  category?: string;
+}
+
 export interface AvatarResponse {
   avatar_url: string;
 }

@@ -49,11 +49,24 @@ export class Select {
   }
 
   /** Открывает список. */
-  private open(): void {
+  private open(highlightOption = false, direction: 'down' | 'up' = 'down'): void {
     this.list.hidden = false;
     this.input.setAttribute('aria-expanded', 'true');
     const selected = this.options.findIndex((option) => option.getAttribute('aria-selected') === 'true');
-    this.setActive(Math.max(selected, 0));
+    const initialIndex = selected >= 0
+      ? selected
+      : highlightOption ? direction === 'down' ? 0 : this.options.length - 1 : -1;
+    this.options.forEach((option) => option.classList.remove('select__option_active'));
+    this.activeIndex = initialIndex;
+    const activeOption = this.options[initialIndex];
+    if (activeOption) {
+      this.input.setAttribute('aria-activedescendant', activeOption.id);
+      if (highlightOption) {
+        activeOption.classList.add('select__option_active');
+      }
+    } else {
+      this.input.removeAttribute('aria-activedescendant');
+    }
     document.addEventListener('click', this.onOutsideClick);
   }
 
@@ -62,6 +75,8 @@ export class Select {
     this.list.hidden = true;
     this.input.setAttribute('aria-expanded', 'false');
     this.input.removeAttribute('aria-activedescendant');
+    this.options[this.activeIndex]?.classList.remove('select__option_active');
+    this.activeIndex = -1;
     document.removeEventListener('click', this.onOutsideClick);
   }
 
@@ -116,20 +131,27 @@ export class Select {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       if (!this.isOpen) {
-        this.open();
+        this.open(true, event.key === 'ArrowDown' ? 'down' : 'up');
         return;
       }
       const step = event.key === 'ArrowDown' ? 1 : -1;
-      this.setActive((this.activeIndex + step + count) % count);
+      const nextIndex = this.activeIndex < 0
+        ? step > 0 ? 0 : count - 1
+        : (this.activeIndex + step + count) % count;
+      this.setActive(nextIndex);
     } else if ((event.key === 'Home' || event.key === 'End') && this.isOpen) {
       event.preventDefault();
       this.setActive(event.key === 'Home' ? 0 : count - 1);
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (this.isOpen) {
+        if (this.activeIndex < 0) {
+          this.setActive(0);
+          return;
+        }
         this.choose(this.activeIndex);
       } else {
-        this.open();
+        this.open(true);
       }
     } else if (event.key === 'Escape' && this.isOpen) {
       event.preventDefault();

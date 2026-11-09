@@ -296,7 +296,7 @@ function bindPosts(
       cards: page.items.map((item) => buildProfilePostCard(item, tab)),
       hasMore: !!cursor,
     });
-    createButton.hidden = isEmpty && tab === 'posts';
+    createButton.hidden = false;
     bindCards(panel);
     watchMore();
   };
