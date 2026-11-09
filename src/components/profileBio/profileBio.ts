@@ -1,7 +1,11 @@
 import { Modal } from '@/components/modal/modal.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 
-/** Показывает кнопку полного описания, когда превью обрезано. */
+/**
+ * Показывает кнопку полного описания, когда превью обрезано.
+ * @param root Контейнер профиля с описанием и диалогом.
+ * @returns Отключение обработчиков и наблюдения за размером, если описание есть.
+ */
 export function bindProfileBio(root: HTMLElement): (() => void) | undefined {
   const bio = root.querySelector<HTMLElement>('[data-profile-bio]');
   if (!bio) {

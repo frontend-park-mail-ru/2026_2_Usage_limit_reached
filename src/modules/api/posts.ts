@@ -26,7 +26,11 @@ const postPath = (id: string): string => `/posts/${encodeURIComponent(id)}`;
  */
 export const getMyPosts = (query: PostsQuery) => request<PostsPage>(`/profile/me/posts?${buildPostsQuery(query)}`);
 
-/** Получает страницу общей ленты опубликованных постов. */
+/**
+ * Получает страницу общей ленты опубликованных постов.
+ * @param query Сортировка и курсор следующей страницы.
+ * @throws {ApiError}
+ */
 export const getFeed = (query: PostsQuery) => request<PostsPage>(`/feed?${buildPostsQuery(query)}`);
 
 /** Получает опубликованные посты пользователя для публичного профиля. */

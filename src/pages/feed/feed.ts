@@ -16,7 +16,12 @@ export function renderFeed(): string {
   return feedTemplate({});
 }
 
-/** Подключает публичную ленту и проверяет сессию для меню профиля. */
+/**
+ * Подключает публичную ленту и проверяет сессию для меню профиля.
+ * @param root Контейнер страницы ленты.
+ * @param navigate Переход на страницу входа при действии гостя.
+ * @returns Отключение обработчиков страницы и подписки на авторизацию.
+ */
 export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
   if (authStore.getState().status === 'unknown') {

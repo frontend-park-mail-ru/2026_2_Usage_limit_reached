@@ -5,6 +5,13 @@ import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { showToast } from '@/components/toast/toast.ts';
 
+/**
+ * Сохраняет лайк и принимает ответ только для актуальной сессии и страницы.
+ * @param id Идентификатор поста.
+ * @param liked Желаемое состояние лайка.
+ * @param context Контекст аккаунта, отправившего запрос.
+ * @param isActive Проверка актуальности страницы или карточки.
+ */
 export async function sendLike(
   id: string,
   liked: boolean,
