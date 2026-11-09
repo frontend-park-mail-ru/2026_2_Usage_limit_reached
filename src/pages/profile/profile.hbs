@@ -19,7 +19,7 @@
         </div>
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
-          {{> profileBio}}
+{{> profileBio}}
           {{#if offline}}
             {{#unless postsMissing}}
               <p class="profile__post-count">{{postCountLabel}}{{#if hasMorePosts}}. Есть ещё посты, они не загружены.{{/if}}</p>
