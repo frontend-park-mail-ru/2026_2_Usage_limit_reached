@@ -1,6 +1,7 @@
 import * as profileApi from '@/modules/api/profile.ts';
 import type { AuthorCreationInput, Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
-import { isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
+import { getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
+import { saveOfflineProfile } from '@/modules/offline/offline.storage.ts';
 import { updateSession } from '@/modules/api/session.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 
@@ -15,13 +16,18 @@ export async function becomeAuthor(data: AuthorCreationInput, context: SessionCo
  * @param context
  * @throws {ApiError}
  */
-export async function saveProfile(data: ProfileUpdate, context: SessionContext): Promise<boolean> {
+export async function saveProfile(data: ProfileUpdate, context: SessionContext) {
   const saved = await runSessionMutation(context, () => profileApi.updateProfile(data));
-  if (!saved) {
-    return false;
+  const current = getSessionContext();
+  if (!saved || !current || current.userId !== saved.user.id) {
+    return undefined;
+  }
+  const stored = await saveOfflineProfile(current.offlineToken, saved, () => isSessionCurrent(current));
+  if (stored === null || !isSessionCurrent(current)) {
+    return undefined;
   }
   updateSession({ nickname: saved.user.nickname });
-  return true;
+  return { profile: saved, context: current };
 }
 
 /**

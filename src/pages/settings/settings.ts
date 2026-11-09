@@ -1,4 +1,5 @@
 import settingsTemplate from './settings.hbs';
+import { openSavedProfile } from '@/pages/profile/profile.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
 import { saveProfile, uploadAvatar, deleteAvatar } from '@/modules/profile/profile.actions.ts';
@@ -16,7 +17,6 @@ import { Modal } from '@/components/modal/modal.ts';
 import { AvatarCropper } from '@/components/avatarCropper/avatarCropper.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { setAlert } from '@/components/alert/alert.ts';
-import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import {
   AVATAR_DELETED_MESSAGE,
@@ -89,11 +89,11 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
 
   try {
     const saved = await saveProfile(buildProfileUpdate(profile, values), context);
-    if (!saved || !form.isConnected) {
+    if (!saved || !form.isConnected || !isSessionCurrent(saved.context)) {
       return;
     }
     showToast(SAVED_MESSAGE);
-    navigate(ROUTES.profile);
+    openSavedProfile(saved, navigate);
   } catch (err) {
     if (!form.isConnected || (!isSessionCurrent(context) && !(err instanceof ApiError && err.isMutationResponseTimeout))) {
       return;

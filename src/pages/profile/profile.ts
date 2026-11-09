@@ -27,7 +27,7 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute, postRoute } from '@/app/paths.ts';
+import { postEditRoute, postRoute, ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -410,7 +410,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     displayedOwnerId = undefined;
     showRetry();
   };
-  const load = async () => {
+  const load = async (savedProfile?: Profile) => {
     if (!active || busy) {
       return;
     }
@@ -421,7 +421,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     let version = getSessionVersion();
     let profile: Profile | undefined;
     try {
-      profile = await checkSession();
+      profile = savedProfile ?? await checkSession();
       if (!active) {
         return;
       }
@@ -489,11 +489,25 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     }
   };
   const unbind = bindOfflineRecovery(retry, () => active && needsRetry);
-  void load();
+  const saved = profileOnNavigation;
+  profileOnNavigation = undefined;
+  void load(saved && isSessionCurrent(saved.context) ? saved.profile : undefined);
   return () => {
     active = false;
     disposePosts?.();
     unbind();
     setRefreshNotice(null);
   };
+}
+
+let profileOnNavigation: { profile: Profile; context: SessionContext } | undefined;
+
+/** Передаёт ответ сохранения только ближайшему открытию профиля. */
+export function openSavedProfile(saved: NonNullable<typeof profileOnNavigation>, navigate: Navigate): void {
+  profileOnNavigation = saved;
+  try {
+    navigate(ROUTES.profile);
+  } finally {
+    profileOnNavigation = undefined;
+  }
 }
