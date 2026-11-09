@@ -16,8 +16,9 @@ export class ActionMenu {
   /**
    * @param root
    * @param onSelect
+   * @param alignment Край кнопки для выравнивания меню.
    */
-  constructor(root: HTMLElement, onSelect: (action: string) => void) {
+  constructor(root: HTMLElement, onSelect: (action: string) => void, private readonly alignment: 'start' | 'end' = 'end') {
     this.root = root;
     this.button = requireElement<HTMLButtonElement>(root, '.action-menu__button');
     this.list = requireElement<HTMLElement>(root, '.action-menu__list');
@@ -78,7 +79,8 @@ export class ActionMenu {
     const available = upwards ? above : below;
     this.list.style.setProperty('--action-menu-max-height', `${available}px`);
     const bounds = this.list.getBoundingClientRect();
-    const left = Math.max(margin, Math.min(button.right - bounds.width, window.innerWidth - bounds.width - margin));
+    const anchor = this.alignment === 'start' ? button.left : button.right - bounds.width;
+    const left = Math.max(margin, Math.min(anchor, window.innerWidth - bounds.width - margin));
     const top = upwards ? button.top - bounds.height - margin : button.bottom + margin;
     this.list.style.setProperty('--action-menu-left', `${left}px`);
     this.list.style.setProperty('--action-menu-top', `${top}px`);

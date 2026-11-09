@@ -41,7 +41,7 @@ export class RichEditor {
     this.tools = [...this.toolbar.querySelectorAll<HTMLButtonElement>('[data-command]')];
     this.blockLabel = requireElement<HTMLElement>(root, '[data-block-label]');
     this.blockOptions = [...root.querySelectorAll<HTMLButtonElement>('.rich-editor__block-option')];
-    this.blockMenu = new ActionMenu(requireElement<HTMLElement>(root, '.rich-editor__block'), (block) => this.setBlock(block));
+    this.blockMenu = new ActionMenu(requireElement<HTMLElement>(root, '.rich-editor__block'), (block) => this.setBlock(block), 'start');
     this.linkDialog = linkDialog;
     this.onChange = onChange;
 
