@@ -12,7 +12,7 @@ import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { LOAD_ERROR, LOADING_MESSAGE } from './profile.constants.ts';
-import { bindPublicPosts } from './publicPosts.ts';
+import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
 
 /** Показывает состояние загрузки публичного профиля. */
 export function renderPublicProfile(): string {

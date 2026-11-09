@@ -3,7 +3,7 @@ import { getFeed } from '@/modules/api/posts.ts';
 import { checkSession, getSessionContext } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
-import { bindPublicPosts } from '@/pages/profile/publicPosts.ts';
+import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';

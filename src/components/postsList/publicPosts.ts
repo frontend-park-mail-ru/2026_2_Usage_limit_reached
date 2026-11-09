@@ -6,8 +6,8 @@ import { publicProfileRoute } from '@/app/paths.ts';
 import type { PostPreview, PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
-import { buildProfilePostCard } from './profile.ts';
-import { LIST_ERROR, LIST_LOADING_MESSAGE, SORT_OPTIONS } from './profile.constants.ts';
+import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
+import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList.constants.ts';
 
 /**
  * Подключает сортировку и подгрузку опубликованных постов.
@@ -24,7 +24,7 @@ export function bindPublicPosts(
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const retry = requireElement<HTMLButtonElement>(root, '[data-list-retry]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
-  const options = SORT_OPTIONS.posts.map((option) => ({ ...option, selected: option.value === 'new' }));
+  const options = POST_SORT_OPTIONS.map((option) => ({ ...option, selected: option.value === 'new' }));
   sortRoot.innerHTML = sortMenuTemplate({ id: feed ? 'feed-sort' : 'public-profile-sort', currentLabel: options[0].label, options });
   let sort: PostsSort = 'new';
   let cursor: string | null = null;
@@ -62,7 +62,7 @@ export function bindPublicPosts(
       }
       cursor = page.next_cursor;
       const cards = page.items.map((item) => ({
-        ...buildProfilePostCard(item, 'posts'),
+        ...buildPostCard(item),
         locked: item.locked,
         canLike: feed && !item.locked,
         liked: item.liked_by_user,
@@ -119,7 +119,7 @@ export function bindPublicPosts(
   }
 
   const sortMenu = new SortMenu(requireElement(sortRoot, '.sort-menu'), (value) => {
-    const option = SORT_OPTIONS.posts.find((item) => item.value === value);
+    const option = POST_SORT_OPTIONS.find((item) => item.value === value);
     if (option) {
       sort = option.value;
       void load();

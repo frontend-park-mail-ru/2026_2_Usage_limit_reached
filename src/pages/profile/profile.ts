@@ -1,10 +1,11 @@
+import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
 import profileTemplate from './profile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
-import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
 import {
   checkSession,
   getSessionContext,
@@ -15,7 +16,7 @@ import {
 } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getMyDrafts } from '@/modules/api/posts.ts';
-import type { PostPreview, PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
+import type { PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
 import type { Profile } from '@/modules/api/profile.types.ts';
 import type { SavedProfile, SavedPosts } from '@/modules/offline/offline.types.ts';
 import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
@@ -28,14 +29,13 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute, postRoute, ROUTES } from '@/app/paths.ts';
+import { postEditRoute, ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   DRAFT_DELETED_MESSAGE,
   DRAFT_DELETE_ERROR,
-  DRAFT_MENU_ITEMS,
   LIST_ERROR,
   LIST_LOADING_MESSAGE,
   LOADING_MESSAGE,
@@ -90,28 +90,6 @@ export function buildProfileViewModel(
     isEmpty: cards.length === 0,
     cards,
     offline,
-  };
-}
-
-/**
- * Данные карточки поста или черновика.
- * @param item
- * @param tab
- */
-export function buildProfilePostCard(item: PostPreview, tab: ProfileTab) {
-  const isDraft = tab === 'drafts';
-  const date = item.published_or_updated_at ?? '';
-  return {
-    id: item.id,
-    href: isDraft ? postEditRoute(item.id) : postRoute(item.id),
-    preview: item.locked ? '' : htmlToText(item.body_preview),
-    title: item.title,
-    isDraft,
-    likesCount: item.likes_count,
-    date,
-    dateLabel: date ? (isDraft ? formatDraftDate(date) : formatPostDate(date)) : '',
-    menuId: `draft-menu-${item.id}`,
-    menuItems: DRAFT_MENU_ITEMS,
   };
 }
 
@@ -242,7 +220,7 @@ function bindPosts(
       }
       cursor = page.next_cursor;
       const holder = document.createElement('div');
-      holder.innerHTML = page.items.map((item) => postCardTemplate(buildProfilePostCard(item, tab))).join('');
+      holder.innerHTML = page.items.map((item) => postCardTemplate(buildPostCard(item, tab === 'drafts'))).join('');
       bindCards(holder);
       grid.append(...holder.children);
       text.textContent = '';
@@ -294,7 +272,7 @@ function bindPosts(
     panel.innerHTML = postsListTemplate({
       isEmpty,
       isDrafts: tab === 'drafts',
-      cards: page.items.map((item) => buildProfilePostCard(item, tab)),
+      cards: page.items.map((item) => buildPostCard(item, tab === 'drafts')),
       hasMore: !!cursor,
     });
     createButton.hidden = false;
