@@ -1,8 +1,7 @@
 import settingsTemplate from './settings.hbs';
-import { openSavedProfile } from '@/pages/profile/profile.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
-import { saveProfile, uploadAvatar, deleteAvatar } from '@/modules/profile/profile.actions.ts';
+import { saveProfile, uploadAvatar, deleteAvatar, openSavedProfile } from '@/modules/profile/profile.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import type { Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';

@@ -1,6 +1,7 @@
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
 import profileTemplate from './profile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
+import { profileStore } from '@/modules/profile/profile.store.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
@@ -29,7 +30,7 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute, ROUTES } from '@/app/paths.ts';
+import { postEditRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -474,8 +475,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     }
   };
   const unbind = bindOfflineRecovery(retry, () => active && needsRetry);
-  const saved = profileOnNavigation;
-  profileOnNavigation = undefined;
+  const saved = profileStore.getSavedNavigation();
   void load(saved && isSessionCurrent(saved.context) ? saved.profile : undefined);
   return () => {
     active = false;
@@ -484,16 +484,4 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     unbind();
     setRefreshNotice(null);
   };
-}
-
-let profileOnNavigation: { profile: Profile | undefined; context: SessionContext } | undefined;
-
-/** Передаёт ответ сохранения только ближайшему открытию профиля. */
-export function openSavedProfile(saved: NonNullable<typeof profileOnNavigation>, navigate: Navigate): void {
-  profileOnNavigation = saved;
-  try {
-    navigate(ROUTES.profile);
-  } finally {
-    profileOnNavigation = undefined;
-  }
 }
