@@ -11,6 +11,7 @@ export class ActionMenu {
   private readonly onListClick: (event: MouseEvent) => void;
   private readonly onKeydown: (event: KeyboardEvent) => void;
   private readonly onOutsideClick: (event: MouseEvent) => void;
+  private readonly onViewportChange: (event: Event) => void;
 
   /**
    * @param root
@@ -27,6 +28,16 @@ export class ActionMenu {
     this.onListClick = this.handleListClick.bind(this);
     this.onKeydown = this.handleKeydown.bind(this);
     this.onOutsideClick = this.handleOutsideClick.bind(this);
+    this.onViewportChange = (event) => {
+      if (!(event.target instanceof Node) || !this.list.contains(event.target)) {
+        const bounds = this.button.getBoundingClientRect();
+        if (!this.root.isConnected || bounds.bottom <= 0 || bounds.top >= window.innerHeight) {
+          this.close();
+        } else {
+          this.position();
+        }
+      }
+    };
 
     this.button.addEventListener('click', this.onToggle);
     this.list.addEventListener('click', this.onListClick);
@@ -49,9 +60,28 @@ export class ActionMenu {
   /** Открывает меню и ставит фокус на первый пункт. */
   private open(): void {
     this.list.hidden = false;
+    this.position();
     this.button.setAttribute('aria-expanded', 'true');
-    this.items[0]?.focus();
+    this.items[0]?.focus({ preventScroll: true });
     document.addEventListener('click', this.onOutsideClick);
+    document.addEventListener('scroll', this.onViewportChange, true);
+    window.addEventListener('resize', this.onViewportChange);
+  }
+
+  /** Размещает меню у кнопки в пределах окна браузера. */
+  private position(): void {
+    const button = this.button.getBoundingClientRect();
+    const margin = 8;
+    const below = Math.max(0, window.innerHeight - button.bottom - margin * 2);
+    const above = Math.max(0, button.top - margin * 2);
+    const upwards = this.list.scrollHeight > below && above > below;
+    const available = upwards ? above : below;
+    this.list.style.setProperty('--action-menu-max-height', `${available}px`);
+    const bounds = this.list.getBoundingClientRect();
+    const left = Math.max(margin, Math.min(button.right - bounds.width, window.innerWidth - bounds.width - margin));
+    const top = upwards ? button.top - bounds.height - margin : button.bottom + margin;
+    this.list.style.setProperty('--action-menu-left', `${left}px`);
+    this.list.style.setProperty('--action-menu-top', `${top}px`);
   }
 
   /**
@@ -65,6 +95,8 @@ export class ActionMenu {
     this.list.hidden = true;
     this.button.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', this.onOutsideClick);
+    document.removeEventListener('scroll', this.onViewportChange, true);
+    window.removeEventListener('resize', this.onViewportChange);
     if (returnFocus) {
       this.button.focus();
     }
