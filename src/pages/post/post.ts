@@ -15,6 +15,7 @@ import type { Post } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
+import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
 import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
@@ -203,6 +204,7 @@ function bindLike(root: HTMLElement, post: Post, beforeAction: () => boolean): v
  * @param params
  */
 export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+  const unbindAvatarFallback = bindAvatarFallback(root);
   let active = true;
   let request = 0;
   let disposeActions: (() => void) | undefined;
@@ -301,6 +303,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   return () => {
     active = false;
     unsubscribe();
+    unbindAvatarFallback();
     disposeActions?.();
   };
 }

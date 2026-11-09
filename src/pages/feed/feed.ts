@@ -9,6 +9,7 @@ import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
+import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 
 /** Показывает каркас общей ленты. */
 export function renderFeed(): string {
@@ -17,6 +18,7 @@ export function renderFeed(): string {
 
 /** Подключает публичную ленту и проверяет сессию для меню профиля. */
 export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
+  const unbindAvatarFallback = bindAvatarFallback(root);
   if (authStore.getState().status === 'unknown') {
     void checkSession().catch(() => {});
   }
@@ -68,6 +70,7 @@ export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
     }
   });
   return () => {
+    unbindAvatarFallback();
     unsubscribe();
     posts.destroy();
   };
