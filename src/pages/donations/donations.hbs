@@ -3,16 +3,21 @@
   <div class="donations__container">
     <div class="donations__heading">
       <h1 class="donations__title" id="donations-title">Пожертвования</h1>
-      <p class="donations__subtitle">Пожертвования читателей и личные сообщения для вас</p>
+      <p class="donations__subtitle" data-donations-subtitle></p>
     </div>
-    <div class="donations__list" data-donations-list></div>
-    <div class="donations__empty" data-donations-empty hidden>
-      <h2 class="donations__empty-title">Пока нет пожертвований</h2>
-      <p class="donations__empty-text">Пожертвования и сообщения читателей появятся здесь</p>
+    <div class="donations__toolbar" data-donations-toolbar hidden>
+      {{> tabs id="donations-tabs" panelId="donations-panel" label="Пожертвования" items=tabs}}
     </div>
-    <div class="donations__more" data-donations-more>
-      <p class="donations__more-text" role="status" data-donations-more-text></p>
-      <button class="button button_view_secondary donations__retry" type="button" data-donations-retry hidden>Повторить</button>
+    <div class="donations__panel" id="donations-panel" data-donations-panel>
+      <div class="donations__list" data-donations-list></div>
+      <div class="donations__empty" data-donations-empty hidden>
+        <h2 class="donations__empty-title" data-donations-empty-title></h2>
+        <p class="donations__empty-text" data-donations-empty-text></p>
+      </div>
+      <div class="donations__more" data-donations-more>
+        <p class="donations__more-text" role="status" data-donations-more-text></p>
+        <button class="button button_view_secondary donations__retry" type="button" data-donations-retry hidden>Повторить</button>
+      </div>
     </div>
   </div>
 

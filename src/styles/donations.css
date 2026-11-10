@@ -50,6 +50,16 @@
   font-size: 16px;
 }
 
+.donations__toolbar {
+  display: flex;
+}
+
+.donations__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .donations__list {
   display: flex;
   flex-direction: column;
@@ -88,6 +98,7 @@
   padding: 24px 0;
 }
 
+.donations__toolbar[hidden],
 .donations__empty[hidden],
 .donations__more[hidden],
 .donations__retry[hidden] {
