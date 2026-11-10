@@ -4,8 +4,8 @@ import { Modal } from '@/components/modal/modal.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatMoney } from '@/utils/helpers/money.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
-import { getReceivedDonations } from '@/modules/api/donations.ts';
-import type { ReceivedDonation } from '@/modules/api/donations.types.ts';
+import { getDonations } from '@/modules/api/donations.ts';
+import type { Donation } from '@/modules/api/donations.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { ANONYMOUS_DONOR, LOADING_MESSAGE, LOAD_ERROR } from './donations.constants.ts';
 
@@ -18,7 +18,7 @@ export function renderDonations(): string {
  * Данные карточки пожертвования.
  * @param donation
  */
-function buildCard(donation: ReceivedDonation) {
+function buildCard(donation: Donation) {
   return {
     id: donation.id,
     name: donation.is_anonymous || !donation.user ? ANONYMOUS_DONOR : donation.user.nickname,
@@ -49,7 +49,7 @@ function updateMoreLinks(list: HTMLElement): void {
  * @param list
  * @param donations
  */
-function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<string, ReceivedDonation>): void {
+function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<string, Donation>): void {
   const dialog = requireElement<HTMLDialogElement>(root, '.donation-message');
   const modal = new Modal(dialog);
   list.addEventListener('click', (event) => {
@@ -80,7 +80,7 @@ export function initDonations(root: HTMLElement): void {
   const more = requireElement<HTMLElement>(root, '[data-donations-more]');
   const moreText = requireElement<HTMLElement>(more, '[data-donations-more-text]');
   const retry = requireElement<HTMLButtonElement>(more, '[data-donations-retry]');
-  const donations = new Map<string, ReceivedDonation>();
+  const donations = new Map<string, Donation>();
   let cursor: string | null = null;
   let hasMore = true;
   let isLoading = false;
@@ -109,7 +109,7 @@ export function initDonations(root: HTMLElement): void {
     moreText.textContent = LOADING_MESSAGE;
     retry.hidden = true;
     try {
-      const page = await getReceivedDonations(cursor);
+      const page = await getDonations('received', cursor);
       if (!list.isConnected) {
         return;
       }

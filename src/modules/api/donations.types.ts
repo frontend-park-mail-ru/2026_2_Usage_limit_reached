@@ -2,6 +2,8 @@ export type DonationCurrency = 'RUB';
 
 export type DonationStatus = 'paid' | 'failed';
 
+export type DonationsDirection = 'received' | 'sent';
+
 export interface DonationInput {
   request_key: string;
   amount_minor: number;
@@ -21,7 +23,7 @@ export interface DonationUser {
   avatar_url: string | null;
 }
 
-export interface ReceivedDonation {
+export interface Donation {
   id: string;
   message: string | null;
   is_anonymous: boolean;
@@ -33,6 +35,6 @@ export interface ReceivedDonation {
 }
 
 export interface DonationsPage {
-  items: ReceivedDonation[];
+  items: Donation[];
   next_cursor: string | null;
 }
