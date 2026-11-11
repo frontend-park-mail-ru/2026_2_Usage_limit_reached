@@ -34,6 +34,18 @@ function buildCard(donation: Donation) {
 }
 
 /**
+ * Подставляет подзаголовок и тексты пустого состояния выбранного списка.
+ * @param root
+ * @param direction
+ */
+function showDirectionTexts(root: HTMLElement, direction: DonationsDirection): void {
+  const texts = DONATIONS_TEXTS[direction];
+  requireElement(root, '[data-donations-subtitle]').textContent = texts.subtitle;
+  requireElement(root, '[data-donations-empty-title]').textContent = texts.emptyTitle;
+  requireElement(root, '[data-donations-empty-text]').textContent = texts.emptyText;
+}
+
+/**
  * Показывает «Прочитать полностью» только у обрезанных сообщений.
  * @param list
  */
@@ -79,13 +91,10 @@ function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<
  * @param root
  */
 export function initDonations(root: HTMLElement): () => void {
-  const subtitle = requireElement<HTMLElement>(root, '[data-donations-subtitle]');
   const toolbar = requireElement<HTMLElement>(root, '[data-donations-toolbar]');
   const panel = requireElement<HTMLElement>(root, '[data-donations-panel]');
   const list = requireElement<HTMLElement>(root, '[data-donations-list]');
   const empty = requireElement<HTMLElement>(root, '[data-donations-empty]');
-  const emptyTitle = requireElement<HTMLElement>(empty, '[data-donations-empty-title]');
-  const emptyText = requireElement<HTMLElement>(empty, '[data-donations-empty-text]');
   const more = requireElement<HTMLElement>(root, '[data-donations-more]');
   const moreText = requireElement<HTMLElement>(more, '[data-donations-more-text]');
   const retry = requireElement<HTMLButtonElement>(more, '[data-donations-retry]');
@@ -118,8 +127,7 @@ export function initDonations(root: HTMLElement): () => void {
     retry.hidden = false;
   };
 
-  function showDirection(next: DonationsDirection): void {
-    direction = next;
+  const resetList = () => {
     listVersion += 1;
     isLoading = false;
     cursor = null;
@@ -127,12 +135,14 @@ export function initDonations(root: HTMLElement): () => void {
     donations.clear();
     list.replaceChildren();
     scrollObserver.unobserve(more);
-    const texts = DONATIONS_TEXTS[next];
-    subtitle.textContent = texts.subtitle;
-    emptyTitle.textContent = texts.emptyTitle;
-    emptyText.textContent = texts.emptyText;
     empty.hidden = true;
     more.hidden = false;
+  };
+
+  function showDirection(next: DonationsDirection): void {
+    direction = next;
+    resetList();
+    showDirectionTexts(root, next);
     void loadPage();
   }
 
