@@ -12,13 +12,13 @@ export const DONATIONS_TABS: DonationsTabItem[] = [
 
 export const DONATIONS_TEXTS: Readonly<Record<DonationsDirection, DonationsTexts>> = {
   received: {
-    subtitle: 'Пожертвования читателей и личные сообщения для вас',
+    subtitle: 'Пожертвования от читателей и сообщения к ним',
     emptyTitle: 'Пока нет пожертвований',
-    emptyText: 'Пожертвования и сообщения читателей появятся здесь',
+    emptyText: 'Здесь появятся пожертвования и сообщения к ним',
   },
   sent: {
     subtitle: 'Ваши пожертвования авторам и сообщения к ним',
     emptyTitle: 'Вы ещё не отправляли пожертвований',
-    emptyText: 'Пожертвования, которые вы отправите авторам, появятся здесь',
+    emptyText: 'Здесь появятся ваши пожертвования авторам',
   },
 };

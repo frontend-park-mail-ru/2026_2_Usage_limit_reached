@@ -89,7 +89,7 @@ export function buildProfileViewModel(
     avatarUrl: avatarUrl ?? AVATAR_PLACEHOLDER,
     needsPayout,
     tabs: PROFILE_TABS.map((item, index) => ({ ...item, selected: index === 0 })),
-    postCountLabel: `Загружено: ${cards.length}`,
+    postCountLabel: `Загружено постов: ${cards.length}`,
     hasMorePosts: !!posts?.next_cursor,
     profileMissing: !profile,
     postsMissing: !posts,
@@ -489,7 +489,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
         return;
       }
       if (profile.author && !posts) {
-        showError('Данные аккаунта изменились. Попробуйте снова');
+        showError('Не удалось загрузить публикации. Попробуйте ещё раз');
         return;
       }
       disposePosts?.();
@@ -532,7 +532,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
         setRefreshNotice({ pending: false }, retry);
       }
       if (active && root.querySelector('[data-profile-loading]')) {
-        showError('Состояние аккаунта изменилось. Попробуйте снова');
+        showError('Не удалось загрузить профиль. Попробуйте ещё раз');
       }
     }
   };

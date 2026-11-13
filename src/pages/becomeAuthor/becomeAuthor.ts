@@ -21,7 +21,7 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { BIO_MAX } from '@/modules/validation/schemas.constants.ts';
 
-const LOAD_ERROR = 'Не удалось загрузить профиль. Проверьте соединение и попробуйте ещё раз';
+const LOAD_ERROR = 'Не удалось загрузить профиль. Проверьте интернет и попробуйте ещё раз';
 const AUTHOR_CREATED_MESSAGE = 'Вы стали автором';
 
 /** Возвращает каркас страницы. */
@@ -51,13 +51,13 @@ function getRequestError(error: ApiError): string {
     return error.text;
   }
   if (error.status === 404) {
-    return 'Профиль пользователя не найден. Обновите страницу и попробуйте ещё раз';
+    return 'Не удалось создать профиль автора. Попробуйте позже';
   }
   if (error.status === 500) {
     return 'Не удалось создать профиль автора. Попробуйте позже';
   }
   if (error.status === 0) {
-    return 'Не удалось связаться с сервером. Проверьте соединение и попробуйте ещё раз';
+    return 'Не удалось подключиться. Проверьте интернет и попробуйте ещё раз';
   }
   return error.text;
 }
@@ -146,7 +146,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
       }
       if (!refreshed) {
         if (completedPostAtStart !== completedPostVersion && requiresStatusCheck) {
-          showRequestError(root, 'Эта проверка началась до завершения запроса. Проверьте профиль ещё раз перед повтором.', true);
+          showRequestError(root, 'Проверка началась до завершения создания профиля. Проверьте профиль ещё раз перед повторной попыткой.', true);
         } else {
           showRequestError(root, 'Не удалось подтвердить сессию. Проверьте соединение и попробуйте ещё раз', true);
         }
@@ -170,18 +170,18 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
       const staleCheck = completedPostAtStart !== completedPostVersion && requiresStatusCheck;
       requiresStatusCheck = requestPending || staleCheck;
       if (requestPending) {
-        showRequestError(root, 'Запрос ещё выполняется. После его завершения проверьте профиль перед повтором.');
+        showRequestError(root, 'Создание профиля ещё не завершилось. Проверьте профиль перед повторной попыткой.');
       } else if (staleCheck) {
-        showRequestError(root, 'Эта проверка началась до завершения запроса. Проверьте профиль ещё раз перед повтором.', true);
+        showRequestError(root, 'Проверка началась до завершения создания профиля. Проверьте профиль ещё раз перед повторной попыткой.', true);
       } else if (wasSessionCheck) {
         clearRequestError();
       } else {
-        showRequestError(root, 'Профиль пока не стал авторским. Если статус не обновился, можно повторить попытку.');
+        showRequestError(root, 'Вы пока не стали автором. Проверьте профиль ещё раз. Если статус не изменится, попробуйте снова.');
       }
       setBusy(false);
     } catch {
       if (active) {
-        showRequestError(root, 'Не удалось проверить профиль. Проверьте соединение и повторите проверку', true);
+        showRequestError(root, 'Не удалось проверить профиль. Проверьте интернет и попробуйте ещё раз', true);
       }
     } finally {
       checking = false;
@@ -258,7 +258,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
         requiresStatusCheck = true;
         setBusy(false);
         finishButtons.forEach((button) => { button.disabled = true; });
-        showRequestError(root, 'Сервер не подтвердил профиль автора. Проверьте результат перед повтором.', true);
+        showRequestError(root, 'Не удалось подтвердить, что вы стали автором. Проверьте профиль перед повторной попыткой.', true);
       }
     } catch (error) {
       if (!active || submittedVersion !== requestVersion) {
@@ -284,7 +284,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
       if (active) {
         if (submittedVersion !== requestVersion) {
           requiresStatusCheck = true;
-          showRequestError(root, 'Запрос мог завершиться после смены сессии. Проверьте профиль перед повтором.', true);
+          showRequestError(root, 'Неизвестно, создан ли профиль автора. Проверьте его перед повторной попыткой.', true);
           const checkButton = requireElement<HTMLButtonElement>(root, '[data-check-author]');
           checkButton.textContent = requiresSessionCheck ? 'Проверить сессию' : 'Проверить профиль';
         }

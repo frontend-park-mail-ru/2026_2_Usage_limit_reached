@@ -29,12 +29,12 @@
       {{> formField id="settings-username" name="username" type="text" label="Имя пользователя" autocomplete="username" value=username readOnly=true}}
 
       {{#if isAuthor}}
-        {{> select id="settings-category" name="category" label="Категория контента" placeholder="Выберите категорию" value=category options=categories}}
+        {{> select id="settings-category" name="category" label="Тематика постов" placeholder="Выберите тематику" value=category options=categories}}
 
         <div class="form-field">
           <label class="form-field__label" for="settings-bio">Описание деятельности</label>
           <textarea class="form-field__input form-field__input-textarea" id="settings-bio" name="bio" rows="3" aria-describedby="settings-bio-hint settings-bio-error">{{bio}}</textarea>
-          <p class="form-field__hint" id="settings-bio-hint">Максимальная длина описания — {{bioMax}} символов</p>
+          <p class="form-field__hint" id="settings-bio-hint">До {{bioMax}} символов</p>
           <p class="form-field__error" id="settings-bio-error" data-error-for="bio" aria-live="polite"></p>
         </div>
       {{/if}}
@@ -51,7 +51,7 @@
   {{#> modal id="avatar-picker" title="Изменить фото" className="settings__modal settings__modal-picker"}}
     {{> alert title="Не удалось загрузить фото" className="settings__picker-error"}}
     <div class="settings__picker">
-      <p class="settings__picker-title">Выберите изображение для аватара</p>
+      <p class="settings__picker-title">Выберите фото профиля</p>
       <p class="settings__hint">JPG, PNG или WebP · до 5 МБ</p>
       <label class="button button_view_primary settings__button settings__button-file">
         Выбрать файл
@@ -64,7 +64,7 @@
     {{> avatarCropper}}
     <div class="settings__modal-actions">
       <button class="button button_view_secondary settings__button settings__button-crop-cancel" type="button" data-modal-close>Отмена</button>
-      <button class="button button_view_primary settings__button settings__button-apply" type="button" data-avatar-apply>Применить фото</button>
+      <button class="button button_view_primary settings__button settings__button-apply" type="button" data-avatar-apply>Сохранить фото</button>
     </div>
   {{/modal}}
 </section>

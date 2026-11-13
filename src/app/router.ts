@@ -37,7 +37,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
-  [ROUTES.postNew]: { title: 'Создание поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
+  [ROUTES.postNew]: { title: 'Новый пост', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
   [ROUTES.post]: { title: 'Публикация', render: renderPost, init: initPost, layout: 'sidebar' },
   [ROUTES.postEdit]: { title: 'Редактирование поста', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
 };

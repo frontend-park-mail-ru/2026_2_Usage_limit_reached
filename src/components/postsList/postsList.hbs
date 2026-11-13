@@ -2,13 +2,13 @@
   <p class="{{#if isError}}posts-list__error{{else}}posts-list__loading{{/if}}" role="status">{{message}}</p>
 {{else if isEmpty}}
   {{#if feed}}
-    <p class="posts-list__empty-title" role="status">В ленте пока нет опубликованных постов</p>
+    <p class="posts-list__empty-title" role="status">В ленте пока нет постов</p>
   {{else if publicProfile}}
-    <p class="posts-list__empty-title" role="status">У автора пока нет опубликованных постов</p>
+    <p class="posts-list__empty-title" role="status">У автора пока нет постов</p>
   {{else if isDrafts}}
     <div class="posts-list__empty posts-list__empty-drafts">
       <h3 class="posts-list__empty-title">Черновиков пока нет</h3>
-      <p class="posts-list__empty-text">Вы можете создать пост и сохранить его, как черновик, чтобы вернуться к нему позднее</p>
+      <p class="posts-list__empty-text">Пост можно сохранить как черновик и продолжить позже</p>
       <a class="button button_view_accent button_borderless posts-list__empty-button" href="/posts/new" data-link>Создать черновик</a>
     </div>
   {{else}}

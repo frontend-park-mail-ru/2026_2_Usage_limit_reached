@@ -24,13 +24,13 @@
           <p class="become-author__username">@{{username}}</p>
         </div>
       </div>
-      <p class="become-author__intro">Публикуйте контент и получайте пожертвования от читателей</p>
+      <p class="become-author__intro">Публикуйте посты и получайте пожертвования от читателей</p>
       <form class="become-author__form" data-author-form novalidate>
-        {{> select id="become-author-category" name="category" label="Категория контента · необязательно" placeholder="Выберите категорию" options=categories}}
+        {{> select id="become-author-category" name="category" label="Тематика постов · необязательно" placeholder="Выберите тематику" options=categories}}
         <div class="form-field">
           <label class="form-field__label" for="become-author-bio">Описание деятельности</label>
           <textarea class="form-field__input form-field__input-textarea become-author__bio" id="become-author-bio" name="bio" rows="3" aria-describedby="become-author-bio-hint become-author-bio-count become-author-bio-error"></textarea>
-          <p class="form-field__hint" id="become-author-bio-hint">Максимальная длина описания — {{bioMax}} символов</p>
+          <p class="form-field__hint" id="become-author-bio-hint">До {{bioMax}} символов</p>
           <p class="become-author__bio-count" id="become-author-bio-count" data-bio-count aria-live="polite">0 / {{bioMax}}</p>
           <p class="form-field__error" id="become-author-bio-error" data-error-for="bio" aria-live="polite"></p>
         </div>
@@ -40,8 +40,8 @@
 
     <section class="become-author__card become-author__payment" data-author-step="payment" aria-labelledby="become-author-title" hidden>
       <p class="become-author__step">ШАГ 2 ИЗ 2 · ПОЖЕРТВОВАНИЯ</p>
-      <h2 class="become-author__payment-title">Настройте получение пожертвований</h2>
-      <p class="become-author__payment-text">Подключите приём платежей, чтобы читатели могли отправлять вам деньги. Полученные средства будут перечисляться на указанные вами реквизиты. Это можно настроить позже</p>
+      <h2 class="become-author__payment-title">Настройте приём пожертвований</h2>
+      <p class="become-author__payment-text">Чтобы получать пожертвования от читателей, понадобится подключить оплату и указать, куда переводить деньги. Сделать это можно позже</p>
       <button class="button button_view_primary become-author__button" type="button" data-payment-open>Настроить оплату</button>
       <button class="button button_view_secondary become-author__button" type="button" data-author-finish>Начать с бесплатных публикаций</button>
       <p class="become-author__note">Бесплатные посты можно публиковать сразу</p>
@@ -49,9 +49,9 @@
     </section>
   </div>
 
-  {{#> modal id="author-payment" title="Оплата не подключена" className="become-author__modal"}}
-    <p class="become-author__modal-text">Платёжный провайдер пока не подключён. На этом этапе банковские данные не запрашиваются</p>
-    <p class="become-author__note">Вы сможете настроить приём денег позже</p>
+  {{#> modal id="author-payment" title="Приём платежей пока не подключён" className="become-author__modal"}}
+    <p class="become-author__modal-text">Банковские данные пока указывать не нужно</p>
+    <p class="become-author__note">Настроить приём пожертвований можно будет позже</p>
     <button class="button button_view_primary" type="button" data-author-finish>Начать с бесплатных публикаций</button>
     <button class="button button_view_secondary" type="button" data-modal-close>Вернуться к выбору</button>
   {{/modal}}
