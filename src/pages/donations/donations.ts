@@ -1,3 +1,4 @@
+import { setLoadingText, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import donationsTemplate from './donations.hbs';
 import donationCardTemplate from '@/components/donationCard/donationCard.hbs';
 import { Modal } from '@/components/modal/modal.ts';
@@ -127,7 +128,10 @@ export function initDonations(root: HTMLElement): () => void {
     retry.hidden = false;
   };
 
-  const resetList = () => {
+  const resetList = (keepLoading = false) => {
+    if (!keepLoading) {
+      cancelLoading(more);
+    }
     listVersion += 1;
     isLoading = false;
     cursor = null;
@@ -139,11 +143,11 @@ export function initDonations(root: HTMLElement): () => void {
     more.hidden = false;
   };
 
-  function showDirection(next: DonationsDirection): void {
+  function showDirection(next: DonationsDirection, keepLoading = false): Promise<void> {
     direction = next;
-    resetList();
+    resetList(keepLoading);
     showDirectionTexts(root, next);
-    void loadPage();
+    return loadPage();
   }
 
   async function loadPage(): Promise<void> {
@@ -152,7 +156,7 @@ export function initDonations(root: HTMLElement): () => void {
     }
     const version = listVersion;
     isLoading = true;
-    moreText.textContent = LOADING_MESSAGE;
+    const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
     retry.hidden = true;
     try {
       const page = await getDonations(direction, cursor);
@@ -182,6 +186,7 @@ export function initDonations(root: HTMLElement): () => void {
       }
       showError(err.status === 0 ? err.text : LOAD_ERROR);
     } finally {
+      stopLoading();
       if (version === listVersion) {
         isLoading = false;
       }
@@ -189,7 +194,7 @@ export function initDonations(root: HTMLElement): () => void {
   }
 
   async function start(): Promise<void> {
-    moreText.textContent = LOADING_MESSAGE;
+    const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
     retry.hidden = true;
     try {
       const profile = await checkSession();
@@ -210,7 +215,7 @@ export function initDonations(root: HTMLElement): () => void {
           showDirection(next);
         });
       }
-      showDirection(profile.author ? 'received' : 'sent');
+      await showDirection(profile.author ? 'received' : 'sent', true);
     } catch (err) {
       if (!(err instanceof ApiError)) {
         throw err;
@@ -219,6 +224,8 @@ export function initDonations(root: HTMLElement): () => void {
         return;
       }
       showError(err.status === 0 ? err.text : LOAD_ERROR);
+    } finally {
+      stopLoading();
     }
   }
 
@@ -229,6 +236,7 @@ export function initDonations(root: HTMLElement): () => void {
   resizeObserver.observe(list);
   void start();
   return () => {
+    cancelLoading(root);
     listVersion += 1;
     tabs?.destroy();
     scrollObserver.disconnect();

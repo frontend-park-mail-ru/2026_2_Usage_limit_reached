@@ -1,3 +1,4 @@
+import { setLoadingText, startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import becomeAuthorTemplate from './becomeAuthor.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
@@ -26,7 +27,7 @@ const AUTHOR_CREATED_MESSAGE = 'Вы стали автором';
 
 /** Возвращает каркас страницы. */
 export function renderBecomeAuthor(): string {
-  return becomeAuthorTemplate({ message: 'Загрузка профиля...' });
+  return becomeAuthorTemplate({ message: 'Загрузка профиля...', loading: true });
 }
 
 function renderLoadError(root: HTMLElement): void {
@@ -89,6 +90,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
   if (!context || context.userId !== profile.user.id) {
     navigate(ROUTES.profile, { replace: true, force: true });
     return () => {
+      cancelLoading(root);
       active = false;
       modal.destroy();
       select?.destroy();
@@ -138,7 +140,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
     checking = true;
     const checkButton = requireElement<HTMLButtonElement>(root, '[data-check-author]');
     checkButton.disabled = true;
-    checkButton.textContent = 'Проверяем…';
+    const stopLoading = setLoadingText(checkButton, 'Проверяем…', true);
     try {
       const refreshed = await checkSession();
       if (!active) {
@@ -184,6 +186,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
         showRequestError(root, 'Не удалось проверить профиль. Проверьте интернет и попробуйте ещё раз', true);
       }
     } finally {
+      stopLoading();
       checking = false;
       if (active) {
         checkButton.disabled = false;
@@ -326,6 +329,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
   requireElement<HTMLButtonElement>(root, '[data-check-author]').addEventListener('click', () => { void checkAuthorStatus(); });
 
   return () => {
+    cancelLoading(root);
     active = false;
     unsubscribeAuth();
     modal.destroy();
@@ -348,6 +352,9 @@ export function initBecomeAuthor(
   let pageReady = false;
   const load = async () => {
     const version = ++requestVersion;
+    cancelLoading(root);
+    root.innerHTML = renderBecomeAuthor();
+    const stopLoading = startLoading(root);
     try {
       const profile = await checkSession();
       if (!active || version !== requestVersion) {
@@ -383,6 +390,8 @@ export function initBecomeAuthor(
       }
       renderLoadError(root);
       root.querySelector('[data-retry-profile]')?.addEventListener('click', () => { void load(); });
+    } finally {
+      stopLoading();
     }
   };
   const unsubscribeAuth = authStore.subscribe(() => {
@@ -392,6 +401,7 @@ export function initBecomeAuthor(
   });
   void load();
   return () => {
+    cancelLoading(root);
     active = false;
     requestVersion += 1;
     unsubscribeAuth();

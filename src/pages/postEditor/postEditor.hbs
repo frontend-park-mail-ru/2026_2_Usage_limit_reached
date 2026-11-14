@@ -1,6 +1,6 @@
 {{#if message}}
   <section class="post-editor" aria-label="Редактор поста">
-    <p class="{{#if isError}}post-editor__load-error{{else}}post-editor__loading{{/if}}" role="status">{{message}}</p>
+    <p class="{{#if isError}}post-editor__load-error{{else}}post-editor__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
   </section>
 {{else if unavailable}}
   <section class="post-editor" aria-labelledby="post-editor-unavailable">

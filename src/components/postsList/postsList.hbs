@@ -1,5 +1,5 @@
 {{#if message}}
-  <p class="{{#if isError}}posts-list__error{{else}}posts-list__loading{{/if}}" role="status">{{message}}</p>
+  <p class="{{#if isError}}posts-list__error{{else}}posts-list__loading{{/if}}" role="status"{{#unless isError}} data-loading-delay="{{message}}"{{/unless}}>{{message}}</p>
 {{else if isEmpty}}
   {{#if feed}}
     <p class="posts-list__empty-title" role="status">В ленте пока нет постов</p>

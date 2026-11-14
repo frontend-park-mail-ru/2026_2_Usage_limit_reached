@@ -1,6 +1,6 @@
 {{#if message}}
   <section class="post-page" aria-label="Публикация">
-    <p class="{{#if isError}}post-page__load-error{{else}}post-page__loading{{/if}}" role="status">{{message}}</p>
+    <p class="{{#if isError}}post-page__load-error{{else}}post-page__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
   </section>
 {{else if unavailable}}
   <section class="post-page" aria-labelledby="post-page-unavailable">

@@ -1,3 +1,4 @@
+import { setLoadingText, startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
@@ -49,13 +50,12 @@ export function bindPublicPosts(
     observer.disconnect();
     retry.hidden = true;
     if (!append) {
+      cancelLoading(panel);
       cursor = null;
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
-    if (moreText) {
-      moreText.textContent = LIST_LOADING_MESSAGE;
-    }
+    const stopLoading = moreText ? setLoadingText(moreText, LIST_LOADING_MESSAGE) : startLoading(panel);
     try {
       const page = await loadPage({ sort, cursor: next });
       if (!active || id !== request) {
@@ -113,6 +113,7 @@ export function bindPublicPosts(
       }
       retry.hidden = false;
     } finally {
+      stopLoading();
       if (id === request) {
         busy = false;
       }
@@ -131,6 +132,7 @@ export function bindPublicPosts(
   return {
     reload: () => { void load(); },
     destroy: () => {
+      cancelLoading(panel);
       active = false;
       observer.disconnect();
       sortMenu.destroy();

@@ -1,6 +1,6 @@
 {{#if message}}
   <section class="settings" aria-label="Настройки профиля">
-    <p class="{{#if isError}}settings__load-error{{else}}settings__loading{{/if}}" role="status">{{message}}</p>
+    <p class="{{#if isError}}settings__load-error{{else}}settings__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
   </section>
 {{else}}
 <section class="settings" aria-labelledby="settings-title">

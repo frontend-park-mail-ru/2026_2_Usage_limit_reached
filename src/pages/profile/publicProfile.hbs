@@ -1,7 +1,7 @@
 <section class="profile" aria-label="Публичный профиль">
   {{#if message}}
     <div class="profile__summary">
-      <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status">{{message}}</p>
+      <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
       {{#if canRetry}}
         <button class="button button_view_secondary profile__button" type="button" data-profile-retry>Повторить</button>
       {{/if}}

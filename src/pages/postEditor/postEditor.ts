@@ -1,3 +1,4 @@
+import { startLoading } from '@/utils/helpers/delayedLoading.ts';
 import postEditorTemplate from './postEditor.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
@@ -39,7 +40,7 @@ import type { EditorIntent, EditorMode, EditorSnapshot } from './postEditor.type
 
 /** Возвращает каркас с текстом загрузки. */
 export function renderPostEditor(): string {
-  return postEditorTemplate({ message: LOADING_MESSAGE });
+  return postEditorTemplate({ message: LOADING_MESSAGE, loading: true });
 }
 
 /**
@@ -258,40 +259,45 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
  * @param params
  */
 export async function initPostEditor(root: HTMLElement, navigate: Navigate, params: RouteParams): Promise<void> {
-  const loadingPage = root.firstElementChild;
-  let post: Post | null = null;
-  let context: SessionContext | undefined;
+  const stopLoading = startLoading(root);
   try {
-    const profile = await checkSession();
-    if (!profile) {
-      return;
-    }
-    context = getSessionContext();
-    if (params.id) {
-      post = await getPost(params.id);
-      if (post.author.id !== profile.user.id) {
+    const loadingPage = root.firstElementChild;
+    let post: Post | null = null;
+    let context: SessionContext | undefined;
+    try {
+      const profile = await checkSession();
+      if (!profile) {
+        return;
+      }
+      context = getSessionContext();
+      if (params.id) {
+        post = await getPost(params.id);
+        if (post.author.id !== profile.user.id) {
+          root.innerHTML = postEditorTemplate({ unavailable: true });
+          return;
+        }
+      }
+    } catch (err) {
+      if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+        return;
+      }
+      if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
         root.innerHTML = postEditorTemplate({ unavailable: true });
         return;
       }
-    }
-  } catch (err) {
-    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+      const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;
+      root.innerHTML = postEditorTemplate({ message, isError: true });
       return;
     }
-    if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-      root.innerHTML = postEditorTemplate({ unavailable: true });
+    if (root.firstElementChild !== loadingPage) {
       return;
     }
-    const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;
-    root.innerHTML = postEditorTemplate({ message, isError: true });
-    return;
+    if (!context || !isSessionCurrent(context)) {
+      return;
+    }
+    root.innerHTML = postEditorTemplate(buildViewModel(post));
+    bindEditor(root, post, navigate, context);
+  } finally {
+    stopLoading();
   }
-  if (root.firstElementChild !== loadingPage) {
-    return;
-  }
-  if (!context || !isSessionCurrent(context)) {
-    return;
-  }
-  root.innerHTML = postEditorTemplate(buildViewModel(post));
-  bindEditor(root, post, navigate, context);
 }

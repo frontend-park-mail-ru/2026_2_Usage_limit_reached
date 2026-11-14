@@ -1,3 +1,4 @@
+import { setLoadingText, startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
 import profileTemplate from './profile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
@@ -262,13 +263,13 @@ function bindPosts(
       return;
     }
     const id = request;
-    const text = requireElement(more, '[data-posts-more-text]');
+    const text = requireElement<HTMLElement>(more, '[data-posts-more-text]');
     const retryButton = requireElement<HTMLButtonElement>(more, '[data-posts-retry]');
     busy = true;
     if (retryAction) {
       setRefreshNotice({ pending: true }, retryAction);
     }
-    text.textContent = LIST_LOADING_MESSAGE;
+    const stopLoading = setLoadingText(text, LIST_LOADING_MESSAGE);
     retryButton.hidden = true;
     try {
       const page = await fetchPage(cursor, id);
@@ -306,6 +307,7 @@ function bindPosts(
       }
       setRetry(() => { void (cursor ? loadMore() : load()); });
     } finally {
+      stopLoading();
       if (isActive() && id === request) {
         busy = false;
         if (retryAction) {
@@ -349,6 +351,7 @@ function bindPosts(
     const id = ++request;
     busy = true;
     if (reset) {
+      cancelLoading(panel);
       clearList();
       cursor = null;
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
@@ -356,6 +359,7 @@ function bindPosts(
     if (retryAction) {
       setRefreshNotice({ pending: true }, retryAction);
     }
+    const stopLoading = startLoading(panel);
     try {
       const page = await fetchPage(null, id);
       if (page) {
@@ -372,6 +376,7 @@ function bindPosts(
       }
       setRetry(() => { void load(); });
     } finally {
+      stopLoading();
       if (isActive() && id === request) {
         busy = false;
         if (retryAction) {
@@ -410,6 +415,7 @@ function bindPosts(
   renderSort();
   showList(initialPage);
   return () => {
+    cancelLoading(root);
     active = false;
     request += 1;
     clearList();
@@ -468,6 +474,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     }
     let version = getSessionVersion();
     let profile: Profile | undefined;
+    let stopLoading = startLoading(root);
     try {
       profile = savedProfile ?? await checkSession();
       if (!active) {
@@ -481,7 +488,9 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       if (displayedOwnerId && displayedOwnerId !== context.userId) {
         disposePosts?.();
         disposePosts = undefined;
+        stopLoading();
         render(renderProfile());
+        stopLoading = startLoading(root);
         displayedOwnerId = undefined;
       }
       const posts = profile.author ? await loadProfilePosts(undefined, () => active) : undefined;
@@ -527,6 +536,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       displayedOwnerId = profile?.user.id ?? saved?.ownerId;
       showRetry();
     } finally {
+      stopLoading();
       busy = false;
       if (active && needsRetry) {
         setRefreshNotice({ pending: false }, retry);
@@ -540,6 +550,7 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
   const saved = profileStore.getSavedNavigation();
   void load(saved && isSessionCurrent(saved.context) ? saved.profile : undefined);
   return () => {
+    cancelLoading(root);
     active = false;
     disposePosts?.();
     disposeBio?.();

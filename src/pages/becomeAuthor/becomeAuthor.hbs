@@ -1,6 +1,6 @@
 {{#if message}}
   <main class="become-author" aria-label="Стать автором">
-    <p class="become-author__status" role="status">{{message}}</p>
+    <p class="become-author__status" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
     {{#if canRetry}}
       <button class="button button_view_secondary" type="button" data-retry-profile>Повторить</button>
     {{/if}}

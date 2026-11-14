@@ -1,3 +1,4 @@
+import { cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import { renderLogin, initLogin } from '@/pages/login/login.ts';
 import { renderFeed, initFeed } from '@/pages/feed/feed.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
@@ -121,6 +122,7 @@ function renderCurrentRoute(): void {
   leaveGuard = undefined;
   currentPath = path + window.location.search;
 
+  cancelLoading(root);
   disposePage?.();
   disposePage = undefined;
   const version = ++pageVersion;
@@ -226,6 +228,7 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
 
   return () => {
     active = false;
+    cancelLoading(requireElement<HTMLElement>(document, '#app'));
     disposePage?.();
     disposePage = undefined;
     pageVersion += 1;
