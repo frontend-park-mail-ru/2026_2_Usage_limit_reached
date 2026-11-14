@@ -4,15 +4,24 @@
       <img class="sidebar__logo" src="/assets/sidebar/logo.svg" alt="">
     </a>
     <div class="sidebar__items">
-      <button class="sidebar__item sidebar__item-search" type="button" aria-disabled="true" aria-label="Поиск" title="Поиск пока недоступен">
-        <span class="sidebar__icon sidebar__icon-search" aria-hidden="true"></span>
-      </button>
-      <button class="sidebar__item sidebar__item-notification" type="button" aria-disabled="true" aria-label="Уведомления" title="Уведомления пока недоступны">
-        <span class="sidebar__icon sidebar__icon-notification" aria-hidden="true"></span>
-      </button>
-      <button class="sidebar__item sidebar__item-subscribes" type="button" aria-disabled="true" aria-label="Подписки" title="Подписки пока недоступны">
-        <span class="sidebar__icon sidebar__icon-subscribes" aria-hidden="true"></span>
-      </button>
+      <div class="sidebar__unavailable" tabindex="0" role="group" aria-label="Поиск" aria-describedby="sidebar-search-hint">
+        <button class="sidebar__item sidebar__item-search" type="button" disabled aria-label="Поиск">
+          <span class="sidebar__icon sidebar__icon-search" aria-hidden="true"></span>
+        </button>
+        <span class="sidebar__hint" id="sidebar-search-hint" role="tooltip" hidden>Будет доступно позже</span>
+      </div>
+      <div class="sidebar__unavailable" tabindex="0" role="group" aria-label="Уведомления" aria-describedby="sidebar-notification-hint">
+        <button class="sidebar__item sidebar__item-notification" type="button" disabled aria-label="Уведомления">
+          <span class="sidebar__icon sidebar__icon-notification" aria-hidden="true"></span>
+        </button>
+        <span class="sidebar__hint" id="sidebar-notification-hint" role="tooltip" hidden>Будет доступно позже</span>
+      </div>
+      <div class="sidebar__unavailable" tabindex="0" role="group" aria-label="Подписки" aria-describedby="sidebar-subscribes-hint">
+        <button class="sidebar__item sidebar__item-subscribes" type="button" disabled aria-label="Подписки">
+          <span class="sidebar__icon sidebar__icon-subscribes" aria-hidden="true"></span>
+        </button>
+        <span class="sidebar__hint" id="sidebar-subscribes-hint" role="tooltip" hidden>Будет доступно позже</span>
+      </div>
     </div>
   </div>
   <div class="sidebar__bottom">

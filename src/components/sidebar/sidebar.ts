@@ -9,6 +9,7 @@ import { requireElement } from '@/utils/helpers/dom.ts';
 let profileMenu: ProfileMenu | null = null;
 let unsubscribeAvatar: (() => void) | null = null;
 let unbindLogo: (() => void) | undefined;
+let hintController: AbortController | undefined;
 
 /** Аватар из store. */
 function getAvatarUrl(): string | undefined {
@@ -56,6 +57,32 @@ function updateSidebarMenu(): void {
  * @param navigate
  */
 export function initSidebar(navigate: Navigate): void {
+  hintController = new AbortController();
+  const { signal } = hintController;
+  const hideHints = () => document.querySelectorAll<HTMLElement>('.sidebar__hint').forEach((hint) => {
+    hint.hidden = true;
+  });
+  document.querySelectorAll<HTMLElement>('.sidebar__unavailable').forEach((item) => {
+    const hint = requireElement<HTMLElement>(item, '.sidebar__hint');
+    const showHint = () => {
+      hideHints();
+      const rect = item.getBoundingClientRect();
+      hint.style.left = `${requireElement<HTMLElement>(document, '.sidebar').getBoundingClientRect().right + 8}px`;
+      hint.hidden = false;
+      hint.style.top = `${Math.max(8, Math.min(rect.top + (rect.height - hint.offsetHeight) / 2, window.innerHeight - hint.offsetHeight - 8))}px`;
+    };
+    item.addEventListener('mouseenter', showHint, { signal });
+    item.addEventListener('focusin', showHint, { signal });
+    item.addEventListener('mouseleave', hideHints, { signal });
+    item.addEventListener('focusout', hideHints, { signal });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      hideHints();
+    }
+  }, { signal });
+  window.addEventListener('resize', hideHints, { signal });
+  document.addEventListener('scroll', hideHints, { signal, capture: true });
   profileMenu = new ProfileMenu(navigate);
   unbindLogo = bindLinks(requireElement<HTMLElement>(document, '.sidebar__top'), navigate);
   updateSidebarMenu();
@@ -67,6 +94,8 @@ export function initSidebar(navigate: Navigate): void {
 
 /** Снимает обработчики сайдбара. */
 export function destroySidebar(): void {
+  hintController?.abort();
+  hintController = undefined;
   unbindLogo?.();
   unbindLogo = undefined;
   profileMenu?.destroy();
