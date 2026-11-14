@@ -3,6 +3,7 @@ import { postEditRoute, postRoute } from '@/app/paths.ts';
 import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
 import { htmlToText } from '@/modules/sanitize/sanitize.ts';
 import { DRAFT_MENU_ITEMS } from './postCard.constants.ts';
+import { getPostListPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 
 /**
  * Данные карточки поста или черновика.
@@ -13,7 +14,8 @@ export function buildPostCard(item: PostPreview, isDraft = false) {
   const date = item.published_or_updated_at ?? '';
   return {
     id: item.id,
-    href: isDraft ? postEditRoute(item.id) : postRoute(item.id),
+    href: withPostReturnPath(isDraft ? postEditRoute(item.id) : postRoute(item.id),
+      getPostListPath(window.location.pathname + window.location.search)),
     preview: item.locked ? '' : htmlToText(item.body_preview),
     title: item.title,
     isDraft,

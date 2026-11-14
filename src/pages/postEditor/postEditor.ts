@@ -13,6 +13,7 @@ import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
+import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import { setLeaveGuard } from '@/app/router.ts';
 import { ROUTES, postEditRoute, postRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
@@ -61,7 +62,8 @@ function buildViewModel(post: Post | null) {
   return {
     ...EDITOR_MODES[mode],
     isPublished: mode === 'published',
-    backHref: post && mode === 'published' ? postRoute(post.id) : ROUTES.profile,
+    backHref: post && mode === 'published'
+      ? withPostReturnPath(postRoute(post.id), getPostReturnPath(ROUTES.profile)) : ROUTES.profile,
     title: post?.title ?? '',
     statusText: CLEAN_STATUS[mode],
   };
@@ -131,6 +133,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const mode = getMode(loaded);
+  const returnTo = loaded ? getPostReturnPath(ROUTES.profile) : ROUTES.profile;
   let post = loaded;
   let intent: EditorIntent = 'save';
   let leave: (() => void) | null = null;
@@ -187,9 +190,9 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (afterSave) {
         afterSave();
       } else if (status === 'published') {
-        navigate(postRoute(id));
+        navigate(withPostReturnPath(postRoute(id), returnTo));
       } else if (!post) {
-        navigate(postEditRoute(id), { replace: true });
+        navigate(withPostReturnPath(postEditRoute(id), returnTo), { replace: true });
       } else {
         updateStatus();
         post = await getPost(id).catch(() => post);
