@@ -10,6 +10,7 @@
       autocomplete="{{autocomplete}}"
       placeholder="{{placeholder}}"
       {{#if readOnly}}readonly{{/if}}
+      {{#if disabled}}disabled{{/if}}
       aria-describedby="{{#if hint}}{{id}}-hint {{/if}}{{id}}-error"
     />
     {{#if passwordToggle}}

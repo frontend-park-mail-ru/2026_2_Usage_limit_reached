@@ -26,7 +26,7 @@
       <hr class="settings__divider">
 
       {{> formField id="settings-nickname" name="nickname" type="text" label="Отображаемое имя" autocomplete="name" placeholder="Иван Петров" value=nickname}}
-      {{> formField id="settings-username" name="username" type="text" label="Имя пользователя" autocomplete="username" value=username readOnly=true}}
+      {{> formField id="settings-username" name="username" type="text" label="Имя пользователя" autocomplete="username" value=username disabled=true}}
 
       {{#if isAuthor}}
         {{> select id="settings-category" name="category" label="Тематика постов" placeholder="Выберите тематику" value=category options=categories}}

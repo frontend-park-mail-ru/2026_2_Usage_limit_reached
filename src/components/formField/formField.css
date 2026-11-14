@@ -33,8 +33,14 @@
   opacity: 1;
 }
 
-.form-field__input:hover {
+.form-field__input:not(:disabled):hover {
   border-color: var(--color-input-border-hover);
+}
+
+.form-field__input:disabled {
+  background: rgba(61, 64, 91, 0.04);
+  cursor: default;
+  opacity: 1;
 }
 
 .form-field__input:focus {
