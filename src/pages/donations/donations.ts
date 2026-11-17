@@ -47,7 +47,7 @@ function showDirectionTexts(root: HTMLElement, direction: DonationsDirection): v
 }
 
 /**
- * Показывает «Прочитать полностью» только у обрезанных сообщений.
+ * Показывает «Показать полностью» только у обрезанных сообщений.
  * @param list
  */
 function updateMoreLinks(list: HTMLElement): void {
