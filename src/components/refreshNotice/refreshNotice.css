@@ -25,12 +25,10 @@ body:has(.sidebar__profile-menu:not([hidden])) .refresh-notice {
 }
 
 .refresh-notice__button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  display: inline-grid;
+  place-items: center;
   min-height: 32px;
-  padding: 4px 8px;
+  padding: 4px 12px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -67,15 +65,19 @@ body:has(.sidebar__profile-menu:not([hidden])) .refresh-notice {
   mask: url('/assets/refreshNotice/refresh-cw.svg') center / contain no-repeat;
 }
 
-/* Обе надписи занимают одну ячейку: смена текста не меняет размер кнопки. */
-.refresh-notice__label {
-  display: grid;
+.refresh-notice__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.refresh-notice__label > span {
+/* Резерв учитывает иконку и подпись, чтобы вся группа оставалась по центру. */
+.refresh-notice__content,
+.refresh-notice__reserve {
   grid-area: 1 / 1;
 }
 
-.refresh-notice__label-reserve {
+.refresh-notice__reserve {
+  padding-left: 24px;
   visibility: hidden;
 }
