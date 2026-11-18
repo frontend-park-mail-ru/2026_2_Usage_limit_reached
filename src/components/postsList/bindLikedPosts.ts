@@ -1,5 +1,5 @@
 import { checkSession, getSessionContext, getSessionVersion } from '@/modules/auth/auth.actions.ts';
-import { loadOfflineFeed } from '@/modules/offline/offline.feed.ts';
+import { loadOfflinePosts } from '@/modules/offline/offline.pages.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
@@ -16,17 +16,22 @@ import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
  * @param loadPage Загрузка страницы постов.
  * @param navigate Переход на вход для гостя.
  * @param feed Отображение карточек общей ленты.
+ * @param offlineProfile Имя автора для сохранения публичного списка.
+ * @param readOnly Режим чтения сохранённого профиля.
  */
 export function bindLikedPosts(
   root: HTMLElement,
   loadPage: (query: PostsQuery) => Promise<PostsPage>,
   navigate: Navigate,
-  feed = false
+  feed = false,
+  offlineProfile?: string,
+  readOnly = false,
 ): () => void {
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
   let offline = false;
+  const offlineEnabled = feed || offlineProfile !== undefined;
   const posts = bindPublicPosts(root, async (query, isCurrent) => {
-    if (authStore.getState().status === 'unknown' || (feed && offline)) {
+    if (authStore.getState().status === 'unknown' || (offlineEnabled && offline)) {
       await checkSession().catch(() => {});
     }
     const context = getSessionContext();
@@ -35,11 +40,11 @@ export function bindLikedPosts(
       await Promise.allSettled(pending.map(([request]) => request));
     }
     const version = getSessionVersion();
-    if (!feed) {
+    if (!offlineEnabled) {
       return loadPage(query);
     }
-    const page = await loadOfflineFeed(query, () => loadPage(query),
-      () => isCurrent() && version === getSessionVersion());
+    const page = await loadOfflinePosts(query, () => loadPage(query),
+      () => isCurrent() && version === getSessionVersion(), offlineProfile);
     if (isCurrent()) {
       offline = page.savedAt !== undefined;
     }
@@ -69,7 +74,7 @@ export function bindLikedPosts(
         pendingLikes.delete(request);
       }
     });
-  }, feed);
+  }, feed, offlineEnabled, readOnly);
   let previous = authStore.getState();
   const unsubscribe = authStore.subscribe(() => {
     const current = authStore.getState();

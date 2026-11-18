@@ -18,7 +18,7 @@ export interface SavedProfile {
 export interface SavedPosts {
   savedAt: number;
   query: ProfilePostsQuery;
-  items: Pick<ProfilePost, 'id' | 'title' | 'locked' | 'body_preview' | 'published_or_updated_at'>[];
+  items: (Pick<ProfilePost, 'id' | 'title' | 'locked' | 'body_preview' | 'published_or_updated_at'> & { likes_count?: number })[];
   next_cursor: string | null;
 }
 

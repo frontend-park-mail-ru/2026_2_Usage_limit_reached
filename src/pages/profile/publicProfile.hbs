@@ -7,6 +7,8 @@
       {{/if}}
     </div>
   {{else}}
+    <p class="profile__username" data-profile-offline role="status"{{#unless offline}} hidden{{/unless}}>Сохранённая копия. Доступен только просмотр</p>
+    <button class="button button_view_secondary profile__button" type="button" data-profile-retry{{#unless offline}} hidden{{/unless}}>Обновить</button>
     <div class="profile__summary profile__summary-public">
       <div class="profile__identity">
         <img class="profile__avatar" src="{{avatarUrl}}" alt="Фото профиля" />
@@ -29,6 +31,7 @@
           <h2 class="profile__title" id="public-profile-posts">Посты</h2>
           <div class="profile__sort" data-public-sort></div>
         </div>
+        <p class="profile__username" data-offline-notice role="status" hidden></p>
         <div data-public-posts></div>
         <button class="button button_view_secondary profile__button" type="button" data-list-retry hidden>Повторить</button>
       </section>
