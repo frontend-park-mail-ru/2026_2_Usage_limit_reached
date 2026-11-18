@@ -21,6 +21,11 @@
   margin-top: 16px;
 }
 
+.feed__offline {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+
 .feed__retry[hidden] {
   display: none;
 }

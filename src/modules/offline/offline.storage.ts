@@ -177,6 +177,23 @@ export async function captureOfflineToken(): Promise<OfflineToken | undefined> {
   return token;
 }
 
+/** Выполняет операцию с копией только для ожидаемой ревизии и актуального запроса. */
+export function accessOfflineCopy<T>(
+  expected: OfflineToken | undefined,
+  mode: IDBTransactionMode,
+  isCurrent: () => boolean,
+  operation: (store: IDBObjectStore, result: (value: T) => void) => void,
+): Promise<T | undefined> {
+  if (!expected) {
+    return Promise.resolve(undefined);
+  }
+  return transaction(mode, (token, tx, result) => {
+    if (token.generation === expected.generation && token.ownerId === expected.ownerId && isCurrent()) {
+      operation(tx.objectStore('copies'), result);
+    }
+  });
+}
+
 /** undefined означает недоступность хранилища, null означает устаревший запрос. */
 export async function saveOfflineProfile(expected: OfflineToken | undefined, profile: Profile, isCurrent: () => boolean): Promise<OfflineToken | null | undefined> {
   if (!expected) {

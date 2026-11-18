@@ -1,4 +1,5 @@
-import { checkSession, getSessionContext } from '@/modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, getSessionVersion } from '@/modules/auth/auth.actions.ts';
+import { loadOfflineFeed } from '@/modules/offline/offline.feed.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
@@ -23,8 +24,9 @@ export function bindLikedPosts(
   feed = false
 ): () => void {
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
-  const posts = bindPublicPosts(root, async (query) => {
-    if (authStore.getState().status === 'unknown') {
+  let offline = false;
+  const posts = bindPublicPosts(root, async (query, isCurrent) => {
+    if (authStore.getState().status === 'unknown' || (feed && offline)) {
       await checkSession().catch(() => {});
     }
     const context = getSessionContext();
@@ -32,7 +34,16 @@ export function bindLikedPosts(
     if (pending.length > 0) {
       await Promise.allSettled(pending.map(([request]) => request));
     }
-    return loadPage(query);
+    const version = getSessionVersion();
+    if (!feed) {
+      return loadPage(query);
+    }
+    const page = await loadOfflineFeed(query, () => loadPage(query),
+      () => isCurrent() && version === getSessionVersion());
+    if (isCurrent()) {
+      offline = page.savedAt !== undefined;
+    }
+    return page;
   }, (button, item) => {
     new LikeButton(button, item, async (liked) => {
       if (authStore.getState().status === 'unknown') {
