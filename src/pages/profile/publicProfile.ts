@@ -1,3 +1,4 @@
+import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import profileTemplate from './publicProfile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
 import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
@@ -16,7 +17,7 @@ import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
 
 /** Показывает состояние загрузки публичного профиля. */
 export function renderPublicProfile(): string {
-  return profileTemplate({ message: LOADING_MESSAGE });
+  return profileTemplate({ message: LOADING_MESSAGE, loading: true });
 }
 
 /**
@@ -32,7 +33,9 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
   let disposeBio: (() => void) | undefined;
 
   async function load(): Promise<void> {
+    cancelLoading(root);
     root.innerHTML = renderPublicProfile();
+    const stopLoading = startLoading(root);
     try {
       const { user, author } = await getPublicProfile(params.username);
       if (!active) {
@@ -86,6 +89,8 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
         });
         root.querySelector('[data-profile-retry]')?.addEventListener('click', () => { void load(); });
       }
+    } finally {
+      stopLoading();
     }
   }
   void load();

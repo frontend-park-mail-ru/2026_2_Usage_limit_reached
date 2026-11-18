@@ -19,7 +19,7 @@
 
 .action-menu__button:hover,
 .action-menu__button[aria-expanded='true'] {
-  background: var(--color-toggle-hover-background);
+  background-color: var(--color-toggle-hover-background);
 }
 
 .action-menu__button:focus-visible,
