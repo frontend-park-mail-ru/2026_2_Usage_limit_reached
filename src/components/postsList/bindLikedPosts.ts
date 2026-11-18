@@ -47,7 +47,7 @@ export function bindLikedPosts(
       }
       const context = getSessionContext();
       if (!context) {
-        showToast('Не удалось подтвердить сессию. Попробуйте позже');
+        showToast('Не удалось подтвердить сессию. Попробуйте позже', 'error');
         return null;
       }
       const request = sendLike(item.id, liked, context, () => button.isConnected);
