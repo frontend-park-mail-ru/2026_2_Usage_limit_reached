@@ -223,7 +223,7 @@ export async function saveOfflineProfile(expected: OfflineToken | undefined, pro
       user: { id: profile.user.id, username: profile.user.username, nickname: profile.user.nickname },
     };
     if (profile.author) {
-      saved.author = { bio: profile.author.bio };
+      saved.author = { bio: profile.author.bio, category: profile.author.category };
     }
     tx.objectStore('copies').put(saved, [profile.user.id, 'profile']);
     result(token);
