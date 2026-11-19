@@ -124,6 +124,14 @@
   background-image: url('/assets/post/like.svg');
 }
 
+.post-card__stat_liked {
+  color: var(--color-primary);
+}
+
+.post-card__stat_liked::before {
+  background-image: url('/assets/post/like-filled.svg');
+}
+
 .post-card__stat-comments::before {
   background-image: url('/assets/post/comment.svg');
 }

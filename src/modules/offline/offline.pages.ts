@@ -1,5 +1,6 @@
 import { ApiError } from '@/modules/api/request.ts';
-import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
+import type { Post, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
+import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
@@ -33,7 +34,7 @@ export function loadOfflinePosts(
       body_preview: item.locked ? '' : item.body_preview,
       published_or_updated_at: item.published_or_updated_at,
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
-      likes_count: item.likes_count, liked_by_user: false,
+      likes_count: item.likes_count, liked_by_user: item.liked_by_user,
     })),
   }), isCurrent);
 }
@@ -46,12 +47,22 @@ export function loadOfflinePublicProfile(username: string, load: () => Promise<P
   }), isCurrent);
 }
 
+/** Сохраняет только открытые опубликованные посты, черновики и закрытые тела исключает. */
+export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent: () => boolean) {
+  return loadOfflinePage<Post>(['post', id], load, (post) => post.locked || post.status !== 'published' ? null : ({
+    id: post.id, title: post.title, body: sanitizeHtml(post.body), status: post.status, locked: false,
+    author: { id: post.author.id, nickname: post.author.nickname, username: post.author.username },
+    published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
+    likes_count: post.likes_count, liked_by_user: post.liked_by_user,
+  }), isCurrent);
+}
+
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
-  key: string[], load: () => Promise<T>, copy: (page: T) => T, isCurrent: () => boolean,
+  key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
 ): Promise<T & { savedAt?: number }> {
   const token = await captureOfflineToken();
-  const group = key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
+  const group = key[0] === 'post' ? key : key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
   let page: T;
   try {
     page = await load();
@@ -73,10 +84,11 @@ async function loadOfflinePage<T extends object>(
     }
     return { ...saved.page, savedAt: saved.savedAt };
   }
-  const saved: SavedPage<T> = { key, savedAt: Date.now(), page: copy(page) };
+  const value = copy(page);
+  const saved = value && { key, savedAt: Date.now(), page: value };
   await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
     store.delete(key);
-    if (new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
+    if (saved && new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
       store.put(saved, key);
     }
     const request = store.getAll(IDBKeyRange.bound([key[0]], [key[0], []]));

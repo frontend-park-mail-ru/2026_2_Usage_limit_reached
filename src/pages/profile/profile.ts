@@ -35,7 +35,8 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute } from '@/app/paths.ts';
+import { postEditRoute, postRoute, ROUTES } from '@/app/paths.ts';
+import { withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -68,9 +69,11 @@ export function buildProfileViewModel(
     const date = item.published_or_updated_at ?? '';
     return {
       id: item.id,
+      href: withPostReturnPath(postRoute(item.id), ROUTES.profile),
       title: item.title,
       preview: item.locked ? '' : htmlToText(item.body_preview),
       likesCount: item.likes_count,
+      liked: item.liked_by_user,
       hasLikesCount: item.likes_count !== undefined,
       date,
       dateLabel: date ? formatPostDate(date) : '',

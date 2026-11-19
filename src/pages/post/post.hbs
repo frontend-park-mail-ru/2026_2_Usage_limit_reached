@@ -1,6 +1,8 @@
 {{#if message}}
   <section class="post-page" aria-label="Публикация">
+    {{#if isError}}<a class="post-page__back" href="/feed" data-link data-back>← Лента</a>{{/if}}
     <p class="{{#if isError}}post-page__load-error{{else}}post-page__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
+    {{#if isError}}<button class="button button_view_secondary" type="button" data-post-retry>Повторить</button>{{/if}}
   </section>
 {{else if unavailable}}
   <section class="post-page" aria-labelledby="post-page-unavailable">
@@ -17,6 +19,8 @@
 {{else}}
 <section class="post-page" aria-labelledby="post-page-title">
   <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
+  <p class="post-page__date" data-post-offline role="status"{{#unless offline}} hidden{{/unless}}>Сохранённая копия. Доступен только просмотр</p>
+  <button class="button button_view_secondary" type="button" data-post-retry{{#unless offline}} hidden{{/unless}}>Обновить</button>
   <article class="post-page__card">
     <header class="post-page__header">
       <img class="post-page__avatar" src="{{avatarUrl}}" alt="" data-avatar />
@@ -33,11 +37,15 @@
     <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
     <div class="rich-text post-page__body" data-post-body></div>
     <footer class="post-page__footer">
+      {{#if offline}}
+        <span class="post-page__stat post-page__stat-likes{{#if liked}} post-page__stat_liked{{/if}}" aria-label="{{#if liked}}Вы поставили лайк. {{/if}}Лайков: {{likesCount}}">{{likesCount}}</span>
+      {{else}}
       {{> likeButton liked=liked count=likesCount}}
       <span class="post-page__stat post-page__stat-comments" aria-label="Комментариев: 0">0</span>
       {{#unless isOwner}}
         <button class="button button_view_primary button_borderless post-page__donate" type="button" data-donate>Пожертвовать</button>
       {{/unless}}
+      {{/if}}
     </footer>
   </article>
 

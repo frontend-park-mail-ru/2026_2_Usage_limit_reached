@@ -11,6 +11,8 @@ import {
   runSessionMutation,
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
+import { loadOfflinePost } from '@/modules/offline/offline.pages.ts';
+import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
@@ -149,7 +151,7 @@ function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate, bef
     if (action === 'edit') {
       navigate(withPostReturnPath(postEditRoute(post.id), getPostReturnPath()));
     } else if (action === 'delete') {
-      dialog.open(post.title, () => removePost(post.id, navigate, context, isActive));
+      dialog.open(post.title, () => beforeAction() ? removePost(post.id, navigate, context, isActive) : Promise.resolve(null));
     }
   });
   return () => {
@@ -165,14 +167,14 @@ function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate, bef
  * @param beforeAction
  * @param isSessionValid
  */
-function bindDonate(root: HTMLElement, post: Post, beforeAction: () => boolean, isSessionValid: () => boolean): () => void {
+function bindDonate(root: HTMLElement, post: Post, beforeAction: () => boolean, isSessionValid: () => boolean): DonateDialog {
   const dialog = new DonateDialog(requireElement<HTMLDialogElement>(root, '.donate-dialog'), isSessionValid);
   requireElement(root, '[data-donate]').addEventListener('click', () => {
     if (beforeAction()) {
       dialog.open(post.author);
     }
   });
-  return () => dialog.destroy();
+  return dialog;
 }
 
 /**
@@ -211,6 +213,11 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   let request = 0;
   let disposeActions: (() => void) | undefined;
   let renderedSession: string | undefined;
+  let offline = false;
+  let needsRetry = false;
+  let busy = false;
+  let recoverAfterLoad = false;
+  let donateDialog: DonateDialog | undefined;
   const sessionKey = () => {
     const { status, user } = authStore.getState();
     return status + (user?.id ?? '');
@@ -218,9 +225,11 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
   const load = async () => {
     const id = ++request;
+    busy = true;
     const isCurrent = () => active && request === id;
     disposeActions?.();
     disposeActions = undefined;
+    donateDialog = undefined;
     renderedSession = undefined;
     cancelLoading(root);
     root.innerHTML = renderPost();
@@ -234,20 +243,28 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       const version = getSessionVersion();
       let post: Post;
       try {
-        post = await getPost(params.id ?? '');
+        const result = await loadOfflinePost(params.id ?? '', () => getPost(params.id ?? ''),
+          () => isCurrent() && version === getSessionVersion());
+        post = result;
+        offline = result.savedAt !== undefined;
+        needsRetry = offline;
       } catch (error) {
         if (!isCurrent()) {
           return;
         }
         const status = error instanceof ApiError ? error.status : undefined;
+        needsRetry = isBackendUnavailable(error);
         const restricted = status === 403;
         const unavailable = restricted || status === 400 || status === 404;
         root.innerHTML = unavailable
           ? postTemplate({ unavailable: true, restricted })
-          : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
+          : postTemplate({ message: error instanceof ApiError && error.code === 'offline_copy_missing'
+            ? 'Не удалось загрузить публикацию. Сохранённой копии нет. Попробуйте ещё раз'
+            : LOAD_ERROR, isError: true });
+        root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
+        bindBackLink(root);
         if (unavailable) {
           renderedSession = sessionKey();
-          bindBackLink(root);
         }
         return;
       }
@@ -266,7 +283,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         return;
       }
       const beforeAction = () => {
-        if (!isCurrent()) {
+        if (!isCurrent() || offline) {
           return false;
         }
         if (authStore.getState().status === 'guest') {
@@ -288,15 +305,32 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         bindBackLink(root);
         return;
       }
-      root.innerHTML = postTemplate(buildViewModel(post, isOwner));
+      root.innerHTML = postTemplate({ ...buildViewModel(post, isOwner && !offline), offline });
       requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
       bindBackLink(root);
+      root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
+      if (offline) {
+        return;
+      }
       bindLike(root, post, beforeAction);
-      disposeActions = isOwner
-        ? bindOwnerActions(root, post, navigate, beforeAction)
-        : bindDonate(root, post, beforeAction, () => !!context && isSessionCurrent(context));
+      if (isOwner) {
+        disposeActions = bindOwnerActions(root, post, navigate, beforeAction);
+      } else {
+        donateDialog = bindDonate(root, post, beforeAction, () => !!context && isSessionCurrent(context));
+        const currentDialog = donateDialog;
+        disposeActions = () => currentDialog.destroy();
+      }
     } finally {
       stopLoading();
+      if (id === request) {
+        busy = false;
+        if (recoverAfterLoad) {
+          recoverAfterLoad = false;
+          if (active && needsRetry) {
+            void load();
+          }
+        }
+      }
     }
   };
 
@@ -306,10 +340,33 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       void load();
     }
   });
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (busy) {
+      recoverAfterLoad = true;
+    } else {
+      void load();
+    }
+  }, () => active && needsRetry && !root.querySelector('dialog[open]'));
+  const handleOffline = () => {
+    offline = true;
+    needsRetry = true;
+    donateDialog?.setReadOnly(true);
+    const notice = root.querySelector<HTMLElement>('[data-post-offline]');
+    if (notice) {
+      notice.textContent = 'Доступен только просмотр';
+    }
+    root.querySelectorAll<HTMLButtonElement>('.like-button, [data-donate], .post-page__menu button')
+      .forEach((button) => { button.disabled = true; });
+    root.querySelectorAll<HTMLElement>('[data-post-offline], [data-post-retry]').forEach((element) => { element.hidden = false; });
+  };
+  window.addEventListener('offline', handleOffline);
   void load();
 
   return () => {
     active = false;
+    cancelLoading(root);
+    unbindRecovery();
+    window.removeEventListener('offline', handleOffline);
     unsubscribe();
     unbindAvatarFallback();
     disposeActions?.();
