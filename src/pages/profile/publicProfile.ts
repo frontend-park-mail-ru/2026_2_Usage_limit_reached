@@ -36,6 +36,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
   let busy = false;
   let offline = false;
   let needsRetry = false;
+  let recoverAfterLoad = false;
   let disposePosts: (() => void) | undefined;
   let dialog: DonateDialog | undefined;
   let disposeBio: (() => void) | undefined;
@@ -134,11 +135,22 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
         } else if (!disposePosts) {
           setRefreshNotice(null);
         }
+        if (recoverAfterLoad) {
+          recoverAfterLoad = false;
+          if (active && needsRetry) {
+            void load();
+          }
+        }
       }
     }
   }
-  const unbindRecovery = bindOfflineRecovery(() => { void load(); },
-    () => active && needsRetry && !busy && !root.querySelector('dialog[open]'));
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (busy) {
+      recoverAfterLoad = true;
+    } else {
+      void load();
+    }
+  }, () => active && (needsRetry || busy) && !root.querySelector('dialog[open]'));
   const handleOffline = () => {
     offline = true;
     needsRetry = true;

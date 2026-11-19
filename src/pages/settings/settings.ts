@@ -333,6 +333,10 @@ export function initSettings(root: HTMLElement, navigate: Navigate, _params: Rou
         return;
       }
       if (!profile) {
+        if (offline && root.querySelector('#settings-form')) {
+          setReadOnly(true);
+          return;
+        }
         disposeForm?.();
         disposeForm = undefined;
         root.innerHTML = settingsTemplate({ message: 'Не удалось открыть настройки', isError: true });
@@ -364,6 +368,11 @@ export function initSettings(root: HTMLElement, navigate: Navigate, _params: Rou
       }
     } catch (error) {
       if (current() && !(error instanceof ApiError && error.isUnauthorized)) {
+        if (root.querySelector('#settings-form')
+          && !(error instanceof ApiError && [403, 404].includes(error.status))) {
+          setReadOnly(true);
+          return;
+        }
         disposeForm?.();
         disposeForm = undefined;
         root.innerHTML = settingsTemplate({ message: LOAD_ERROR, isError: true });
