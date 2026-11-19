@@ -18,6 +18,7 @@ export function buildPostCard(item: PostPreview, isDraft = false) {
       getPostListPath(window.location.pathname + window.location.search)),
     preview: item.locked ? '' : htmlToText(item.body_preview),
     title: item.title,
+    locked: item.locked,
     isDraft,
     likesCount: item.likes_count,
     liked: item.liked_by_user,

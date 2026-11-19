@@ -72,6 +72,7 @@ export function buildProfileViewModel(
       id: item.id,
       href: withPostReturnPath(postRoute(item.id), ROUTES.profile),
       title: item.title,
+      locked: item.locked,
       preview: item.locked ? '' : htmlToText(item.body_preview),
       likesCount: item.likes_count,
       liked: item.liked_by_user,

@@ -16,11 +16,6 @@ export const SAFE_LINK_PROTOCOL = 'https:';
 
 export const LINK_REL = 'noopener noreferrer nofollow';
 
-export const TEXT_BREAKS: Readonly<Record<string, string>> = {
-  P: '\n\n',
-  H3: '\n\n',
-  LI: '\n',
-  UL: '\n',
-  OL: '\n',
-  BR: '\n',
-};
+export const TEXT_BLOCKS: ReadonlySet<string> = new Set([
+  'P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE', 'PRE',
+]);
