@@ -4,7 +4,11 @@ import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
-import type { PostPreview, PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
+import type { PostPreview, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
+import type { OfflinePostsPage } from '@/modules/offline/offline.feed.ts';
+import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { ApiError } from '@/modules/api/request.ts';
+import { formatPostDate } from '@/utils/helpers/posts.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
@@ -19,7 +23,7 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  */
 export function bindPublicPosts(
   root: HTMLElement,
-  loadPage: (query: PostsQuery) => Promise<PostsPage>,
+  loadPage: (query: PostsQuery, isCurrent: () => boolean) => Promise<OfflinePostsPage>,
   bindLike?: (button: HTMLButtonElement, item: PostPreview) => void,
   feed = false
 ) {
@@ -33,6 +37,8 @@ export function bindPublicPosts(
   let request = 0;
   let busy = false;
   let active = true;
+  let offline = false;
+  const notice = root.querySelector<HTMLElement>('[data-offline-notice]');
 
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((entry) => entry.isIntersecting)) {
@@ -52,20 +58,34 @@ export function bindPublicPosts(
     if (!append) {
       cancelLoading(panel);
       cursor = null;
+      offline = false;
+      if (notice) {
+        notice.hidden = true;
+      }
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
     const stopLoading = moreText ? setLoadingText(moreText, LIST_LOADING_MESSAGE) : startLoading(panel);
     try {
-      const page = await loadPage({ sort, cursor: next });
+      const page = await loadPage({ sort, cursor: next }, () => active && id === request);
       if (!active || id !== request) {
         return;
       }
       cursor = page.next_cursor;
+      offline ||= page.savedAt !== undefined;
+      if (page.savedAt !== undefined) {
+        if (notice) {
+          notice.textContent = `Сохранённая копия · ${formatPostDate(new Date(page.savedAt).toISOString())}. Доступен только просмотр`;
+          notice.hidden = false;
+        }
+        panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+        retry.hidden = false;
+      }
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
         locked: item.locked,
-        canLike: !!bindLike && !item.locked,
+        offline,
+        canLike: !offline && !!bindLike && !item.locked,
         liked: item.liked_by_user,
         feedAuthor: feed ? {
           name: item.author.nickname, avatarUrl: item.author.avatar_url ?? AVATAR_PLACEHOLDER, href: publicProfileRoute(item.author.username),
@@ -86,7 +106,7 @@ export function bindPublicPosts(
           publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && !cursor, hasMore: !!cursor,
         });
       }
-      if (bindLike && cards.length > 0) {
+      if (!offline && bindLike && cards.length > 0) {
         const grid = requireElement(panel, '[data-posts-grid]');
         page.items.forEach((item, index) => {
           const button = grid.children[previousCount + index]?.querySelector<HTMLButtonElement>('.post-card__like');
@@ -102,14 +122,23 @@ export function bindPublicPosts(
           observer.observe(more);
         }
       }
-    } catch {
+    } catch (error) {
       if (!active || id !== request) {
         return;
       }
+      offline ||= feed && isBackendUnavailable(error);
+      if (offline) {
+        panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+      }
+      const message = error instanceof ApiError && error.code === 'offline_copy_missing'
+        ? 'Не удалось загрузить публикации. Сохранённой копии этой страницы нет. Попробуйте ещё раз'
+        : error instanceof ApiError && error.code === 'offline_storage_unavailable'
+          ? 'Не удалось загрузить публикации или открыть сохранённую копию. Попробуйте ещё раз'
+          : LIST_ERROR;
       if (moreText) {
-        moreText.textContent = LIST_ERROR;
+        moreText.textContent = message;
       } else {
-        panel.innerHTML = postsListTemplate({ message: LIST_ERROR, isError: true });
+        panel.innerHTML = postsListTemplate({ message, isError: true });
       }
       retry.hidden = false;
     } finally {
@@ -127,13 +156,26 @@ export function bindPublicPosts(
       void load();
     }
   });
-  retry.addEventListener('click', () => { void load(!!cursor); });
+  retry.addEventListener('click', () => { void load(!!cursor && !offline); });
+  const unbindRecovery = bindOfflineRecovery(() => { void load(); }, () => feed && active && offline && !busy);
+  const handleOffline = () => {
+    if (feed && active) {
+      offline = true;
+      panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+      if (!busy) {
+        void load();
+      }
+    }
+  };
+  window.addEventListener('offline', handleOffline);
   void load();
   return {
     reload: () => { void load(); },
     destroy: () => {
       cancelLoading(panel);
       active = false;
+      window.removeEventListener('offline', handleOffline);
+      unbindRecovery();
       observer.disconnect();
       sortMenu.destroy();
     },
