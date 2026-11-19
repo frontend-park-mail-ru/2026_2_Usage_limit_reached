@@ -6,7 +6,11 @@ import { Tabs } from '@/components/tabs/tabs.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatMoney } from '@/utils/helpers/money.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
-import { checkSession } from '@/modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, getSessionVersion, runSessionRequest } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
+import { loadOfflineDonations } from '@/modules/offline/offline.pages.ts';
+import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
 import { getDonations } from '@/modules/api/donations.ts';
 import type { Donation, DonationsDirection } from '@/modules/api/donations.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
@@ -66,7 +70,7 @@ function updateMoreLinks(list: HTMLElement): void {
  * @param list
  * @param donations
  */
-function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<string, Donation>): void {
+function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<string, Donation>): () => void {
   const dialog = requireElement<HTMLDialogElement>(root, '.donation-message');
   const modal = new Modal(dialog);
   list.addEventListener('click', (event) => {
@@ -85,6 +89,7 @@ function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<
     requireElement(dialog, '[data-message-text]').textContent = card.message;
     modal.open();
   });
+  return () => modal.destroy();
 }
 
 /**
@@ -106,6 +111,16 @@ export function initDonations(root: HTMLElement): () => void {
   let hasMore = true;
   let isLoading = false;
   let listVersion = 0;
+  let active = true;
+  let ownerId: string | undefined;
+  let sessionVersion = getSessionVersion();
+  let startRequest = 0;
+  let starting = false;
+  let needsRetry = false;
+  let recoverAfterLoad = false;
+  const notice = requireElement<HTMLElement>(root, '[data-donations-offline]');
+  const refresh = requireElement<HTMLButtonElement>(root, '[data-donations-refresh]');
+  const isCurrent = (version: number) => active && list.isConnected && version === listVersion && sessionVersion === getSessionVersion();
 
   const resizeObserver = new ResizeObserver(() => {
     if (list.isConnected) {
@@ -140,6 +155,8 @@ export function initDonations(root: HTMLElement): () => void {
     list.replaceChildren();
     scrollObserver.unobserve(more);
     empty.hidden = true;
+    notice.hidden = true;
+    refresh.hidden = true;
     more.hidden = false;
   };
 
@@ -151,7 +168,7 @@ export function initDonations(root: HTMLElement): () => void {
   }
 
   async function loadPage(): Promise<void> {
-    if (!direction || isLoading || !hasMore) {
+    if (!active || !ownerId || !direction || isLoading || !hasMore) {
       return;
     }
     const version = listVersion;
@@ -159,16 +176,35 @@ export function initDonations(root: HTMLElement): () => void {
     const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
     retry.hidden = true;
     try {
-      const page = await getDonations(direction, cursor);
-      if (!list.isConnected || version !== listVersion) {
+      const context = getSessionContext();
+      const currentDirection = direction;
+      const currentCursor = cursor;
+      const page = await loadOfflineDonations(ownerId, direction, cursor, async () => {
+        if (!context || context.userId !== ownerId || !isCurrent(version)) {
+          throw new ApiError(0, 'session_unconfirmed');
+        }
+        const result = await runSessionRequest(context, () => getDonations(currentDirection, currentCursor));
+        if (!result) {
+          throw new ApiError(0, 'stale_session');
+        }
+        return result;
+      }, () => isCurrent(version));
+      if (!isCurrent(version)) {
         return;
       }
       cursor = page.next_cursor;
       hasMore = !!cursor;
-      for (const donation of page.items) {
+      needsRetry = page.savedAt !== undefined;
+      refresh.hidden = !needsRetry;
+      if (needsRetry) {
+        notice.textContent = 'Сохранённая копия. Доступен только просмотр';
+        notice.hidden = false;
+      }
+      const items = page.items.filter((item) => !donations.has(item.id));
+      for (const donation of items) {
         donations.set(donation.id, donation);
       }
-      list.insertAdjacentHTML('beforeend', page.items.map((donation) => donationCardTemplate(buildCard(donation))).join(''));
+      list.insertAdjacentHTML('beforeend', items.map((donation) => donationCardTemplate(buildCard(donation))).join(''));
       updateMoreLinks(list);
       empty.hidden = donations.size > 0;
       moreText.textContent = '';
@@ -181,61 +217,146 @@ export function initDonations(root: HTMLElement): () => void {
       if (!(err instanceof ApiError)) {
         throw err;
       }
-      if (!list.isConnected || version !== listVersion || err.status === 401) {
+      if (!isCurrent(version) || err.isUnauthorized) {
         return;
       }
-      showError(err.status === 0 ? err.text : LOAD_ERROR);
+      if (err.status === 403 || err.status === 404) {
+        donations.clear();
+        list.replaceChildren();
+        empty.hidden = true;
+        hasMore = false;
+        root.querySelector<HTMLDialogElement>('.donation-message')?.close();
+      }
+      needsRetry = isBackendUnavailable(err);
+      showError(err.code === 'offline_copy_missing'
+        ? 'Не удалось загрузить пожертвования. Сохранённой копии этой страницы нет. Попробуйте ещё раз'
+        : err.code === 'offline_storage_unavailable'
+          ? 'Не удалось загрузить пожертвования или открыть сохранённую копию. Попробуйте ещё раз'
+          : err.status === 0 ? err.text : LOAD_ERROR);
     } finally {
       stopLoading();
       if (version === listVersion) {
         isLoading = false;
+        if (recoverAfterLoad && !starting) {
+          recoverAfterLoad = false;
+          if (needsRetry) {
+            void start();
+          }
+        }
       }
     }
   }
 
   async function start(): Promise<void> {
+    const wantedDirection = direction;
+    direction = undefined;
+    const id = ++startRequest;
+    const version = getSessionVersion();
+    starting = true;
+    resetList();
+    tabs?.destroy();
+    tabs = undefined;
+    toolbar.hidden = true;
+    root.querySelector<HTMLDialogElement>('.donation-message')?.close();
     const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
     retry.hidden = true;
     try {
-      const profile = await checkSession();
-      if (!list.isConnected) {
+      let profile;
+      try {
+        profile = await checkSession();
+      } catch (error) {
+        if (!isBackendUnavailable(error)) {
+          throw error;
+        }
+        const copy = await readOfflineCopy(ownerId);
+        const token = await captureOfflineToken();
+        profile = copy && copy.generation === token?.generation ? copy.profile : undefined;
+      }
+      if (!active || id !== startRequest || version !== getSessionVersion()) {
         return;
       }
       if (!profile) {
+        needsRetry = true;
         showError(LOAD_ERROR);
         return;
       }
+      ownerId = profile.user.id;
+      sessionVersion = getSessionVersion();
+      panel.removeAttribute('role');
+      panel.removeAttribute('aria-labelledby');
+      const nextDirection = profile.author ? wantedDirection ?? 'received' : 'sent';
+      toolbar.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((button) => {
+        button.setAttribute('aria-selected', String(button.dataset.tab === nextDirection));
+        button.tabIndex = button.dataset.tab === nextDirection ? 0 : -1;
+      });
       if (profile.author) {
         toolbar.hidden = false;
         panel.setAttribute('role', 'tabpanel');
-        panel.setAttribute('aria-labelledby', 'donations-tabs-tab-received');
+        panel.setAttribute('aria-labelledby', `donations-tabs-tab-${nextDirection}`);
         tabs = new Tabs(requireElement<HTMLElement>(toolbar, '.tabs'), (value) => {
           const next = value === 'sent' ? 'sent' : 'received';
           panel.setAttribute('aria-labelledby', `donations-tabs-tab-${next}`);
           showDirection(next);
         });
       }
-      await showDirection(profile.author ? 'received' : 'sent', true);
+      await showDirection(nextDirection, true);
     } catch (err) {
       if (!(err instanceof ApiError)) {
         throw err;
       }
-      if (!list.isConnected || err.status === 401) {
+      if (!active || id !== startRequest || version !== getSessionVersion() || err.isUnauthorized) {
         return;
       }
+      needsRetry = isBackendUnavailable(err);
       showError(err.status === 0 ? err.text : LOAD_ERROR);
     } finally {
       stopLoading();
+      if (id === startRequest) {
+        starting = false;
+        if (recoverAfterLoad) {
+          recoverAfterLoad = false;
+          if (needsRetry) {
+            void start();
+          }
+        }
+      }
     }
   }
 
   retry.addEventListener('click', () => {
-    void (direction ? loadPage() : start());
+    void (direction && hasMore ? loadPage() : start());
   });
-  bindMessageDialog(root, list, donations);
+  refresh.addEventListener('click', () => { void start(); });
+  const disposeMessage = bindMessageDialog(root, list, donations);
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (starting || isLoading) {
+      recoverAfterLoad = true;
+    } else {
+      void start();
+    }
+  }, () => active && needsRetry && !root.querySelector('dialog[open]'));
+  let previous = authStore.getState();
+  let previousVersion = getSessionVersion();
+  const unsubscribe = authStore.subscribe(() => {
+    const current = authStore.getState();
+    const changed = current.status === 'unknown' || previousVersion !== getSessionVersion() || (previous.status !== 'unknown'
+      && (current.status !== previous.status || current.user?.id !== previous.user?.id));
+    previous = current;
+    previousVersion = getSessionVersion();
+    if (changed) {
+      ownerId = undefined;
+      direction = undefined;
+      void start();
+    }
+  });
   resizeObserver.observe(list);
   void start();
   return () => {
+    active = false;
+    startRequest += 1;
+    unsubscribe();
+    unbindRecovery();
+    disposeMessage();
     cancelLoading(root);
     listVersion += 1;
     tabs?.destroy();
