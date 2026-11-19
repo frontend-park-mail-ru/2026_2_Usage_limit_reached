@@ -2,6 +2,12 @@ import type { Profile, ProfilePosts, ProfilePostsQuery } from '@/modules/api/pro
 import { DEFAULT_PROFILE_POSTS_QUERY } from '@/modules/api/profile.constants.ts';
 import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GENERATION } from './offline.constants.ts';
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
+import type { PostsQuery } from '@/modules/api/posts.types.ts';
+import { ApiError } from '@/modules/api/request.ts';
+
+const MAX_POST_PAGES = 20;
+const MAX_POST_BYTES = 512 * 1024;
+const MAX_POST_AGE = 7 * 24 * 60 * 60 * 1000;
 
 let connection: Promise<IDBDatabase> | undefined;
 let channel: BroadcastChannel | undefined;
@@ -232,7 +238,7 @@ export async function saveOfflineProfile(expected: OfflineToken | undefined, pro
   return next;
 }
 
-/** Сохраняет только полученную страницу и её параметры, чужие элементы отклоняет. */
+/** Сохраняет непрерывное начало списка отдельно для каждой сортировки. */
 export function saveOfflinePosts(expected: OfflineToken | undefined, posts: ProfilePosts, query: ProfilePostsQuery, isCurrent: () => boolean): Promise<boolean | undefined> {
   if (!expected?.ownerId) {
     return Promise.resolve(undefined);
@@ -252,15 +258,33 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
         locked: item.locked,
         body_preview: item.locked ? '' : item.body_preview,
         likes_count: item.likes_count,
+        liked_by_user: item.liked_by_user,
         published_or_updated_at: item.published_or_updated_at,
       })),
       next_cursor: posts.next_cursor,
     };
-    if (query.cursor !== undefined) {
-      saved.query.cursor = query.cursor;
-    }
-    tx.objectStore('copies').put(saved, [token.ownerId, 'posts']);
-    result(true);
+    const key = [token.ownerId, 'posts', query.sort];
+    const request = tx.objectStore('copies').get(key);
+    request.onsuccess = () => {
+      const previous: SavedPosts | undefined = request.result;
+      saved.pages = 1;
+      if (query.cursor) {
+        if (!previous || previous.next_cursor !== query.cursor || previous.query.limit !== saved.query.limit
+          || (previous.pages ?? 1) >= MAX_POST_PAGES || Date.now() - previous.savedAt > MAX_POST_AGE) {
+          result(true);
+          return;
+        }
+        saved.pages = (previous.pages ?? 1) + 1;
+        saved.savedAt = previous.savedAt;
+        saved.items = [...new Map([...previous.items, ...saved.items].map((item) => [item.id, item])).values()];
+      }
+      if (new Blob([JSON.stringify(saved)]).size <= MAX_POST_BYTES) {
+        tx.objectStore('copies').put(saved, key);
+      } else if (!query.cursor) {
+        tx.objectStore('copies').delete(key);
+      }
+      result(true);
+    };
   });
 }
 
@@ -319,7 +343,7 @@ export async function clearOfflineCopy(expected: OfflineClearToken | undefined, 
 }
 
 /** Читает только копию текущего владельца, не меняя состояние авторизации. */
-export function readOfflineCopy(ownerId?: string): Promise<OfflineCopy | null | undefined> {
+export function readOfflineCopy(ownerId?: string, sort: PostsQuery['sort'] = 'new'): Promise<OfflineCopy | null | undefined> {
   return transaction('readonly', (token, tx, result) => {
     if (!token.ownerId || (ownerId !== undefined && token.ownerId !== ownerId)) {
       result(null);
@@ -327,11 +351,41 @@ export function readOfflineCopy(ownerId?: string): Promise<OfflineCopy | null | 
     }
     const copy: OfflineCopy = { ownerId: token.ownerId, generation: token.generation };
     const profile = tx.objectStore('copies').get([token.ownerId, 'profile']);
-    const posts = tx.objectStore('copies').get([token.ownerId, 'posts']);
+    const posts = tx.objectStore('copies').get([token.ownerId, 'posts', sort]);
     profile.onsuccess = () => { copy.profile = profile.result; };
-    posts.onsuccess = () => { copy.posts = posts.result; };
+    posts.onsuccess = () => {
+      const legacy = tx.objectStore('copies').get([copy.ownerId, 'posts']);
+      legacy.onsuccess = () => {
+        const saved: SavedPosts | undefined = posts.result ?? legacy.result;
+        if (saved?.query.sort === sort && !saved.query.cursor && Date.now() - saved.savedAt <= MAX_POST_AGE) {
+          copy.posts = saved;
+        }
+      };
+    };
     result(copy);
   });
+}
+
+/** Возвращает сохранённый список порциями, не выдавая отсутствующий хвост за конец списка. */
+export async function readOfflineOwnPosts(ownerId: string, query: PostsQuery, isCurrent: () => boolean) {
+  const copy = await readOfflineCopy(ownerId, query.sort);
+  const offset = query.cursor ? Number(query.cursor) : 0;
+  const posts = copy?.posts;
+  if (!isCurrent() || !copy?.profile || !posts || !Number.isSafeInteger(offset) || offset < 0
+    || (offset > 0 && offset >= posts.items.length)) {
+    throw new ApiError(0, 'offline_copy_missing');
+  }
+  const limit = posts.query.limit ?? DEFAULT_PROFILE_POSTS_QUERY.limit;
+  const end = offset + limit;
+  const author = copy.profile.user;
+  return {
+    savedAt: posts.savedAt,
+    items: posts.items.slice(offset, end).map((item) => ({
+      ...item, author, hasLikesCount: item.likes_count !== undefined,
+      likes_count: item.likes_count ?? 0, liked_by_user: item.liked_by_user ?? false,
+    })),
+    next_cursor: end < posts.items.length || posts.next_cursor ? String(end) : null,
+  };
 }
 
 /** Слушает изменения других вкладок на время работы приложения. */

@@ -25,7 +25,8 @@ import { deletePost, getMyDrafts } from '@/modules/api/posts.ts';
 import type { PostPreview, PostsPage, PostsSort } from '@/modules/api/posts.types.ts';
 import type { Profile } from '@/modules/api/profile.types.ts';
 import type { SavedProfile, SavedPosts } from '@/modules/offline/offline.types.ts';
-import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
+import { captureOfflineToken, readOfflineCopy, readOfflineOwnPosts } from '@/modules/offline/offline.storage.ts';
+import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
 import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { htmlToText } from '@/modules/sanitize/sanitize.ts';
@@ -35,7 +36,8 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute } from '@/app/paths.ts';
+import { postEditRoute, postRoute, ROUTES } from '@/app/paths.ts';
+import { withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -68,9 +70,11 @@ export function buildProfileViewModel(
     const date = item.published_or_updated_at ?? '';
     return {
       id: item.id,
+      href: withPostReturnPath(postRoute(item.id), ROUTES.profile),
       title: item.title,
       preview: item.locked ? '' : htmlToText(item.body_preview),
       likesCount: item.likes_count,
+      liked: item.liked_by_user,
       hasLikesCount: item.likes_count !== undefined,
       date,
       dateLabel: date ? formatPostDate(date) : '',
@@ -92,8 +96,6 @@ export function buildProfileViewModel(
     avatarUrl: avatarUrl ?? AVATAR_PLACEHOLDER,
     needsPayout,
     tabs: PROFILE_TABS.map((item, index) => ({ ...item, selected: index === 0 })),
-    postCountLabel: `Загружено постов: ${cards.length}`,
-    hasMorePosts: !!posts?.next_cursor,
     profileMissing: !profile,
     postsMissing: !posts,
     showPosts: offline || !!profile?.author,
@@ -536,6 +538,11 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       disposePosts = undefined;
       render(profileTemplate(buildProfileViewModel(profile ?? saved?.profile, saved?.posts, true)));
       displayedOwnerId = profile?.user.id ?? saved?.ownerId;
+      if (displayedOwnerId && (profile?.author || saved?.profile?.author)) {
+        const ownerId = displayedOwnerId;
+        disposePosts = bindPublicPosts(root, (query, current) => readOfflineOwnPosts(ownerId, query,
+          () => current() && active && version === getSessionVersion()), undefined, false, false, true).destroy;
+      }
       showRetry();
     } finally {
       stopLoading();
@@ -549,11 +556,19 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
     }
   };
   const unbind = bindOfflineRecovery(retry, () => active && needsRetry);
+  const handleOffline = () => {
+    displayedOwnerId = undefined;
+    disposePosts?.();
+    disposePosts = undefined;
+    void load();
+  };
+  window.addEventListener('offline', handleOffline);
   const saved = profileStore.getSavedNavigation();
   void load(saved && isSessionCurrent(saved.context) ? saved.profile : undefined);
   return () => {
     cancelLoading(root);
     active = false;
+    window.removeEventListener('offline', handleOffline);
     disposePosts?.();
     disposeBio?.();
     unbind();

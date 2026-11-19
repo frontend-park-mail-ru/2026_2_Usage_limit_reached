@@ -144,3 +144,19 @@
     padding-top: 24px;
   }
 }
+
+.post-page [data-post-retry][hidden] {
+  display: none;
+}
+
+.post-page__stat-likes::before {
+  background-image: url('/assets/post/like.svg');
+}
+
+.post-page__stat_liked {
+  color: var(--color-primary);
+}
+
+.post-page__stat_liked::before {
+  background-image: url('/assets/post/like-filled.svg');
+}

@@ -1,7 +1,7 @@
 <article class="post-card" aria-labelledby="post-card-title-{{id}}" data-post-id="{{id}}">
-  {{#unless offline}}
+  {{#if href}}
     <a class="post-card__link" href="{{href}}"{{#if feedAuthor}} target="_blank" rel="noopener noreferrer"{{/if}} data-link aria-labelledby="post-card-title-{{id}}"></a>
-  {{/unless}}
+  {{/if}}
   {{#if feedAuthor}}
     <a class="post-card__author" href="{{feedAuthor.href}}" data-link>
       <img class="post-card__author-avatar" src="{{feedAuthor.avatarUrl}}" alt="" data-avatar>
@@ -18,7 +18,7 @@
     {{else}}
       {{#if offline}}
         {{#if hasLikesCount}}
-          <span class="post-card__stat post-card__stat-likes" aria-label="Лайков: {{likesCount}}">{{likesCount}}</span>
+          <span class="post-card__stat post-card__stat-likes{{#if liked}} post-card__stat_liked{{/if}}" aria-label="{{#if liked}}Вы поставили лайк. {{/if}}Лайков: {{likesCount}}">{{likesCount}}</span>
         {{/if}}
       {{else}}
         {{#if canLike}}

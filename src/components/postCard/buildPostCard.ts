@@ -20,6 +20,7 @@ export function buildPostCard(item: PostPreview, isDraft = false) {
     title: item.title,
     isDraft,
     likesCount: item.likes_count,
+    liked: item.liked_by_user,
     hasLikesCount: item.likes_count !== undefined,
     date,
     dateLabel: date ? (isDraft ? formatDraftDate(date) : formatPostDate(date)) : '',
