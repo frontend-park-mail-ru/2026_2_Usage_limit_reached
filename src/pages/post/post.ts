@@ -12,7 +12,7 @@ import {
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { loadOfflinePost } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery } from '@/modules/offline/offline.recovery.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
@@ -29,6 +29,7 @@ import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   DELETED_MESSAGE,
   DELETE_ERROR,
@@ -207,7 +208,7 @@ function bindLike(root: HTMLElement, post: Post, beforeAction: () => boolean): v
  * @param navigate
  * @param params
  */
-export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
   let active = true;
   let request = 0;
@@ -226,6 +227,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   const load = async () => {
     const id = ++request;
     busy = true;
+    setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
     disposeActions?.();
     disposeActions = undefined;
@@ -253,15 +255,12 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
           return;
         }
         const status = error instanceof ApiError ? error.status : undefined;
-        needsRetry = isBackendUnavailable(error);
+        needsRetry = !(error instanceof ApiError && [400, 401, 403, 404].includes(error.status));
         const restricted = status === 403;
         const unavailable = restricted || status === 400 || status === 404;
         root.innerHTML = unavailable
           ? postTemplate({ unavailable: true, restricted })
-          : postTemplate({ message: error instanceof ApiError && error.code === 'offline_copy_missing'
-            ? 'Не удалось загрузить публикацию. Сохранённой копии нет. Попробуйте ещё раз'
-            : LOAD_ERROR, isError: true });
-        root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
+          : postTemplate({ message: LOAD_ERROR, isError: true });
         bindBackLink(root);
         if (unavailable) {
           renderedSession = sessionKey();
@@ -308,7 +307,6 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       root.innerHTML = postTemplate({ ...buildViewModel(post, isOwner && !offline), offline });
       requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
       bindBackLink(root);
-      root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
       if (offline) {
         return;
       }
@@ -324,6 +322,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       stopLoading();
       if (id === request) {
         busy = false;
+        setRefreshNotice(needsRetry ? { pending: false } : null, () => { void load(); });
         if (recoverAfterLoad) {
           recoverAfterLoad = false;
           if (active && needsRetry) {
@@ -351,13 +350,9 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     offline = true;
     needsRetry = true;
     donateDialog?.setReadOnly(true);
-    const notice = root.querySelector<HTMLElement>('[data-post-offline]');
-    if (notice) {
-      notice.textContent = 'Доступен только просмотр';
-    }
     root.querySelectorAll<HTMLButtonElement>('.like-button, [data-donate], .post-page__menu button')
       .forEach((button) => { button.disabled = true; });
-    root.querySelectorAll<HTMLElement>('[data-post-offline], [data-post-retry]').forEach((element) => { element.hidden = false; });
+    setRefreshNotice({ pending: busy }, () => { void load(); });
   };
   window.addEventListener('offline', handleOffline);
   void load();
@@ -370,5 +365,6 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     unsubscribe();
     unbindAvatarFallback();
     disposeActions?.();
+    setRefreshNotice(null);
   };
 }

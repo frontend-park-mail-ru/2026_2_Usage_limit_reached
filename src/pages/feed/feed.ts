@@ -3,6 +3,8 @@ import { getFeed } from '@/modules/api/posts.ts';
 import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
 import type { Navigate } from '@/app/paths.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
+import type { RouteParams } from '@/app/router.types.ts';
 
 /** Показывает каркас общей ленты. */
 export function renderFeed(): string {
@@ -15,9 +17,9 @@ export function renderFeed(): string {
  * @param navigate Переход на страницу входа при действии гостя.
  * @returns Отключение обработчиков страницы и подписки на авторизацию.
  */
-export function initFeed(root: HTMLElement, navigate: Navigate): () => void {
+export function initFeed(root: HTMLElement, navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
-  const disposePosts = bindLikedPosts(root, getFeed, navigate, true);
+  const disposePosts = bindLikedPosts(root, getFeed, navigate, true, undefined, false, setRefreshNotice);
   return () => {
     unbindAvatarFallback();
     disposePosts();

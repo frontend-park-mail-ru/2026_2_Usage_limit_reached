@@ -9,6 +9,7 @@ import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
 /**
  * Подключает лайки и обновление списка при смене сессии.
@@ -18,6 +19,7 @@ import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
  * @param feed Отображение карточек общей ленты.
  * @param offlineProfile Имя автора для сохранения публичного списка.
  * @param readOnly Режим чтения сохранённого профиля.
+ * @param setRefreshNotice
  */
 export function bindLikedPosts(
   root: HTMLElement,
@@ -26,6 +28,7 @@ export function bindLikedPosts(
   feed = false,
   offlineProfile?: string,
   readOnly = false,
+  setRefreshNotice?: SetRefreshNotice,
 ): () => void {
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
   let offline = false;
@@ -74,7 +77,7 @@ export function bindLikedPosts(
         pendingLikes.delete(request);
       }
     });
-  }, feed, offlineEnabled, readOnly);
+  }, feed, offlineEnabled, readOnly, setRefreshNotice);
   let previous = authStore.getState();
   const unsubscribe = authStore.subscribe(() => {
     const current = authStore.getState();

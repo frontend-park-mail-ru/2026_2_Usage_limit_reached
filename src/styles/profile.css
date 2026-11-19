@@ -44,9 +44,7 @@
   height: 112px;
 }
 
-.profile__summary-public [data-donate][hidden],
-.profile [data-profile-retry][hidden],
-.profile [data-list-retry][hidden] {
+.profile__summary-public [data-donate][hidden] {
   display: none;
 }
 

@@ -24,9 +24,7 @@
       </div>
     </div>
     <div class="profile__actions">
-      {{#unless offline}}
       <a class="button button_view_secondary profile__button profile__button-edit" href="/settings" data-link>Редактировать профиль</a>
-      {{/unless}}
       <a class="button button_view_secondary profile__button profile__button-donations" href="/donations" data-link>Пожертвования</a>
     </div>
     {{/if}}
@@ -52,10 +50,7 @@
         <h2 class="profile__title">Посты</h2>
         <div data-public-sort></div>
       </div>
-      <p class="profile__username" role="status">Сохранённые посты. Доступен только просмотр</p>
-      <p class="profile__username" data-offline-notice role="status" hidden></p>
       <div data-public-posts></div>
-      <button class="button button_view_secondary profile__button" type="button" data-list-retry hidden>Повторить</button>
       {{else}}
         <p class="profile__username">Нет сохранённых постов</p>
       {{/if}}

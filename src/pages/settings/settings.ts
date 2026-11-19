@@ -23,6 +23,8 @@ import { AvatarCropper } from '@/components/avatarCropper/avatarCropper.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   AVATAR_DELETED_MESSAGE,
   AVATAR_DELETE_ERROR,
@@ -274,11 +276,12 @@ function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, c
  * @param root
  * @param navigate
  */
-export function initSettings(root: HTMLElement, navigate: Navigate): () => void {
+export function initSettings(root: HTMLElement, navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   let active = true;
   let request = 0;
   let busy = false;
   let readOnly = false;
+  let needsRetry = false;
   let ownerId: string | undefined;
   let baseline: Record<string, string> | undefined;
   let recoveryPending = false;
@@ -287,7 +290,9 @@ export function initSettings(root: HTMLElement, navigate: Navigate): () => void 
     .filter((input) => ['nickname', 'bio', 'category'].includes(input.name)).map((input) => [input.name, input.value]));
   const setReadOnly = (value: boolean) => {
     readOnly = value;
-    root.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button:not([data-settings-retry]), textarea')
+    needsRetry = value;
+    setRefreshNotice(value ? { pending: busy } : null, () => { void load(); });
+    root.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button, textarea')
       .forEach((element) => { element.disabled = value || element.getAttribute('name') === 'username'; });
     root.querySelectorAll<HTMLElement>('[data-settings-offline]').forEach((element) => { element.hidden = !value; });
     const fieldset = root.querySelector<HTMLFieldSetElement>('[data-settings-fields]');
@@ -306,6 +311,9 @@ export function initSettings(root: HTMLElement, navigate: Navigate): () => void 
     const version = getSessionVersion();
     const current = () => active && id === request && version === getSessionVersion();
     busy = true;
+    if (needsRetry) {
+      setRefreshNotice({ pending: true }, () => { void load(); });
+    }
     const stopLoading = startLoading(root);
     try {
       let profile: Profile | SavedProfile | undefined;
@@ -327,8 +335,9 @@ export function initSettings(root: HTMLElement, navigate: Navigate): () => void 
       if (!profile) {
         disposeForm?.();
         disposeForm = undefined;
-        root.innerHTML = settingsTemplate({ message: 'Не удалось открыть настройки. Сохранённой копии профиля нет. Попробуйте ещё раз', isError: true });
+        root.innerHTML = settingsTemplate({ message: 'Не удалось открыть настройки', isError: true });
         readOnly = offline;
+        needsRetry = true;
       } else {
         const edits = ownerId === profile.user.id && baseline
           ? Object.entries(values()).filter(([name, value]) => value !== baseline?.[name]) : [];
@@ -353,18 +362,18 @@ export function initSettings(root: HTMLElement, navigate: Navigate): () => void 
         }
         setReadOnly(offline);
       }
-      root.querySelector('[data-settings-retry]')?.addEventListener('click', () => { void load(); });
     } catch (error) {
       if (current() && !(error instanceof ApiError && error.isUnauthorized)) {
         disposeForm?.();
         disposeForm = undefined;
         root.innerHTML = settingsTemplate({ message: LOAD_ERROR, isError: true });
-        root.querySelector('[data-settings-retry]')?.addEventListener('click', () => { void load(); });
+        needsRetry = true;
       }
     } finally {
       stopLoading();
       if (id === request) {
         busy = false;
+        setRefreshNotice(needsRetry ? { pending: false } : null, () => { void load(); });
         if (recoveryPending) {
           recoveryPending = false;
           if (active && readOnly) {
@@ -401,6 +410,7 @@ export function initSettings(root: HTMLElement, navigate: Navigate): () => void 
   void load();
   return () => {
     active = false;
+    setRefreshNotice(null);
     disposeForm?.();
     cancelLoading(root);
     unsubscribe();

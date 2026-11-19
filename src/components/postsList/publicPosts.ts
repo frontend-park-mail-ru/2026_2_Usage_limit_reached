@@ -7,11 +7,11 @@ import { publicProfileRoute } from '@/app/paths.ts';
 import type { PostPreview, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import type { OfflinePostsPage } from '@/modules/offline/offline.pages.ts';
 import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
-import { ApiError } from '@/modules/api/request.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
-import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList.constants.ts';
+import { LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList.constants.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
 /**
  * Подключает сортировку и подгрузку опубликованных постов.
@@ -21,6 +21,7 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  * @param feed
  * @param offlineEnabled
  * @param readOnly
+ * @param setRefreshNotice
  */
 export function bindPublicPosts(
   root: HTMLElement,
@@ -29,9 +30,9 @@ export function bindPublicPosts(
   feed = false,
   offlineEnabled = feed,
   readOnly = false,
+  setRefreshNotice: SetRefreshNotice = () => {},
 ) {
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
-  const retry = requireElement<HTMLButtonElement>(root, '[data-list-retry]');
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
   const options = POST_SORT_OPTIONS.map((option) => ({ ...option, selected: option.value === 'new' }));
   sortRoot.innerHTML = sortMenuTemplate({ id: feed ? 'feed-sort' : 'public-profile-sort', currentLabel: options[0].label, options });
@@ -43,7 +44,7 @@ export function bindPublicPosts(
   let offline = readOnly;
   let unavailable = false;
   let recoverAfterLoad = false;
-  const notice = root.querySelector<HTMLElement>('[data-offline-notice]');
+  let retryAction: (() => void) | undefined;
 
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((entry) => entry.isIntersecting)) {
@@ -59,14 +60,13 @@ export function bindPublicPosts(
     const next = append ? cursor : null;
     busy = true;
     observer.disconnect();
-    retry.hidden = true;
+    if (retryAction) {
+      setRefreshNotice({ pending: true }, retryAction);
+    }
     if (!append) {
       cancelLoading(panel);
       cursor = null;
       offline = readOnly;
-      if (notice) {
-        notice.hidden = true;
-      }
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
@@ -80,12 +80,7 @@ export function bindPublicPosts(
       unavailable = page.savedAt !== undefined;
       offline ||= page.savedAt !== undefined;
       if (page.savedAt !== undefined) {
-        if (notice) {
-          notice.textContent = 'Сохранённая копия. Доступен только просмотр';
-          notice.hidden = false;
-        }
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
-        retry.hidden = false;
       }
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
@@ -123,6 +118,7 @@ export function bindPublicPosts(
         });
       }
       const more = panel.querySelector<HTMLElement>('[data-posts-more]');
+      retryAction = offline ? () => { void load(); } : undefined;
       if (more) {
         more.hidden = !cursor;
         if (cursor) {
@@ -138,24 +134,21 @@ export function bindPublicPosts(
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
       }
-      const message = error instanceof ApiError && error.code === 'offline_copy_missing'
-        ? 'Не удалось загрузить публикации. Сохранённой копии этой страницы нет. Попробуйте ещё раз'
-        : error instanceof ApiError && error.code === 'offline_storage_unavailable'
-          ? 'Не удалось загрузить публикации или открыть сохранённую копию. Попробуйте ещё раз'
-          : LIST_ERROR;
+      const message = append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
       if (moreText) {
         moreText.textContent = message;
       } else {
         panel.innerHTML = postsListTemplate({ message, isError: true });
       }
-      retry.hidden = false;
+      retryAction = () => { void load(append && !offline); };
     } finally {
       stopLoading();
       if (id === request) {
         busy = false;
+        setRefreshNotice(retryAction ? { pending: false } : null, retryAction);
         if (recoverAfterLoad) {
           recoverAfterLoad = false;
-          if (active && unavailable) {
+          if (active && (unavailable || offline)) {
             void load();
           }
         }
@@ -170,7 +163,6 @@ export function bindPublicPosts(
       void load();
     }
   });
-  retry.addEventListener('click', () => { void load(!!cursor && !offline); });
   const unbindRecovery = bindOfflineRecovery(() => {
     if (busy) {
       recoverAfterLoad = true;
@@ -195,6 +187,7 @@ export function bindPublicPosts(
     destroy: () => {
       cancelLoading(panel);
       active = false;
+      setRefreshNotice(null);
       window.removeEventListener('offline', handleOffline);
       unbindRecovery();
       observer.disconnect();

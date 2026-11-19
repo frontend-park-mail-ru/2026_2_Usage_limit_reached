@@ -2,7 +2,6 @@
   <section class="settings" aria-label="Настройки профиля">
     {{#if isError}}<a class="settings__back" href="/profile" data-link>← Мой профиль</a>{{/if}}
     <p class="{{#if isError}}settings__load-error{{else}}settings__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
-    {{#if isError}}<button class="button button_view_secondary" type="button" data-settings-retry>Повторить</button>{{/if}}
   </section>
 {{else}}
 <section class="settings" aria-labelledby="settings-title">
@@ -11,7 +10,6 @@
     <h1 class="settings__title" id="settings-title">Настройки профиля</h1>
     <div data-settings-offline{{#unless offline}} hidden{{/unless}}>
       <p class="settings__hint" role="status">Доступен только просмотр. Для изменения профиля нужно соединение</p>
-      <button class="button button_view_secondary" type="button" data-settings-retry>Проверить соединение</button>
     </div>
 
     {{> alert title="Не удалось сохранить изменения" className="settings__save-error"}}
