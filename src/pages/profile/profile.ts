@@ -268,19 +268,16 @@ function bindPosts(
     }
     const id = request;
     const text = requireElement<HTMLElement>(more, '[data-posts-more-text]');
-    const retryButton = requireElement<HTMLButtonElement>(more, '[data-posts-retry]');
     busy = true;
     if (retryAction) {
       setRefreshNotice({ pending: true }, retryAction);
     }
     const stopLoading = setLoadingText(text, LIST_LOADING_MESSAGE);
-    retryButton.hidden = true;
     try {
       const page = await fetchPage(cursor, id);
       if (!page) {
         if (isActive() && id === request) {
           text.textContent = LIST_ERROR;
-          retryButton.hidden = false;
           setRetry(() => { void loadMore(); });
         }
         return;
@@ -307,7 +304,6 @@ function bindPosts(
         cursor = null;
       } else {
         text.textContent = LIST_ERROR;
-        retryButton.hidden = false;
       }
       setRetry(() => { void (cursor ? loadMore() : load()); });
     } finally {
@@ -331,7 +327,6 @@ function bindPosts(
       }
     }, { rootMargin: '200px' });
     observer.observe(more);
-    requireElement(more, '[data-posts-retry]').addEventListener('click', () => { void loadMore(); });
   };
   const showList = (page: PostsPage) => {
     clearList();
@@ -541,7 +536,8 @@ export function initProfile(root: HTMLElement, navigate: Navigate, _params: Rout
       if (displayedOwnerId && (profile?.author || saved?.profile?.author)) {
         const ownerId = displayedOwnerId;
         disposePosts = bindPublicPosts(root, (query, current) => readOfflineOwnPosts(ownerId, query,
-          () => current() && active && version === getSessionVersion()), undefined, false, false, true).destroy;
+          () => current() && active && version === getSessionVersion()), undefined, false, false, true,
+        (state) => setRefreshNotice(state, retry)).destroy;
       }
       showRetry();
     } finally {

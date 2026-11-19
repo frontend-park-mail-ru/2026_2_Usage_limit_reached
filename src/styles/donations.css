@@ -100,17 +100,12 @@
 
 .donations__toolbar[hidden],
 .donations__empty[hidden],
-.donations__more[hidden],
-.donations__retry[hidden] {
+.donations__more[hidden] {
   display: none;
 }
 
 .donations__more-text {
   font-size: 16px;
-}
-
-.donations__retry {
-  width: auto;
 }
 
 .donation-message__window {
@@ -171,7 +166,4 @@
   .donations__back {
     left: 16px;
   }
-}
-.donations [data-donations-refresh][hidden] {
-  display: none;
 }

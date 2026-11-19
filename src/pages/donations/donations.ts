@@ -14,6 +14,9 @@ import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/off
 import { getDonations } from '@/modules/api/donations.ts';
 import type { Donation, DonationsDirection } from '@/modules/api/donations.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
+import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import { ANONYMOUS_DONOR, DONATIONS_TABS, DONATIONS_TEXTS, LOADING_MESSAGE, LOAD_ERROR } from './donations.constants.ts';
 
 /** Возвращает каркас страницы. */
@@ -96,14 +99,13 @@ function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<
  * Показывает полученные или отправленные пожертвования и подгружает их при прокрутке.
  * @param root
  */
-export function initDonations(root: HTMLElement): () => void {
+export function initDonations(root: HTMLElement, _navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const toolbar = requireElement<HTMLElement>(root, '[data-donations-toolbar]');
   const panel = requireElement<HTMLElement>(root, '[data-donations-panel]');
   const list = requireElement<HTMLElement>(root, '[data-donations-list]');
   const empty = requireElement<HTMLElement>(root, '[data-donations-empty]');
   const more = requireElement<HTMLElement>(root, '[data-donations-more]');
   const moreText = requireElement<HTMLElement>(more, '[data-donations-more-text]');
-  const retry = requireElement<HTMLButtonElement>(more, '[data-donations-retry]');
   const donations = new Map<string, Donation>();
   let direction: DonationsDirection | undefined;
   let tabs: Tabs | undefined;
@@ -118,8 +120,8 @@ export function initDonations(root: HTMLElement): () => void {
   let starting = false;
   let needsRetry = false;
   let recoverAfterLoad = false;
-  const notice = requireElement<HTMLElement>(root, '[data-donations-offline]');
-  const refresh = requireElement<HTMLButtonElement>(root, '[data-donations-refresh]');
+  let retryAction: (() => void) | undefined;
+  const updateNotice = () => setRefreshNotice(retryAction ? { pending: starting || isLoading } : null, retryAction);
   const isCurrent = (version: number) => active && list.isConnected && version === listVersion && sessionVersion === getSessionVersion();
 
   const resizeObserver = new ResizeObserver(() => {
@@ -140,7 +142,8 @@ export function initDonations(root: HTMLElement): () => void {
 
   const showError = (text: string) => {
     moreText.textContent = text;
-    retry.hidden = false;
+    retryAction = () => { void (direction && hasMore ? loadPage() : start()); };
+    updateNotice();
   };
 
   const resetList = (keepLoading = false) => {
@@ -155,8 +158,6 @@ export function initDonations(root: HTMLElement): () => void {
     list.replaceChildren();
     scrollObserver.unobserve(more);
     empty.hidden = true;
-    notice.hidden = true;
-    refresh.hidden = true;
     more.hidden = false;
   };
 
@@ -174,7 +175,7 @@ export function initDonations(root: HTMLElement): () => void {
     const version = listVersion;
     isLoading = true;
     const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
-    retry.hidden = true;
+    updateNotice();
     try {
       const context = getSessionContext();
       const currentDirection = direction;
@@ -195,11 +196,7 @@ export function initDonations(root: HTMLElement): () => void {
       cursor = page.next_cursor;
       hasMore = !!cursor;
       needsRetry = page.savedAt !== undefined;
-      refresh.hidden = !needsRetry;
-      if (needsRetry) {
-        notice.textContent = 'Сохранённая копия. Доступен только просмотр';
-        notice.hidden = false;
-      }
+      retryAction = needsRetry ? () => { void start(); } : undefined;
       const items = page.items.filter((item) => !donations.has(item.id));
       for (const donation of items) {
         donations.set(donation.id, donation);
@@ -228,15 +225,12 @@ export function initDonations(root: HTMLElement): () => void {
         root.querySelector<HTMLDialogElement>('.donation-message')?.close();
       }
       needsRetry = isBackendUnavailable(err);
-      showError(err.code === 'offline_copy_missing'
-        ? 'Не удалось загрузить пожертвования. Сохранённой копии этой страницы нет. Попробуйте ещё раз'
-        : err.code === 'offline_storage_unavailable'
-          ? 'Не удалось загрузить пожертвования или открыть сохранённую копию. Попробуйте ещё раз'
-          : err.status === 0 ? err.text : LOAD_ERROR);
+      showError(donations.size > 0 ? 'Не удалось загрузить ещё пожертвования' : 'Не удалось загрузить пожертвования');
     } finally {
       stopLoading();
       if (version === listVersion) {
         isLoading = false;
+        updateNotice();
         if (recoverAfterLoad && !starting) {
           recoverAfterLoad = false;
           if (needsRetry) {
@@ -259,7 +253,7 @@ export function initDonations(root: HTMLElement): () => void {
     toolbar.hidden = true;
     root.querySelector<HTMLDialogElement>('.donation-message')?.close();
     const stopLoading = setLoadingText(moreText, LOADING_MESSAGE);
-    retry.hidden = true;
+    updateNotice();
     try {
       let profile;
       try {
@@ -313,6 +307,7 @@ export function initDonations(root: HTMLElement): () => void {
       stopLoading();
       if (id === startRequest) {
         starting = false;
+        updateNotice();
         if (recoverAfterLoad) {
           recoverAfterLoad = false;
           if (needsRetry) {
@@ -323,10 +318,6 @@ export function initDonations(root: HTMLElement): () => void {
     }
   }
 
-  retry.addEventListener('click', () => {
-    void (direction && hasMore ? loadPage() : start());
-  });
-  refresh.addEventListener('click', () => { void start(); });
   const disposeMessage = bindMessageDialog(root, list, donations);
   const unbindRecovery = bindOfflineRecovery(() => {
     if (starting || isLoading) {
@@ -353,6 +344,7 @@ export function initDonations(root: HTMLElement): () => void {
   void start();
   return () => {
     active = false;
+    setRefreshNotice(null);
     startRequest += 1;
     unsubscribe();
     unbindRecovery();

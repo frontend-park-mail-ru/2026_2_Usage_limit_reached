@@ -12,7 +12,7 @@ export type OfflineClearToken = OfflineToken | { generations: readonly string[] 
 export interface SavedProfile {
   savedAt: number;
   user: { id: string; username: string; nickname: string };
-  author?: { bio: string };
+  author?: { bio: string; category?: string | null };
 }
 
 export interface SavedPosts {

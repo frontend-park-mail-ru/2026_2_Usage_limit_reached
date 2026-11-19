@@ -145,10 +145,6 @@
   }
 }
 
-.post-page [data-post-retry][hidden] {
-  display: none;
-}
-
 .post-page__stat-likes::before {
   background-image: url('/assets/post/like.svg');
 }

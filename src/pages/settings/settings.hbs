@@ -1,5 +1,6 @@
 {{#if message}}
   <section class="settings" aria-label="Настройки профиля">
+    {{#if isError}}<a class="settings__back" href="/profile" data-link>← Мой профиль</a>{{/if}}
     <p class="{{#if isError}}settings__load-error{{else}}settings__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
   </section>
 {{else}}
@@ -7,10 +8,14 @@
   <a class="settings__back" href="/profile" data-link>← Мой профиль</a>
   <div class="settings__container">
     <h1 class="settings__title" id="settings-title">Настройки профиля</h1>
+    <div data-settings-offline{{#unless offline}} hidden{{/unless}}>
+      <p class="settings__hint" role="status">Доступен только просмотр. Для изменения профиля нужно соединение</p>
+    </div>
 
     {{> alert title="Не удалось сохранить изменения" className="settings__save-error"}}
 
     <form class="settings__card" id="settings-form" novalidate>
+      <fieldset class="settings__fields" data-settings-fields{{#if offline}} disabled{{/if}}>
       <div class="settings__photo">
         <img class="settings__avatar" src="{{avatarUrl}}" alt="Фото профиля" data-avatar>
         <div class="settings__photo-info">
@@ -45,6 +50,7 @@
         <button class="button button_view_primary settings__button settings__button-submit" type="submit">Сохранить изменения</button>
         <a class="button button_view_secondary settings__button settings__button-cancel" href="/profile" data-link>Отмена</a>
       </div>
+      </fieldset>
     </form>
   </div>
 

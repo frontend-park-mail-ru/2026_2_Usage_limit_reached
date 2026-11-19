@@ -2,7 +2,6 @@
   <section class="post-page" aria-label="Публикация">
     {{#if isError}}<a class="post-page__back" href="/feed" data-link data-back>← Лента</a>{{/if}}
     <p class="{{#if isError}}post-page__load-error{{else}}post-page__loading{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
-    {{#if isError}}<button class="button button_view_secondary" type="button" data-post-retry>Повторить</button>{{/if}}
   </section>
 {{else if unavailable}}
   <section class="post-page" aria-labelledby="post-page-unavailable">
@@ -19,8 +18,6 @@
 {{else}}
 <section class="post-page" aria-labelledby="post-page-title">
   <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
-  <p class="post-page__date" data-post-offline role="status"{{#unless offline}} hidden{{/unless}}>Сохранённая копия. Доступен только просмотр</p>
-  <button class="button button_view_secondary" type="button" data-post-retry{{#unless offline}} hidden{{/unless}}>Обновить</button>
   <article class="post-page__card">
     <header class="post-page__header">
       <img class="post-page__avatar" src="{{avatarUrl}}" alt="" data-avatar />
