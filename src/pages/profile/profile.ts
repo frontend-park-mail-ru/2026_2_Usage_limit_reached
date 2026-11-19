@@ -70,6 +70,8 @@ export function buildProfileViewModel(
       id: item.id,
       title: item.title,
       preview: item.locked ? '' : htmlToText(item.body_preview),
+      likesCount: item.likes_count,
+      hasLikesCount: item.likes_count !== undefined,
       date,
       dateLabel: date ? formatPostDate(date) : '',
       offline: true,
