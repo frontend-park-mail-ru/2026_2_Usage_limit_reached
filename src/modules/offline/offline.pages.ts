@@ -2,6 +2,7 @@ import { ApiError } from '@/modules/api/request.ts';
 import type { Post, PostPreview, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
+import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
 
@@ -58,12 +59,28 @@ export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent
   }), isCurrent);
 }
 
+/** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
+export function loadOfflineDonations(ownerId: string, direction: DonationsDirection, cursor: string | null,
+  load: () => Promise<DonationsPage>, isCurrent: () => boolean) {
+  return loadOfflinePage(['donations', ownerId, direction, cursor ?? ''], load, (page) => ({
+    next_cursor: page.next_cursor,
+    items: page.items.map((item) => ({
+      id: item.id, message: item.message, amount_minor: item.amount_minor, currency: item.currency,
+      status: item.status, created_or_paid_at: item.created_or_paid_at, is_anonymous: item.is_anonymous,
+      user: item.is_anonymous || !item.user ? null
+        : { username: item.user.username, nickname: item.user.nickname, avatar_url: null },
+    })),
+  }), isCurrent, ownerId);
+}
+
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
-  key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
+  key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean, ownerId?: string,
 ): Promise<T & { savedAt?: number }> {
-  const token = await captureOfflineToken();
-  const group = key[0] === 'post' ? key : key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
+  const captured = await captureOfflineToken();
+  const token = ownerId === undefined || captured?.ownerId === ownerId ? captured : undefined;
+  const group = key[0] === 'donations' ? key.slice(0, 3)
+    : key[0] === 'post' ? key : key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
   let page: T;
   try {
     page = await load();
@@ -89,15 +106,36 @@ async function loadOfflinePage<T extends object>(
   const saved = value && { key, savedAt: Date.now(), page: value };
   await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
     store.delete(key);
+    if (key[0] === 'donations' && key[3] === '') {
+      store.delete(IDBKeyRange.bound(group, [...group, []]));
+    }
     if (saved && new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
       store.put(saved, key);
     }
     const request = store.getAll(IDBKeyRange.bound([key[0]], [key[0], []]));
     request.onsuccess = () => {
       const pages = (request.result as SavedPage<T>[]).sort((a, b) => b.savedAt - a.savedAt);
+      if (key[0] === 'donations') {
+        const current = pages.filter((entry) => entry.key[1] === key[1] && entry.key[2] === key[2]);
+        const byCursor = new Map(current.map((entry) => [entry.key[3], entry]));
+        const kept = new Set<SavedPage<T>>();
+        let next: string | null = '';
+        while (next !== null && kept.size < MAX_PAGES) {
+          const entry = byCursor.get(next);
+          if (!entry || kept.has(entry) || Date.now() - entry.savedAt > MAX_AGE) {
+            break;
+          }
+          kept.add(entry);
+          next = (entry.page as DonationsPage).next_cursor;
+        }
+        current.filter((entry) => !kept.has(entry)).forEach((entry) => store.delete(entry.key));
+      }
       const counts = new Map<string, number>();
       pages.forEach((entry) => {
-        const kind = entry.key[0] === 'public' ? entry.key[2] : 'feed';
+        if (entry.key[0] === 'donations') {
+          return;
+        }
+        const kind = entry.key[0] === 'public' || entry.key[0] === 'donations' ? entry.key[2] : 'feed';
         const count = counts.get(kind) ?? 0;
         if (count >= MAX_PAGES || Date.now() - entry.savedAt > MAX_AGE) {
           store.delete(entry.key);
