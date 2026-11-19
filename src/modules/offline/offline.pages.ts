@@ -1,11 +1,12 @@
 import { ApiError } from '@/modules/api/request.ts';
-import type { Post, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
+import type { Post, PostPreview, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
 
 export interface OfflinePostsPage extends PostsPage {
+  items: (PostPreview & { hasLikesCount?: boolean })[];
   savedAt?: number;
 }
 

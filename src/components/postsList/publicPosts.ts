@@ -89,6 +89,7 @@ export function bindPublicPosts(
       }
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
+        hasLikesCount: item.hasLikesCount ?? item.likes_count !== undefined,
         locked: item.locked,
         offline,
         canLike: !offline && !!bindLike && !item.locked,
