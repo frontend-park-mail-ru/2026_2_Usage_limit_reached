@@ -11,6 +11,7 @@ import { postSchema } from '@/modules/validation/schemas.ts';
 import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { RichEditor } from '@/components/richEditor/richEditor.ts';
 import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
+import { bindAttachments } from './postAttachments.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -124,8 +125,9 @@ function getErrorText(err: ApiError): string {
  * @param loaded
  * @param navigate
  * @param context
+ * @param signal
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, signal: AbortSignal): void {
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
@@ -133,6 +135,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
+  bindAttachments(form, context, signal);
+  signal.addEventListener('abort', () => editor.destroy(), { once: true });
   const mode = getMode(loaded);
   const returnTo = loaded ? getPostReturnPath(ROUTES.profile) : ROUTES.profile;
   let post = loaded;
@@ -258,7 +262,13 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
  * @param navigate
  * @param params
  */
-export async function initPostEditor(root: HTMLElement, navigate: Navigate, params: RouteParams): Promise<void> {
+export function initPostEditor(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+  const lifecycle = new AbortController();
+  void loadEditor(root, navigate, params, lifecycle.signal);
+  return () => lifecycle.abort();
+}
+
+async function loadEditor(root: HTMLElement, navigate: Navigate, params: RouteParams, signal: AbortSignal): Promise<void> {
   const stopLoading = startLoading(root);
   try {
     const loadingPage = root.firstElementChild;
@@ -272,13 +282,9 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
       context = getSessionContext();
       if (params.id) {
         post = await getPost(params.id);
-        if (post.author.id !== profile.user.id) {
-          root.innerHTML = postEditorTemplate({ unavailable: true });
-          return;
-        }
       }
     } catch (err) {
-      if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+      if (signal.aborted || root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
         return;
       }
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
@@ -289,14 +295,18 @@ export async function initPostEditor(root: HTMLElement, navigate: Navigate, para
       root.innerHTML = postEditorTemplate({ message, isError: true });
       return;
     }
-    if (root.firstElementChild !== loadingPage) {
+    if (signal.aborted || root.firstElementChild !== loadingPage) {
       return;
     }
     if (!context || !isSessionCurrent(context)) {
       return;
     }
+    if (post && post.author.id !== context.userId) {
+      root.innerHTML = postEditorTemplate({ unavailable: true });
+      return;
+    }
     root.innerHTML = postEditorTemplate(buildViewModel(post));
-    bindEditor(root, post, navigate, context);
+    bindEditor(root, post, navigate, context, signal);
   } finally {
     stopLoading();
   }

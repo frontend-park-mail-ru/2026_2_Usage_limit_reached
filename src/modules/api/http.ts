@@ -29,7 +29,7 @@ function getApiUrl(path: string): string {
 
 /** Отправляет HTTP-запрос без получения CSRF-токена. */
 export async function sendRequest<T>(path: string, {
-  method = 'GET', data, responseType = 'json', headers: extraHeaders, cache, redirect,
+  method = 'GET', data, responseType = 'json', headers: extraHeaders, cache, redirect, timeoutMs, signal,
 }: HttpOptions = {}): Promise<T> {
   const url = getApiUrl(path);
   const headers = new Headers(extraHeaders);
@@ -42,12 +42,13 @@ export async function sendRequest<T>(path: string, {
   }
   const isRead = ['GET', 'HEAD', 'OPTIONS'].includes(method);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), isRead ? API_READ_TIMEOUT : API_WRITE_TIMEOUT);
+  const timer = setTimeout(() => controller.abort(), timeoutMs ?? (isRead ? API_READ_TIMEOUT : API_WRITE_TIMEOUT));
+  const requestSignal = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
   try {
     let response: Response;
     try {
       response = await fetch(url, {
-        method, credentials: 'include', signal: controller.signal, headers, body, cache, redirect,
+        method, credentials: 'include', signal: requestSignal, headers, body, cache, redirect,
       });
     } catch {
       throw new ApiError(0, controller.signal.aborted && !isRead ? 'mutation_timeout' : 'network error');

@@ -104,6 +104,84 @@
   padding: 0;
 }
 
+.action-menu__button.post-editor__attachment-add {
+  --attachment-icon: url('/assets/profile/plus.svg');
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(61, 64, 91, 0.04);
+}
+
+.post-editor__attachment-menu {
+  gap: 4px;
+  width: 248px;
+  padding: 12px;
+  border-color: var(--color-sidebar-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.post-editor__attachment-menu .action-menu__item {
+  padding-inline: 12px;
+}
+
+.post-editor__attachment:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 12px;
+  background: rgba(61, 64, 91, 0.04);
+}
+
+.post-editor__attachment-name {
+  align-self: center;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.post-editor__attachment-close {
+  --attachment-icon: url('/assets/modal/close.svg');
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1e1e1e;
+  cursor: pointer;
+}
+
+.post-editor__attachment-add::before,
+.post-editor__attachment-close::before {
+  content: '';
+  display: block;
+  height: 100%;
+  background: currentColor;
+  mask: var(--attachment-icon) center no-repeat;
+}
+
+.post-editor__attachment-message,
+.post-editor__attachment-retry {
+  grid-column: 1 / -1;
+  color: rgba(61, 64, 91, 0.5);
+  font: inherit;
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.post-editor__attachment-message_error {
+  color: var(--color-error);
+}
+
+.post-editor__attachment-retry {
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
 .post-editor__status {
   min-height: 17px;
   margin: 0;

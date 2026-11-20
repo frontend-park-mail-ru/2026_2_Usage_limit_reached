@@ -6,8 +6,10 @@
 }
 
 .rich-editor {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
 }
 
 .rich-editor__toolbar {
@@ -15,22 +17,29 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  min-height: 52px;
-  padding: 6px 8px;
+  padding: 1px 8px;
   border: 1px solid var(--color-input-border);
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--color-editor-toolbar);
   box-sizing: border-box;
 }
 
 .rich-editor__block-button {
   width: 200px;
+  max-width: 100%;
   height: 40px;
   padding: 0 40px 0 12px;
   background: url('/assets/profile/chevron.svg') right 12px center / 12px 7px no-repeat;
   font-size: 14px;
   line-height: 40px;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rich-editor__block {
+  max-width: 100%;
 }
 
 .rich-editor__block-list {
@@ -117,6 +126,7 @@
 }
 
 .rich-editor__content {
+  grid-column: 1 / -1;
   position: relative;
   min-height: 200px;
   padding-top: 24px;
@@ -141,9 +151,22 @@
 }
 
 .rich-editor__error {
+  grid-column: 1 / -1;
   margin-top: 16px;
 }
 
 .rich-editor__error:empty {
   display: none;
+}
+
+@media (max-width: 720px) {
+  .rich-editor__toolbar {
+    grid-area: 1 / 1 / 2 / -1;
+    padding: 5px 56px 1px 8px;
+  }
+
+  .rich-editor__attachment-slot {
+    grid-area: 1 / 2;
+    margin: 4px;
+  }
 }
