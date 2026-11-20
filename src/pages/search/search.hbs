@@ -2,8 +2,28 @@
   <h1 class="author-search__title">Поиск авторов</h1>
   <form class="author-search__form" role="search">
     {{> formField id="author-query" name="q" type="search" label="Отображаемое имя или имя пользователя" placeholder="Например, ivan_petrov" large=true}}
+    <div class="author-search__filter">
+      <button class="button author-search__categories" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="author-categories">Категории</button>
+      <dialog id="author-categories" class="author-search__panel" aria-labelledby="author-categories-title">
+        <div class="author-search__options">
+          <h2 id="author-categories-title">Категории</h2>
+          {{#each categories}}
+            <label class="author-search__option"><input type="checkbox" value="{{this}}"> {{this}}</label>
+          {{/each}}
+          <div class="author-search__actions">
+            <button class="button button_view_secondary" type="button" data-category-reset>Сбросить</button>
+            <button class="button button_view_primary" type="button" data-category-apply>Применить</button>
+          </div>
+        </div>
+      </dialog>
+    </div>
     <button class="button button_view_primary author-search__submit" type="submit">Найти</button>
   </form>
+  <div class="author-search__chips" aria-label="Выбранные категории" role="group" hidden>
+    {{#each categories}}
+      <button class="author-search__chip" type="button" data-tag="{{this}}" aria-label="Удалить категорию «{{this}}»" hidden>{{this}} <span aria-hidden="true">×</span></button>
+    {{/each}}
+  </div>
   <div class="author-search__status" role="status" data-search-status></div>
   <ul class="author-search__results" data-search-results hidden></ul>
 </section>
