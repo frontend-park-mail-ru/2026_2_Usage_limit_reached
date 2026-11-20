@@ -1,6 +1,7 @@
 import { cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import { renderLogin, initLogin } from '@/pages/login/login.ts';
 import { renderFeed, initFeed } from '@/pages/feed/feed.ts';
+import { renderSearch, initSearch } from '@/pages/search/search.ts';
 import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
 import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
@@ -14,7 +15,7 @@ import {
   renderSidebar,
   initSidebar,
   destroySidebar,
-  updateSidebarProfileState,
+  updateSidebarCurrentPage,
   closeSidebarProfileMenu,
 } from '@/components/sidebar/sidebar.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -31,6 +32,7 @@ const feedRoute: Route = { title: 'Лента', render: renderFeed, init: initFe
 const routes: Record<RoutePattern, Route> = {
   [ROUTES.home]: feedRoute,
   [ROUTES.feed]: feedRoute,
+  [ROUTES.search]: { title: 'Поиск авторов', render: renderSearch, init: initSearch, layout: 'sidebar' },
   [ROUTES.login]: { title: 'Вход', render: renderLogin, init: initLogin },
   [ROUTES.register]: { title: 'Регистрация', render: renderRegister, init: initRegister },
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
@@ -129,7 +131,7 @@ function renderCurrentRoute(): void {
   setRefreshNotice?.(null);
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
-  updateSidebarProfileState(path);
+  updateSidebarCurrentPage(path);
   document.title = route.title;
   root.innerHTML = route.render();
   const cleanup = route.init?.(

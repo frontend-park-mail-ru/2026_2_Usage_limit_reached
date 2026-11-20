@@ -28,6 +28,10 @@
   box-sizing: border-box;
 }
 
+.form-field__input_large {
+  height: 44px;
+}
+
 .form-field__input::placeholder {
   color: var(--color-input-placeholder);
   opacity: 1;
