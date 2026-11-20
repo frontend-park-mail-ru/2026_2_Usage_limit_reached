@@ -1,0 +1,9 @@
+<section class="author-search">
+  <h1 class="author-search__title">Поиск авторов</h1>
+  <form class="author-search__form" role="search">
+    {{> formField id="author-query" name="q" type="search" label="Отображаемое имя или имя пользователя" placeholder="Например, ivan_petrov" large=true}}
+    <button class="button button_view_primary author-search__submit" type="submit">Найти</button>
+  </form>
+  <div class="author-search__status" role="status" data-search-status></div>
+  <ul class="author-search__results" data-search-results hidden></ul>
+</section>

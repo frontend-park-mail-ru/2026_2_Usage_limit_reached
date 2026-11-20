@@ -3,6 +3,7 @@ import type { RouteMatch, RouteParams } from './router.types.ts';
 export const ROUTES = {
   home: '/',
   feed: '/feed',
+  search: '/search',
   login: '/login',
   register: '/register',
   profile: '/profile',

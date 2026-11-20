@@ -18,7 +18,7 @@ function getAvatarUrl(): string | undefined {
 
 /** Возвращает HTML сайдбара. */
 export function renderSidebar(): string {
-  return sidebarTemplate({ avatarUrl: getAvatarUrl(), feedHref: ROUTES.feed });
+  return sidebarTemplate({ avatarUrl: getAvatarUrl(), feedHref: ROUTES.feed, searchHref: ROUTES.search });
 }
 
 /** Закрывает меню профиля. */
@@ -109,12 +109,14 @@ export function destroySidebar(): void {
  * @param path
  */
 export function updateSidebarCurrentPage(path: string): void {
-  const feedLink = document.querySelector(`.sidebar__item-link[href='${ROUTES.feed}']`);
-  if (path === ROUTES.home || path === ROUTES.feed) {
-    feedLink?.setAttribute('aria-current', 'page');
-  } else {
-    feedLink?.removeAttribute('aria-current');
-  }
+  const current = path === ROUTES.home ? ROUTES.feed : path;
+  document.querySelectorAll<HTMLAnchorElement>('.sidebar__item-link').forEach((link) => {
+    if (link.pathname === current) {
+      link.setAttribute('aria-current', 'page');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  });
   const profileButton = document.querySelector('.sidebar__item-profile');
   if (!profileButton) {
     return;
