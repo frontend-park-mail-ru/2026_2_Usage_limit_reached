@@ -8,7 +8,7 @@ import { requireElement } from '@/utils/helpers/dom.ts';
 
 let profileMenu: ProfileMenu | null = null;
 let unsubscribeAvatar: (() => void) | null = null;
-let unbindLogo: (() => void) | undefined;
+let unbindSidebarLinks: (() => void) | undefined;
 let hintController: AbortController | undefined;
 
 /** Аватар из store. */
@@ -18,7 +18,7 @@ function getAvatarUrl(): string | undefined {
 
 /** Возвращает HTML сайдбара. */
 export function renderSidebar(): string {
-  return sidebarTemplate({ avatarUrl: getAvatarUrl() });
+  return sidebarTemplate({ avatarUrl: getAvatarUrl(), feedHref: ROUTES.feed });
 }
 
 /** Закрывает меню профиля. */
@@ -84,7 +84,7 @@ export function initSidebar(navigate: Navigate): void {
   window.addEventListener('resize', hideHints, { signal });
   document.addEventListener('scroll', hideHints, { signal, capture: true });
   profileMenu = new ProfileMenu(navigate);
-  unbindLogo = bindLinks(requireElement<HTMLElement>(document, '.sidebar__top'), navigate);
+  unbindSidebarLinks = bindLinks(requireElement<HTMLElement>(document, '.sidebar__top'), navigate);
   updateSidebarMenu();
   unsubscribeAvatar = authStore.subscribe(() => {
     updateSidebarAvatar();
@@ -96,8 +96,8 @@ export function initSidebar(navigate: Navigate): void {
 export function destroySidebar(): void {
   hintController?.abort();
   hintController = undefined;
-  unbindLogo?.();
-  unbindLogo = undefined;
+  unbindSidebarLinks?.();
+  unbindSidebarLinks = undefined;
   profileMenu?.destroy();
   profileMenu = null;
   unsubscribeAvatar?.();
@@ -105,15 +105,15 @@ export function destroySidebar(): void {
 }
 
 /**
- * Отмечает кнопку профиля, если открыта страница профиля.
+ * Отмечает текущую страницу в сайдбаре.
  * @param path
  */
-export function updateSidebarProfileState(path: string): void {
-  const logo = document.querySelector('.sidebar__logo-link');
+export function updateSidebarCurrentPage(path: string): void {
+  const feedLink = document.querySelector(`.sidebar__item-link[href='${ROUTES.feed}']`);
   if (path === ROUTES.home || path === ROUTES.feed) {
-    logo?.setAttribute('aria-current', 'page');
+    feedLink?.setAttribute('aria-current', 'page');
   } else {
-    logo?.removeAttribute('aria-current');
+    feedLink?.removeAttribute('aria-current');
   }
   const profileButton = document.querySelector('.sidebar__item-profile');
   if (!profileButton) {

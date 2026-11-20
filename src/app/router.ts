@@ -14,7 +14,7 @@ import {
   renderSidebar,
   initSidebar,
   destroySidebar,
-  updateSidebarProfileState,
+  updateSidebarCurrentPage,
   closeSidebarProfileMenu,
 } from '@/components/sidebar/sidebar.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -129,7 +129,7 @@ function renderCurrentRoute(): void {
   setRefreshNotice?.(null);
   closeSidebarProfileMenu();
   updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
-  updateSidebarProfileState(path);
+  updateSidebarCurrentPage(path);
   document.title = route.title;
   root.innerHTML = route.render();
   const cleanup = route.init?.(
