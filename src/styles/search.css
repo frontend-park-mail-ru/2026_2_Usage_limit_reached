@@ -138,6 +138,11 @@
   margin-top: 16px;
 }
 
+.author-search__retry {
+  width: fit-content;
+  margin-top: 8px;
+}
+
 .author-search__results {
   margin: 16px 0 0;
   padding: 0 24px;

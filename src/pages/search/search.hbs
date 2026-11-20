@@ -24,6 +24,9 @@
       <button class="author-search__chip" type="button" data-tag="{{this}}" aria-label="Удалить категорию «{{this}}»" hidden>{{this}} <span aria-hidden="true">×</span></button>
     {{/each}}
   </div>
-  <div class="author-search__status" role="status" data-search-status></div>
   <ul class="author-search__results" data-search-results hidden></ul>
+  <div class="author-search__status" role="status" data-search-status></div>
+  <div class="author-search__retry" data-search-retry hidden>
+    <button class="button button_view_primary" type="button">Повторить</button>
+  </div>
 </section>

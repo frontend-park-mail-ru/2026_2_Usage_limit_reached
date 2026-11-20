@@ -18,6 +18,7 @@ export function initSearch(root: HTMLElement): () => void {
   const input = requireElement<HTMLInputElement>(form, '#author-query');
   const status = requireElement<HTMLElement>(root, '[data-search-status]');
   const results = requireElement<HTMLUListElement>(root, '[data-search-results]');
+  const retry = requireElement<HTMLElement>(root, '[data-search-retry]');
   const events = new AbortController();
   const { signal } = events;
   const filter = requireElement(form, '.author-search__filter');
@@ -29,6 +30,19 @@ export function initSearch(root: HTMLElement): () => void {
   let tags: string[] = [];
   let q = '';
   let version = 0;
+  let cursor: string | null = null;
+
+  const observer = new IntersectionObserver((entries) => {
+    if (retry.hidden && entries.some((entry) => entry.isIntersecting)) {
+      loadMore();
+    }
+  }, { rootMargin: '200px' });
+
+  function loadMore(): void {
+    if (cursor !== null) {
+      void load(cursor);
+    }
+  }
 
   function applyTags(next: string[]): void {
     tags = next;
@@ -37,7 +51,7 @@ export function initSearch(root: HTMLElement): () => void {
     chips.querySelectorAll<HTMLButtonElement>('button').forEach((chip) => {
       chip.hidden = !tags.includes(chip.dataset.tag ?? '');
     });
-    void search();
+    search();
   }
 
   trigger.addEventListener('click', () => {
@@ -92,32 +106,48 @@ export function initSearch(root: HTMLElement): () => void {
     }
   }, { capture: true, signal });
 
-  async function search(): Promise<void> {
-    const submitted = ++version;
-    const hasQuery = q !== '' || tags.length > 0;
+  function search(): void {
+    version += 1;
     results.replaceChildren();
     results.hidden = true;
-    status.textContent = hasQuery ? 'Ищем авторов…' : '';
-    if (!hasQuery) {
+    void load(null);
+  }
+
+  async function load(next: string | null): Promise<void> {
+    const submitted = version;
+    observer.disconnect();
+    cursor = null;
+    retry.hidden = true;
+    if (!q && tags.length === 0) {
+      status.textContent = '';
       return;
     }
+    status.textContent = next === null ? 'Ищем авторов…' : 'Загружаем ещё авторов…';
 
     try {
-      const page = await searchAuthors(q, tags);
+      const page = await searchAuthors(q, tags, next);
       if (version !== submitted) {
         return;
       }
-      results.innerHTML = page.items.map((author) => authorResultTemplate({
+      results.insertAdjacentHTML('beforeend', page.items.map((author) => authorResultTemplate({
         ...author,
         href: publicProfileRoute(author.username),
         initials: author.nickname.trim().split(/\s+/u).slice(0, 2)
           .map((part) => [...part][0] ?? '').join('').toUpperCase(),
-      })).join('');
-      results.hidden = page.items.length === 0;
-      status.textContent = page.items.length ? '' : 'Авторы не найдены';
+      })).join(''));
+      results.hidden = results.childElementCount === 0;
+      cursor = page.next_cursor;
+      status.textContent = results.hidden && cursor === null ? 'Авторы не найдены' : '';
+      if (cursor !== null) {
+        observer.observe(status);
+      }
     } catch {
       if (version === submitted) {
-        status.textContent = 'Не удалось найти авторов. Попробуйте ещё раз';
+        cursor = next;
+        retry.hidden = next === null;
+        status.textContent = next === null
+          ? 'Не удалось найти авторов. Попробуйте ещё раз'
+          : 'Не удалось загрузить ещё авторов';
       }
     }
   }
@@ -125,14 +155,16 @@ export function initSearch(root: HTMLElement): () => void {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     q = input.value.trim();
-    void search();
+    search();
   }, { signal });
+  retry.addEventListener('click', loadMore, { signal });
 
   if (authStore.getState().status === 'unknown') {
     void checkSession().catch(() => {});
   }
   return () => {
     version += 1;
+    observer.disconnect();
     events.abort();
   };
 }
