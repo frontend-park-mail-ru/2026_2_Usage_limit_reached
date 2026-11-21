@@ -50,12 +50,14 @@
         <input type="file" hidden>
       </div>
     {{/richEditor}}
-    <div class="post-editor__attachment" data-attachment hidden>
-      <span class="post-editor__attachment-name" data-attachment-name></span>
-      <button class="post-editor__attachment-close" type="button" aria-label="Убрать файл"></button>
-      <div class="post-editor__attachment-message" role="status"></div>
-      <button class="post-editor__attachment-retry" type="button" hidden>Повторить</button>
-    </div>
+    <template data-attachment-template>
+      <div class="post-editor__attachment" data-attachment contenteditable="false">
+        <span class="post-editor__attachment-name" data-attachment-name></span>
+        <button class="post-editor__attachment-close" type="button" aria-label="Убрать файл"></button>
+        <div class="post-editor__attachment-message" role="status"></div>
+        <button class="post-editor__attachment-retry" type="button" hidden>Повторить</button>
+      </div>
+    </template>
     <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
   </form>
 

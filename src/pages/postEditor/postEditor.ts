@@ -135,7 +135,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
-  bindAttachments(form, context, signal);
+  bindAttachments(form, editor, context, signal);
   signal.addEventListener('abort', () => editor.destroy(), { once: true });
   const mode = getMode(loaded);
   const returnTo = loaded ? getPostReturnPath(ROUTES.profile) : ROUTES.profile;

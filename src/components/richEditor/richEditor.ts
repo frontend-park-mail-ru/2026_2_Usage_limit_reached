@@ -67,7 +67,61 @@ export class RichEditor {
 
   /** Возвращает HTML поля или пустую строку. */
   getHtml(): string {
-    return this.isEmpty() ? '' : this.content.innerHTML;
+    let body = this.content;
+    if (body.querySelector('[data-attachment], [data-attachment-tail]')) {
+      body = document.createElement('div');
+      for (const node of this.content.childNodes) {
+        if (!(node instanceof HTMLElement && node.hasAttribute('data-attachment'))) {
+          body.append(node.cloneNode(true));
+        }
+      }
+      body.querySelectorAll('[data-attachment]').forEach((card) => card.remove());
+      body.querySelectorAll('[data-attachment-tail]').forEach((paragraph) => {
+        if (paragraph.textContent?.trim()) {
+          paragraph.removeAttribute('data-attachment-tail');
+        } else {
+          paragraph.remove();
+        }
+      });
+    }
+    return body.textContent?.trim() || body.querySelector('li') ? body.innerHTML : '';
+  }
+
+  /** Запоминает узел, перед которым нужно вставить вложение. */
+  getAttachmentPosition(): ChildNode | null {
+    const selection = document.getSelection();
+    const range = selection?.rangeCount && this.content.contains(selection.focusNode)
+      ? selection.getRangeAt(0) : this.savedRange;
+    if (!range || !this.content.contains(range.endContainer)) {
+      return null;
+    }
+    if (range.endContainer === this.content) {
+      return this.content.childNodes[range.endOffset] ?? null;
+    }
+    let node = range.endContainer;
+    while (node.parentNode && node.parentNode !== this.content) {
+      node = node.parentNode;
+    }
+    return node.nextSibling;
+  }
+
+  /** Вставляет карточку и оставляет место для ввода после последнего вложения. */
+  insertAttachment(card: HTMLElement, before: ChildNode | null): void {
+    const tail = this.content.querySelector(':scope > [data-attachment-tail]:last-child');
+    this.content.insertBefore(card, before?.parentNode === this.content ? before : tail);
+    if (this.content.lastChild === card) {
+      const paragraph = document.createElement('p');
+      paragraph.setAttribute('data-attachment-tail', '');
+      paragraph.append(document.createElement('br'));
+      card.after(paragraph);
+    }
+    this.sync();
+  }
+
+  /** Убирает карточку и обновляет поле. */
+  removeAttachment(card: HTMLElement): void {
+    card.remove();
+    this.sync();
   }
 
   /**
@@ -92,15 +146,10 @@ export class RichEditor {
     this.form?.removeEventListener('submit', this.onSubmit, true);
   }
 
-  /** Пусто ли поле. */
-  private isEmpty(): boolean {
-    return !this.content.textContent?.trim() && !this.content.querySelector('li');
-  }
-
   /** Обновляет скрытое поле формы и подсказку. */
   private sync(): void {
     this.valueInput.value = this.getHtml();
-    this.content.toggleAttribute('data-empty', this.isEmpty());
+    this.content.toggleAttribute('data-empty', !this.valueInput.value && !this.content.querySelector('[data-attachment]'));
   }
 
   /** Кладёт в форму очищенный текст перед отправкой. */
@@ -110,7 +159,7 @@ export class RichEditor {
 
   /** Заворачивает текст без абзаца в абзац и ставит курсор в его конец. */
   private ensureParagraph(): void {
-    if (this.content.querySelector('p, h3, ul, ol')) {
+    if (this.content.querySelector('p, h3, ul, ol, [data-attachment]')) {
       return;
     }
     const paragraph = document.createElement('p');
@@ -129,6 +178,11 @@ export class RichEditor {
   /** Ввод текста. */
   private handleInput(): void {
     this.ensureParagraph();
+    this.content.querySelectorAll('[data-attachment-tail]').forEach((paragraph) => {
+      if (paragraph.textContent?.trim()) {
+        paragraph.removeAttribute('data-attachment-tail');
+      }
+    });
     this.sync();
     this.onChange();
   }
