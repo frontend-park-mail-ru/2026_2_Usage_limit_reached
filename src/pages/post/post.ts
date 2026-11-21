@@ -2,6 +2,7 @@ import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postTemplate from './post.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import {
   checkSession,
@@ -306,7 +307,21 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       renderedSession = sessionKey();
       document.title = post.title;
       if (post.locked) {
-        root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+        const lockedCoverUrl = !offline && post.cover_url ? getAttachmentUrl(post.cover_url) : null;
+        const showRestricted = () => {
+          root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+          bindBackLink(root);
+        };
+        if (!lockedCoverUrl) {
+          showRestricted();
+          return;
+        }
+        root.innerHTML = postTemplate({ ...buildViewModel(post, false), lockedCoverUrl });
+        requireElement(root, '.post-page__cover').addEventListener('error', () => {
+          if (isCurrent()) {
+            showRestricted();
+          }
+        }, { once: true });
         bindBackLink(root);
         return;
       }
