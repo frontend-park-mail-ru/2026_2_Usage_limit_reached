@@ -10,6 +10,9 @@
   {{/if}}
   {{#if locked}}
     <div class="post-card__locked">
+      {{#if coverUrl}}
+        <img class="post-card__cover" src="{{coverUrl}}" alt="" loading="lazy">
+      {{/if}}
       <p class="post-card__blur" aria-hidden="true">Этот пост доступен по подписке. Для чтения нужен уровень подписки, который включает доступ к этой публикации. У разных уровней могут быть разные условия: подписка на один уровень не обязательно открывает все посты автора. Если публикация остаётся закрытой, у текущего аккаунта нет необходимого доступа. Пока доступны название поста и информация об авторе, а само содержимое скрыто.</p>
       <span class="post-card__subscription" id="post-card-access-{{id}}">
         <img src="/assets/post/lock.svg" width="20" height="20" alt="" />
@@ -17,6 +20,9 @@
       </span>
     </div>
   {{else}}
+    {{#if coverUrl}}
+      <img class="post-card__cover" src="{{coverUrl}}" alt="" loading="lazy">
+    {{/if}}
     <p class="post-card__excerpt">{{preview}}</p>
   {{/if}}
   <h3 class="post-card__title" id="post-card-title-{{id}}">{{title}}</h3>

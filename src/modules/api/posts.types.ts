@@ -17,6 +17,7 @@ export interface PostPreview {
   locked: boolean;
   title: string;
   body_preview: string;
+  cover_url?: string | null;
   likes_count: number;
   liked_by_user: boolean;
   published_or_updated_at: string | null;

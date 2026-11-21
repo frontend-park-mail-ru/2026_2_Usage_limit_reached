@@ -10,6 +10,7 @@ import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/off
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
+import { bindPostCardCovers } from '@/components/postCard/bindPostCardCovers.ts';
 import { LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList.constants.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
@@ -33,6 +34,7 @@ export function bindPublicPosts(
   setRefreshNotice: SetRefreshNotice = () => {},
 ) {
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
+  const unbindCovers = bindPostCardCovers(panel);
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
   const options = POST_SORT_OPTIONS.map((option) => ({ ...option, selected: option.value === 'new' }));
   sortRoot.innerHTML = sortMenuTemplate({ id: feed ? 'feed-sort' : 'public-profile-sort', currentLabel: options[0].label, options });
@@ -190,6 +192,7 @@ export function bindPublicPosts(
       setRefreshNotice(null);
       window.removeEventListener('offline', handleOffline);
       unbindRecovery();
+      unbindCovers();
       observer.disconnect();
       sortMenu.destroy();
     },
