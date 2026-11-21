@@ -12,6 +12,7 @@ import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { RichEditor } from '@/components/richEditor/richEditor.ts';
 import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { bindAttachments } from './postAttachments.ts';
+import { bindPostCover } from './postCover.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -136,6 +137,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
+  const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length
@@ -153,10 +155,15 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   });
   form.addEventListener('input', refreshAttachmentErrors, { signal });
   form.addEventListener('submit', (event) => {
-    if (showAttachmentErrors()) {
+    const hasAttachmentErrors = showAttachmentErrors();
+    if (hasAttachmentErrors || cover.isUploading()) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      attachmentsAlert.scrollIntoView({ block: 'nearest' });
+      if (hasAttachmentErrors) {
+        attachmentsAlert.scrollIntoView({ block: 'nearest' });
+      } else {
+        cover.reveal();
+      }
     }
   }, { capture: true, signal });
   signal.addEventListener('abort', () => editor.destroy(), { once: true });
@@ -174,7 +181,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     leave = null;
   });
 
-  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body || getUnfinished().length > 0;
+  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
+    || getUnfinished().length > 0 || cover.hasChanges();
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -199,7 +207,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     leave = null;
     setBusy(true);
     setAlert(alert, null);
-    const data = { title: values.title.trim(), body: values.body, status };
+    const coverId = cover.getCoverId();
+    const data = { title: values.title.trim(), body: values.body, status, ...(coverId === undefined ? {} : { cover_id: coverId }) };
     try {
       const save = async () => {
         if (post) {
@@ -215,6 +224,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         return;
       }
       saved = snapshot;
+      cover.markSaved();
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();

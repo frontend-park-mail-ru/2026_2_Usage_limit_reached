@@ -38,6 +38,7 @@ export interface Post {
   title: string;
   body: string;
   attachments?: PostAttachment[];
+  cover_url?: string | null;
   status: PostStatus;
   published_at: string | null;
   created_at: string;
@@ -51,6 +52,7 @@ export interface PostInput {
   title: string;
   body: string;
   status: PostStatus;
+  cover_id?: string | null;
 }
 
 export interface PostUpdate extends PostInput {

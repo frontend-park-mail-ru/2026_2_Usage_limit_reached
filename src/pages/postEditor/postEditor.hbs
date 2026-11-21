@@ -25,41 +25,52 @@
     </div>
   </header>
 
-  <form class="post-editor__card" id="post-editor-form" novalidate>
-    {{> alert className="post-editor__alert"}}
-    {{> alert className="post-editor__attachments-alert" title="Вложения ещё не готовы"}}
-    <input
-      class="post-editor__title"
-      name="title"
-      type="text"
-      value="{{title}}"
-      placeholder="Заголовок поста"
-      aria-label="Заголовок поста"
-      aria-describedby="post-editor-title-error"
-      autocomplete="off"
-    />
-    <p class="form-field__error post-editor__title-error" id="post-editor-title-error" data-error-for="title" aria-live="polite"></p>
-    {{#> richEditor id="post-editor-body" name="body" label="Текст поста" placeholder="Начните писать…" errorPlaceholder="Текст поста"}}
-      <div class="action-menu rich-editor__attachment-slot" data-attachments>
-        <button class="action-menu__button post-editor__attachment-add" type="button" aria-label="Добавить вложение" aria-haspopup="menu" aria-expanded="false" aria-controls="post-attachments-menu"></button>
-        <div class="action-menu__list post-editor__attachment-menu" id="post-attachments-menu" role="menu" aria-label="Добавить вложение" hidden>
-          <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="image">Изображение</button>
-          <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="video">Видео</button>
-          <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="audio">Аудио</button>
-          <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="file">Файл</button>
+  <form class="post-editor__form" id="post-editor-form" novalidate>
+    <div class="post-editor__card">
+      {{> alert className="post-editor__alert"}}
+      {{> alert className="post-editor__attachments-alert" title="Вложения ещё не готовы"}}
+      <input
+        class="post-editor__title"
+        name="title"
+        type="text"
+        value="{{title}}"
+        placeholder="Заголовок поста"
+        aria-label="Заголовок поста"
+        aria-describedby="post-editor-title-error"
+        autocomplete="off"
+      />
+      <p class="form-field__error post-editor__title-error" id="post-editor-title-error" data-error-for="title" aria-live="polite"></p>
+      {{#> richEditor id="post-editor-body" name="body" label="Текст поста" placeholder="Начните писать…" errorPlaceholder="Текст поста"}}
+        <div class="action-menu rich-editor__attachment-slot" data-attachments>
+          <button class="action-menu__button post-editor__attachment-add" type="button" aria-label="Добавить вложение" aria-haspopup="menu" aria-expanded="false" aria-controls="post-attachments-menu"></button>
+          <div class="action-menu__list post-editor__attachment-menu" id="post-attachments-menu" role="menu" aria-label="Добавить вложение" hidden>
+            <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="image">Изображение</button>
+            <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="video">Видео</button>
+            <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="audio">Аудио</button>
+            <button class="action-menu__item" type="button" role="menuitem" tabindex="-1" data-action="file">Файл</button>
+          </div>
+          <input type="file" hidden>
         </div>
-        <input type="file" hidden>
-      </div>
-    {{/richEditor}}
-    <template data-attachment-template>
-      <div class="post-editor__attachment" data-attachment contenteditable="false">
-        <span class="post-editor__attachment-name" data-attachment-name></span>
-        <button class="post-editor__attachment-close" type="button" aria-label="Убрать файл"></button>
-        <div class="post-editor__attachment-message" role="status"></div>
-        <button class="post-editor__attachment-retry" type="button" hidden>Повторить</button>
-      </div>
-    </template>
-    <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
+      {{/richEditor}}
+      <template data-attachment-template>
+        <div class="post-editor__attachment" data-attachment contenteditable="false">
+          <span class="post-editor__attachment-name" data-attachment-name></span>
+          <button class="post-editor__attachment-close" type="button" aria-label="Убрать файл"></button>
+          <div class="post-editor__attachment-message" role="status"></div>
+          <button class="post-editor__attachment-retry" type="button" hidden>Повторить</button>
+        </div>
+      </template>
+      <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
+    </div>
+    <section class="post-cover" data-cover aria-labelledby="post-cover-heading">
+      <h2 class="post-cover__heading" id="post-cover-heading">Обложка поста</h2>
+      <img class="post-cover__preview" data-cover-preview alt="Обложка поста" hidden>
+      <button class="button button_view_secondary post-cover__choose" type="button" data-cover-choose>Добавить обложку</button>
+      <button class="post-cover__remove" type="button" data-cover-remove hidden>Удалить обложку</button>
+      <p class="post-cover__status" data-cover-status role="status"></p>
+      <p class="post-cover__hint">Обложка будет видна в ленте, если вы её добавите</p>
+      <input type="file" hidden>
+    </section>
   </form>
 
   {{> linkDialog}}
