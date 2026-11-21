@@ -100,6 +100,88 @@
   line-height: 20px;
 }
 
+.post-page__attachment {
+  margin: 24px 0;
+}
+
+.post-page__attachment img,
+.post-page__attachment video,
+.post-page__attachment audio {
+  display: block;
+  width: 100%;
+}
+
+.post-page__attachment img,
+.post-page__attachment video {
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.post-page__attachment audio {
+  height: 54px;
+}
+
+.post-page__attachment_file,
+.post-page__attachment_unavailable {
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: 12px;
+  background: rgba(61, 64, 91, 0.04);
+}
+
+.post-page__attachment_file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-page__file-info {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.post-page__file-name {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: 500;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.post-page__file-size,
+.post-page__file-error {
+  color: rgba(61, 64, 91, 0.8);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.post-page__file-error:empty {
+  display: none;
+}
+
+.post-page__download {
+  flex: 0 0 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: url('/assets/post/download.svg') center no-repeat;
+  cursor: pointer;
+}
+
+.post-page__download:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.post-page__download:focus-visible {
+  outline: 2px solid var(--color-text);
+}
+
 .post-page__footer {
   display: flex;
   align-items: center;

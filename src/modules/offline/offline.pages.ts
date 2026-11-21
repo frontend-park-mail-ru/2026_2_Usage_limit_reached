@@ -51,8 +51,9 @@ export function loadOfflinePublicProfile(username: string, load: () => Promise<P
 
 /** Сохраняет только открытые опубликованные посты, черновики и закрытые тела исключает. */
 export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent: () => boolean) {
-  return loadOfflinePage<Post>(['post', id], load, (post) => post.locked || post.status !== 'published' ? null : ({
+  return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => post.locked || post.status !== 'published' ? null : ({
     id: post.id, title: post.title, body: sanitizeHtml(post.body), status: post.status, locked: false,
+    hasAttachments: !!new DOMParser().parseFromString(post.body, 'text/html').body.querySelector('figure[data-attachment-id]'),
     author: { id: post.author.id, nickname: post.author.nickname, username: post.author.username },
     published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
     likes_count: post.likes_count, liked_by_user: post.liked_by_user,

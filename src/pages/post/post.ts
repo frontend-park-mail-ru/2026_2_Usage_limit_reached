@@ -18,6 +18,7 @@ import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
+import { bindPostAttachments } from './postAttachments.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
@@ -213,6 +214,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   let active = true;
   let request = 0;
   let disposeActions: (() => void) | undefined;
+  let disposeBody: (() => void) | undefined;
   let renderedSession: string | undefined;
   let offline = false;
   let needsRetry = false;
@@ -229,6 +231,8 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     busy = true;
     setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
+    disposeBody?.();
+    disposeBody = undefined;
     disposeActions?.();
     disposeActions = undefined;
     donateDialog = undefined;
@@ -244,11 +248,13 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       }
       const version = getSessionVersion();
       let post: Post;
+      let hasOfflineAttachments: boolean;
       try {
         const result = await loadOfflinePost(params.id ?? '', () => getPost(params.id ?? ''),
           () => isCurrent() && version === getSessionVersion());
         post = result;
         offline = result.savedAt !== undefined;
+        hasOfflineAttachments = !!result.hasAttachments;
         needsRetry = offline;
       } catch (error) {
         if (!isCurrent()) {
@@ -305,11 +311,21 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         return;
       }
       root.innerHTML = postTemplate({ ...buildViewModel(post, isOwner && !offline), offline });
-      requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
+      const body = requireElement<HTMLElement>(root, '[data-post-body]');
+      body.innerHTML = sanitizeHtml(post.body, !offline);
       bindBackLink(root);
       if (offline) {
+        if (hasOfflineAttachments || !body.textContent?.trim()) {
+          const message = document.createElement('p');
+          message.className = 'post-page__attachment_unavailable';
+          message.textContent = hasOfflineAttachments
+            ? 'Вложения доступны после подключения к интернету'
+            : 'Содержимое поста недоступно без интернета';
+          body.append(message);
+        }
         return;
       }
+      disposeBody = bindPostAttachments(body, post.attachments ?? []);
       bindLike(root, post, beforeAction);
       if (isOwner) {
         disposeActions = bindOwnerActions(root, post, navigate, beforeAction);
@@ -364,6 +380,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     window.removeEventListener('offline', handleOffline);
     unsubscribe();
     unbindAvatarFallback();
+    disposeBody?.();
     disposeActions?.();
     setRefreshNotice(null);
   };
