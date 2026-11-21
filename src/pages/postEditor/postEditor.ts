@@ -132,10 +132,30 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
   const alert = requireElement<HTMLElement>(form, '[data-alert]');
+  const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
-  bindAttachments(form, editor, context, signal);
+  const showAttachmentErrors = (): boolean => {
+    const unfinished = getUnfinished();
+    setAlert(attachmentsAlert, unfinished.length
+      ? `Дождитесь загрузки или уберите файлы с ошибкой. ${unfinished.join(', ')}` : null);
+    return unfinished.length > 0;
+  };
+  const refreshAttachmentErrors = () => {
+    if (!attachmentsAlert.hidden) {
+      showAttachmentErrors();
+    }
+  };
+  const getUnfinished = bindAttachments(form, editor, context, signal, refreshAttachmentErrors);
+  form.addEventListener('input', refreshAttachmentErrors, { signal });
+  form.addEventListener('submit', (event) => {
+    if (showAttachmentErrors()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      attachmentsAlert.scrollIntoView({ block: 'nearest' });
+    }
+  }, { capture: true, signal });
   signal.addEventListener('abort', () => editor.destroy(), { once: true });
   const mode = getMode(loaded);
   const returnTo = loaded ? getPostReturnPath(ROUTES.profile) : ROUTES.profile;

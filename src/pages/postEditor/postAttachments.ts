@@ -10,7 +10,13 @@ import { ATTACHMENT_OPTIONS, validateAttachment } from './attachmentValidation.t
 import { showAttachmentPreview } from './attachmentPreview.ts';
 
 /** Подключает выбор файла и хранит загруженные вложения до выхода из редактора. */
-export function bindAttachments(form: HTMLFormElement, editor: RichEditor, context: SessionContext, signal: AbortSignal): void {
+export function bindAttachments(
+  form: HTMLFormElement,
+  editor: RichEditor,
+  context: SessionContext,
+  signal: AbortSignal,
+  onChange: () => void,
+): () => string[] {
   const picker = requireElement<HTMLElement>(form, '[data-attachments]');
   const add = requireElement<HTMLButtonElement>(picker, '.post-editor__attachment-add');
   const input = requireElement<HTMLInputElement>(picker, 'input[type="file"]');
@@ -59,6 +65,7 @@ export function bindAttachments(form: HTMLFormElement, editor: RichEditor, conte
       message.textContent = text;
       message.classList.toggle('post-editor__attachment-message_error', error);
       retry.hidden = !canRetry;
+      onChange();
     };
 
     async function upload(selectedFile: File | undefined): Promise<void> {
@@ -76,6 +83,7 @@ export function bindAttachments(form: HTMLFormElement, editor: RichEditor, conte
           file = undefined;
           name.textContent = attachment.name;
           showAttachmentPreview(message, attachment);
+          onChange();
         }
       } catch (error) {
         if (card.isConnected && !uploadSignal.aborted && isSessionCurrent(context)) {
@@ -96,6 +104,7 @@ export function bindAttachments(form: HTMLFormElement, editor: RichEditor, conte
       pending?.abort();
       uploaded.delete(card);
       editor.removeAttachment(card);
+      onChange();
       add.focus();
     });
     if (issue) {
@@ -107,4 +116,12 @@ export function bindAttachments(form: HTMLFormElement, editor: RichEditor, conte
     card.scrollIntoView({ block: 'nearest' });
   }, { signal });
   signal.addEventListener('abort', () => menu.destroy(), { once: true });
+
+  return () => [...form.querySelectorAll<HTMLElement>('[data-attachment]')]
+    .filter((card) => !uploaded.has(card))
+    .map((card) => {
+      const name = requireElement(card, '[data-attachment-name]').textContent;
+      const status = requireElement(card, '.post-editor__attachment-message').textContent;
+      return `«${name}» (${status})`;
+    });
 }

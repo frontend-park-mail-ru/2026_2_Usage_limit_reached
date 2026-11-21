@@ -108,7 +108,11 @@ export class RichEditor {
   /** Вставляет карточку и оставляет место для ввода после последнего вложения. */
   insertAttachment(card: HTMLElement, before: ChildNode | null): void {
     const tail = this.content.querySelector(':scope > [data-attachment-tail]:last-child');
-    this.content.insertBefore(card, before?.parentNode === this.content ? before : tail);
+    let next = before?.parentNode === this.content ? before : tail;
+    while (next instanceof HTMLElement && next.hasAttribute('data-attachment')) {
+      next = next.nextSibling;
+    }
+    this.content.insertBefore(card, next);
     if (this.content.lastChild === card) {
       const paragraph = document.createElement('p');
       paragraph.setAttribute('data-attachment-tail', '');
