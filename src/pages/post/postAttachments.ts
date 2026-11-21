@@ -1,7 +1,6 @@
 import fileTemplate from './postAttachmentFile.hbs';
 import type { PostAttachment } from '@/modules/api/attachments.ts';
 import { formatAttachmentSize, getAttachmentUrl } from '@/utils/helpers/attachments.ts';
-import { requireElement } from '@/utils/helpers/dom.ts';
 
 /** Показывает ошибку в том же месте, где было вложение. */
 function showUnavailable(figure: HTMLElement, message: string): void {
@@ -10,41 +9,6 @@ function showUnavailable(figure: HTMLElement, message: string): void {
   status.setAttribute('role', 'status');
   status.textContent = message;
   figure.replaceChildren(status);
-}
-
-/** Скачивает документ после клика, оставляя повтор доступным при ошибке. */
-function bindDownload(figure: HTMLElement, file: PostAttachment, url: string, signal: AbortSignal): void {
-  figure.classList.add('post-page__attachment_file');
-  figure.innerHTML = fileTemplate({ name: file.name, size: formatAttachmentSize(file.size_bytes) });
-  const button = requireElement<HTMLButtonElement>(figure, '.post-page__download');
-  const error = requireElement(figure, '[data-download-error]');
-
-  button.addEventListener('click', async () => {
-    button.disabled = true;
-    error.textContent = '';
-    try {
-      const response = await fetch(url, { signal, cache: 'no-store', mode: 'same-origin' });
-      if (!response.ok) {
-        throw new Error();
-      }
-      const blob = await response.blob();
-      if (signal.aborted) {
-        return;
-      }
-      const link = document.createElement('a');
-      const blobUrl = URL.createObjectURL(blob);
-      link.href = blobUrl;
-      link.download = file.name;
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-    } catch {
-      if (!signal.aborted) {
-        error.textContent = 'Не удалось скачать файл';
-      }
-    } finally {
-      button.disabled = false;
-    }
-  }, { signal });
 }
 
 /** Подставляет вложения в очищенный текст по ID маркеров. */
@@ -61,7 +25,8 @@ export function bindPostAttachments(body: Element, attachments: PostAttachment[]
       continue;
     }
     if (file.media_type === 'file') {
-      bindDownload(figure, file, url, signal);
+      figure.classList.add('post-page__attachment_file');
+      figure.innerHTML = fileTemplate({ name: file.name, size: formatAttachmentSize(file.size_bytes), url });
       continue;
     }
 

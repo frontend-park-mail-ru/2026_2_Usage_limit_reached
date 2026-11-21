@@ -104,14 +104,20 @@
   margin: 24px 0;
 }
 
-.post-page__attachment img,
+.post-page__attachment img {
+  display: block;
+  max-width: 100%;
+  max-height: 75svh;
+  margin-inline: auto;
+  border-radius: 12px;
+}
+
 .post-page__attachment video,
 .post-page__attachment audio {
   display: block;
   width: 100%;
 }
 
-.post-page__attachment img,
 .post-page__attachment video {
   aspect-ratio: 16 / 9;
   border-radius: 12px;
@@ -153,29 +159,18 @@
   -webkit-line-clamp: 2;
 }
 
-.post-page__file-size,
-.post-page__file-error {
+.post-page__file-size {
   color: rgba(61, 64, 91, 0.8);
   font-size: 14px;
   line-height: 17px;
 }
 
-.post-page__file-error:empty {
-  display: none;
-}
-
 .post-page__download {
   flex: 0 0 44px;
   height: 44px;
-  border: 0;
   border-radius: 8px;
   background: url('/assets/post/download.svg') center no-repeat;
   cursor: pointer;
-}
-
-.post-page__download:disabled {
-  opacity: 0.6;
-  cursor: wait;
 }
 
 .post-page__download:focus-visible {
