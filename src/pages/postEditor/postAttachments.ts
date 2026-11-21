@@ -15,14 +15,15 @@ export function bindAttachments(
   editor: RichEditor,
   context: SessionContext,
   signal: AbortSignal,
+  attachments: PostAttachment[],
   onChange: () => void,
-): () => string[] {
+) {
   const picker = requireElement<HTMLElement>(form, '[data-attachments]');
   const add = requireElement<HTMLButtonElement>(picker, '.post-editor__attachment-add');
   const input = requireElement<HTMLInputElement>(picker, 'input[type="file"]');
   const template = requireElement<HTMLTemplateElement>(form, '[data-attachment-template]');
   const cardTemplate = requireElement<HTMLElement>(template.content, '[data-attachment]');
-  const uploaded = new WeakMap<HTMLElement, PostAttachment>();
+  const byId = new Map(attachments.map((attachment) => [attachment.id, attachment]));
   let before: ChildNode | null = null;
   let type: AttachmentType = 'image';
 
@@ -45,13 +46,37 @@ export function bindAttachments(
     }
   });
 
+  function makeCard(onRemove?: () => void): HTMLElement {
+    const card = cardTemplate.cloneNode(true) as HTMLElement;
+    requireElement(card, '.post-editor__attachment-close').addEventListener('click', () => {
+      onRemove?.();
+      editor.removeAttachment(card);
+      onChange();
+      add.focus();
+    });
+    return card;
+  }
+
+  function showReady(card: HTMLElement, id: string): void {
+    const attachment = byId.get(id);
+    card.dataset.attachmentId = id;
+    requireElement(card, '[data-attachment-name]').textContent = attachment?.name ?? 'Вложение';
+    const message = requireElement<HTMLElement>(card, '.post-editor__attachment-message');
+    if (attachment) {
+      showAttachmentPreview(message, attachment);
+    } else {
+      message.textContent = 'Данные о файле недоступны';
+    }
+  }
+
   input.addEventListener('change', () => {
     const selected = input.files?.[0];
-    if (!selected || !isSessionCurrent(context)) {
+    input.value = '';
+    if (!selected || form.inert || !isSessionCurrent(context)) {
       return;
     }
-    input.value = '';
-    const card = cardTemplate.cloneNode(true) as HTMLElement;
+    let pending: AbortController | undefined;
+    const card = makeCard(() => pending?.abort());
     const name = requireElement<HTMLElement>(card, '[data-attachment-name]');
     const message = requireElement<HTMLElement>(card, '.post-editor__attachment-message');
     const retry = requireElement<HTMLButtonElement>(card, '.post-editor__attachment-retry');
@@ -59,7 +84,6 @@ export function bindAttachments(
     editor.insertAttachment(card, before);
     const issue = validateAttachment(selected, type);
     let file = issue ? undefined : selected;
-    let pending: AbortController | undefined;
 
     const show = (text: string, error = false, canRetry = false) => {
       message.textContent = text;
@@ -79,10 +103,9 @@ export function bindAttachments(
       try {
         const attachment = await runSessionRequest(context, () => uploadAttachment(selectedFile, uploadSignal));
         if (attachment && card.isConnected && !uploadSignal.aborted) {
-          uploaded.set(card, attachment);
+          byId.set(attachment.id, attachment);
           file = undefined;
-          name.textContent = attachment.name;
-          showAttachmentPreview(message, attachment);
+          showReady(card, attachment.id);
           onChange();
         }
       } catch (error) {
@@ -100,13 +123,6 @@ export function bindAttachments(
     }
 
     retry.addEventListener('click', () => { void upload(file); });
-    requireElement(card, '.post-editor__attachment-close').addEventListener('click', () => {
-      pending?.abort();
-      uploaded.delete(card);
-      editor.removeAttachment(card);
-      onChange();
-      add.focus();
-    });
     if (issue) {
       const limit = ATTACHMENT_OPTIONS[type].maxMiB;
       show(issue === 'size' ? `Файл слишком большой. Выберите файл размером до ${limit} МиБ`
@@ -117,11 +133,17 @@ export function bindAttachments(
   }, { signal });
   signal.addEventListener('abort', () => menu.destroy(), { once: true });
 
-  return () => [...form.querySelectorAll<HTMLElement>('[data-attachment]')]
-    .filter((card) => !uploaded.has(card))
-    .map((card) => {
-      const name = requireElement(card, '[data-attachment-name]').textContent;
-      const status = requireElement(card, '.post-editor__attachment-message').textContent;
-      return `«${name}» (${status})`;
-    });
+  return {
+    getUnfinished: () => [...form.querySelectorAll('[data-attachment]:not([data-attachment-id])')]
+      .map((card) => {
+        const name = requireElement(card, '[data-attachment-name]').textContent;
+        const status = requireElement(card, '.post-editor__attachment-message').textContent;
+        return `«${name}» (${status})`;
+      }),
+    restoreCard: (id: string) => {
+      const card = makeCard();
+      showReady(card, id);
+      return card;
+    },
+  };
 }

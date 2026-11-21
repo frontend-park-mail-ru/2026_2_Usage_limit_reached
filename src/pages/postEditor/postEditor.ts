@@ -147,7 +147,10 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       showAttachmentErrors();
     }
   };
-  const getUnfinished = bindAttachments(form, editor, context, signal, refreshAttachmentErrors);
+  const { getUnfinished, restoreCard } = bindAttachments(form, editor, context, signal, loaded?.attachments ?? [], () => {
+    refreshAttachmentErrors();
+    updateStatus();
+  });
   form.addEventListener('input', refreshAttachmentErrors, { signal });
   form.addEventListener('submit', (event) => {
     if (showAttachmentErrors()) {
@@ -164,14 +167,14 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   let leave: (() => void) | null = null;
   let isSaving = false;
 
-  editor.setValue(loaded?.body ?? '');
+  editor.setValue(loaded?.body ?? '', restoreCard);
   let saved: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
 
   const leaveModal = new Modal(requireElement<HTMLDialogElement>(root, '.post-editor__leave'), () => {
     leave = null;
   });
 
-  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body;
+  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body || getUnfinished().length > 0;
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -179,6 +182,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
 
   const setBusy = (busy: boolean) => {
     isSaving = busy;
+    form.inert = busy;
     for (const button of buttons) {
       button.disabled = busy || !isSessionCurrent(context);
     }
@@ -188,7 +192,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     if (isSaving || !isSessionCurrent(context)) {
       return;
     }
-    const body = editor.getHtml();
+    const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
     const status = getTargetStatus(mode, intent);
     const action = intent;
     const afterSave = leave;
@@ -210,7 +214,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (!form.isConnected || !id) {
         return;
       }
-      saved = { title: titleInput.value, body };
+      saved = snapshot;
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();

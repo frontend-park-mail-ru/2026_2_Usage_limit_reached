@@ -1,3 +1,5 @@
+import type { PostAttachment } from './attachments.ts';
+
 export type PostStatus = 'draft' | 'published' | 'archived';
 
 export type PostsSort = 'new' | 'old' | 'popular';
@@ -35,6 +37,7 @@ export interface Post {
   author: PostAuthor;
   title: string;
   body: string;
+  attachments?: PostAttachment[];
   status: PostStatus;
   published_at: string | null;
   created_at: string;
