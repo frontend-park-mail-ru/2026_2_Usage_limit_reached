@@ -11,7 +11,7 @@ import { getPublicProfile } from '@/modules/api/profile.ts';
 import { getPublicPosts } from '@/modules/api/posts.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
-import { ROUTES } from '@/app/paths.ts';
+import { ROUTES, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -69,12 +69,13 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       if (!isCurrent()) {
         return;
       }
-      offline = savedAt !== undefined;
+      offline = savedAt !== undefined || !navigator.onLine;
       needsRetry = offline;
       document.title = user.nickname;
       root.innerHTML = profileTemplate({
         name: user.nickname, username: `@${user.username}`, avatarUrl: user.avatar_url ?? AVATAR_PLACEHOLDER,
         bio: author?.bio, isAuthor: !!author,
+        subscribeHref: author && getSessionContext()?.userId !== user.id ? subscriptionRoute(user.username) : undefined,
         offline,
       });
       disposeBio = bindProfileBio(root);
@@ -83,6 +84,11 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
           (state, retry) => { if (!needsRetry) { setRefreshNotice(state, retry); } });
         const donate = requireElement<HTMLButtonElement>(root, '[data-donate]');
         donate.disabled = offline;
+        root.querySelector('[data-subscribe]')?.addEventListener('click', (event) => {
+          if (offline || !navigator.onLine) {
+            event.preventDefault();
+          }
+        });
         const donateDialog = new DonateDialog(requireElement(root, '.donate-dialog'), isCurrent);
         donateDialog.setReadOnly(offline);
         dialog = donateDialog;
@@ -158,6 +164,12 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
     const donate = root.querySelector<HTMLButtonElement>('[data-donate]');
     if (donate) {
       donate.disabled = true;
+    }
+    const subscribe = root.querySelector('[data-subscribe]');
+    if (subscribe) {
+      subscribe.setAttribute('role', 'link');
+      subscribe.setAttribute('aria-disabled', 'true');
+      subscribe.removeAttribute('href');
     }
     setRefreshNotice({ pending: busy }, () => { void load(); });
   };

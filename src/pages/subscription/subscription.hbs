@@ -1,0 +1,30 @@
+<section class="settings subscription" aria-labelledby="subscription-heading">
+  {{#if backHref}}<a class="settings__back" href="{{backHref}}" data-link>← К профилю автора</a>{{/if}}
+  <div class="settings__container">
+    <h1 class="settings__title" id="subscription-heading">{{heading}}</h1>
+    {{#if author}}
+      <div class="settings__card subscription__author">
+        <img src="{{author.avatar}}" width="32" height="32" alt="" data-avatar>
+        <p>{{author.name}}</p>
+      </div>
+    {{/if}}
+    <div class="settings__card subscription__options">
+      {{#each tiers}}
+        <div class="subscription__tier">
+          <div class="subscription__tier-header">
+            <h2 id="subscription-tier-{{@index}}">{{name}}</h2>
+            <p>{{price}} в месяц</p>
+          </div>
+          {{#if current}}
+            <p class="subscription__current">Текущий уровень</p>
+          {{else}}
+            {{#if description}}<p class="subscription__description">{{description}}</p>{{/if}}
+            <button class="button {{#if ../upgrade}}button_view_primary{{else}}button_view_secondary{{/if}} subscription__button" type="button" data-tier-id="{{id}}"
+              aria-describedby="subscription-tier-{{@index}}" aria-pressed="false">Выбрать уровень</button>
+          {{/if}}
+        </div>
+      {{/each}}
+      {{#if message}}<p role="status">{{message}}</p>{{/if}}
+    </div>
+  </div>
+</section>

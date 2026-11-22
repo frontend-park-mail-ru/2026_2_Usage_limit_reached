@@ -6,6 +6,7 @@ import { renderRegister, initRegister } from '@/pages/register/register.ts';
 import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
 import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
 import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
+import { renderSubscription, initSubscription } from '@/pages/subscription/subscription.ts';
 import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
 import { renderAuthorTiers, initAuthorTiers } from '@/pages/authorTiers/authorTiers.ts';
 import { renderNewTier, initNewTier, renderEditTier, initEditTier } from '@/pages/authorTiers/newTier.ts';
@@ -40,6 +41,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.profile]: { title: 'Мой профиль', render: renderProfile, init: initProfile, layout: 'sidebar' },
   [ROUTES.becomeAuthor]: { title: 'Стать автором', render: renderBecomeAuthor, init: initBecomeAuthor, layout: 'sidebar' },
   [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
+  [ROUTES.subscription]: { title: 'Подписка', render: renderSubscription, init: initSubscription, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.settingsTiers]: { title: 'Уровни подписки', render: renderAuthorTiers, init: initAuthorTiers, layout: 'sidebar' },
   [ROUTES.settingsTierNew]: { title: 'Новый уровень', render: renderNewTier, init: initNewTier, layout: 'sidebar' },
