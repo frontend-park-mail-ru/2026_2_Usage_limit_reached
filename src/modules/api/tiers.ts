@@ -9,9 +9,15 @@ export interface SubscriptionTier {
   status: 'open' | 'archived';
 }
 
+export type TierInput = Pick<SubscriptionTier, 'name' | 'description' | 'price_minor'>;
+
 /** Создаёт открытый уровень подписки автора. */
-export const createTier = (data: Pick<SubscriptionTier, 'name' | 'description' | 'price_minor'>) =>
+export const createTier = (data: TierInput) =>
   request<SubscriptionTier>('/profile/me/tiers', { method: 'POST', data });
+
+/** Сохраняет изменённые поля уровня. */
+export const updateTier = (id: string, data: Partial<TierInput>) =>
+  request<SubscriptionTier>(`/profile/me/tiers/${encodeURIComponent(id)}`, { method: 'PATCH', data });
 
 /** Загружает уровни автора и проверяет структуру ответа. */
 export async function getMyTiers(signal: AbortSignal): Promise<{ items: SubscriptionTier[] }> {

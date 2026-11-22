@@ -78,6 +78,18 @@
   line-height: 42px;
 }
 
+.subscription-tiers__edit {
+  margin-top: 16px;
+}
+
+.tier-form__submit-mobile {
+  display: none;
+}
+
+.tier-form .tier-form__price-notice {
+  margin: 0;
+}
+
 .tier-form .form-field__label,
 .tier-form .form-field__hint {
   padding-inline: 0;
@@ -147,7 +159,12 @@
   }
 
   .tier-form__access,
-  #tier-price-hint {
+  .tier-form:not(.tier-form-edit) #tier-price-hint,
+  .tier-form__submit-desktop {
     display: none;
+  }
+
+  .tier-form__submit-mobile {
+    display: inline;
   }
 }

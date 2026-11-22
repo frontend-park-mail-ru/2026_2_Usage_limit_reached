@@ -1,15 +1,19 @@
 <section class="settings author-tiers" aria-labelledby="new-tier-heading">
   <a class="settings__back" href="/settings/tiers" data-link data-tier-return>← К уровням подписки</a>
   <div class="settings__container">
-    <h1 class="settings__title" id="new-tier-heading">Новый уровень</h1>
+    <h1 class="settings__title" id="new-tier-heading">{{#if editing}}Редактировать уровень{{else}}Новый уровень{{/if}}</h1>
     {{#if ready}}
-      <form class="settings__card tier-form" novalidate>
-        {{> alert title="Не удалось создать уровень"}}
+      <form class="settings__card tier-form{{#if editing}} tier-form-edit{{/if}}" novalidate>
+        {{> alert}}
         <div data-tier-check hidden>
           <a href="/settings/tiers" target="_blank" rel="noopener">Проверить список уровней в новой вкладке</a>
         </div>
-        {{> formField id="tier-name" name="name" label="Название" type="text" large=true}}
-        {{> formField id="tier-price" name="price" label="Цена за 30 дней, ₽" type="text" inputMode="numeric" large=true hint="Уровни располагаются по возрастанию цены"}}
+        {{> formField id="tier-name" name="name" label="Название" type="text" large=true value=tier.name}}
+        {{#if editing}}
+          {{> formField id="tier-price" name="price" label="Цена за 30 дней, ₽" type="text" inputMode="numeric" large=true value=price hint="Цена совпадает с ценой архивного уровня. Изменить её нельзя"}}
+        {{else}}
+          {{> formField id="tier-price" name="price" label="Цена за 30 дней, ₽" type="text" inputMode="numeric" large=true hint="Уровни располагаются по возрастанию цены"}}
+        {{/if}}
         <div class="form-field">
           <label class="form-field__label" for="tier-description">Описание</label>
           <textarea class="form-field__input form-field__input_large form-field__input-textarea" id="tier-description" name="description"
@@ -17,9 +21,15 @@
           <p class="form-field__hint" id="tier-description-hint">Расскажите, какие посты откроет этот уровень</p>
           <p class="form-field__error" id="tier-description-error" data-error-for="description" aria-live="polite"></p>
         </div>
-        <p class="tier-form__access">Подписчики увидят посты этого уровня и всех уровней ниже</p>
+        {{#if editing}}
+          <p class="form-field__hint tier-form__price-notice">Новая цена действует для новых подписчиков</p>
+        {{else}}
+          <p class="tier-form__access">Подписчики увидят посты этого уровня и всех уровней ниже</p>
+        {{/if}}
         <div class="tier-form__actions">
-          <button class="button button_view_primary tier-button" type="submit">Создать уровень</button>
+          <button class="button button_view_primary tier-button" type="submit">
+            {{#if editing}}<span class="tier-form__submit-desktop">Сохранить изменения</span><span class="tier-form__submit-mobile">Сохранить</span>{{else}}Создать уровень{{/if}}
+          </button>
           <a class="button button_view_secondary tier-button" href="/settings/tiers" data-link data-tier-return>Отмена</a>
         </div>
         <p class="tier-form__status" role="status"></p>
