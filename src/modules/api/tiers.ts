@@ -9,6 +9,10 @@ export interface SubscriptionTier {
   status: 'open' | 'archived';
 }
 
+/** Создаёт открытый уровень подписки автора. */
+export const createTier = (data: Pick<SubscriptionTier, 'name' | 'description' | 'price_minor'>) =>
+  request<SubscriptionTier>('/profile/me/tiers', { method: 'POST', data });
+
 /** Загружает уровни автора и проверяет структуру ответа. */
 export async function getMyTiers(signal: AbortSignal): Promise<{ items: SubscriptionTier[] }> {
   const response = await request<{ items: SubscriptionTier[] } | null>('/profile/me/tiers', { signal });

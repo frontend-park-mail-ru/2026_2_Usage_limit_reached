@@ -11,6 +11,7 @@ export const ROUTES = {
   publicProfile: '/users/:username',
   settings: '/settings',
   settingsTiers: '/settings/tiers',
+  settingsTierNew: '/settings/tiers/new',
   donations: '/donations',
   postNew: '/posts/new',
   post: '/posts/:id',

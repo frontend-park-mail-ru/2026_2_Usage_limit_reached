@@ -8,6 +8,7 @@ import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becom
 import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
 import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
 import { renderAuthorTiers, initAuthorTiers } from '@/pages/authorTiers/authorTiers.ts';
+import { renderNewTier, initNewTier } from '@/pages/authorTiers/newTier.ts';
 import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
 import { renderPost, initPost } from '@/pages/post/post.ts';
 import { renderDonations, initDonations } from '@/pages/donations/donations.ts';
@@ -41,6 +42,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
   [ROUTES.settingsTiers]: { title: 'Уровни подписки', render: renderAuthorTiers, init: initAuthorTiers, layout: 'sidebar' },
+  [ROUTES.settingsTierNew]: { title: 'Новый уровень', render: renderNewTier, init: initNewTier, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Новый пост', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
   [ROUTES.post]: { title: 'Публикация', render: renderPost, init: initPost, layout: 'sidebar' },
@@ -51,6 +53,7 @@ const notFoundRoute: Route = { title: 'Страница не найдена', re
 
 const PRIVATE_ROUTES: readonly RoutePattern[] = [
   ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.settingsTiers, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit,
+  ROUTES.settingsTierNew,
 ];
 
 let currentLayout: Layout | undefined;
@@ -218,7 +221,8 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
     if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
     } else if ((status === 'unknown' && [ROUTES.profile, ROUTES.settings].some((path) => path === window.location.pathname))
-      || ((status === 'unknown' || changedAccount) && window.location.pathname === ROUTES.settingsTiers)) {
+      || ((status === 'unknown' || changedAccount)
+        && [ROUTES.settingsTiers, ROUTES.settingsTierNew].some((path) => path === window.location.pathname))) {
       renderCurrentRoute();
     } else {
       redirectByAuth();

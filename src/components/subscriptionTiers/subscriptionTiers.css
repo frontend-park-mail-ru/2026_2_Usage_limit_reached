@@ -72,6 +72,44 @@
   width: fit-content;
 }
 
+.tier-button {
+  width: min(232px, 100%);
+  height: 44px;
+  line-height: 42px;
+}
+
+.tier-form .form-field__label,
+.tier-form .form-field__hint {
+  padding-inline: 0;
+}
+
+.tier-form .form-field__hint {
+  margin-bottom: 0;
+}
+
+.tier-form textarea {
+  min-height: 88px;
+}
+
+.tier-form__access {
+  padding-top: 8px;
+  line-height: 19px;
+}
+
+.tier-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.tier-form__status:empty {
+  position: absolute;
+}
+
+[data-tier-return][inert] {
+  opacity: 0.6;
+}
+
 @media (max-width: 720px) {
   .app-layout-wrapper:has(.author-tiers) {
     grid-template-columns: minmax(0, 1fr);
@@ -93,7 +131,23 @@
     gap: 16px;
   }
 
-  .author-tiers .subscription-tiers {
+  .author-tiers .subscription-tiers,
+  .author-tiers .tier-form {
+    gap: 16px;
     padding: 16px;
+  }
+
+  [data-add-tier] .tier-button {
+    width: 100%;
+  }
+
+  .tier-form__actions .tier-button {
+    flex: 1 1 145px;
+    padding-inline: 8px;
+  }
+
+  .tier-form__access,
+  #tier-price-hint {
+    display: none;
   }
 }
