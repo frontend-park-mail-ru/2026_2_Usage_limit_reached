@@ -1,0 +1,19 @@
+{{#if error}}
+  <p class="subscription-tiers__error" role="alert">Не удалось загрузить уровни подписки</p>
+  <button class="button button_view_secondary subscription-tiers__retry" type="button" data-tiers-retry>Повторить</button>
+{{else if message}}
+  <p role="status">{{message}}</p>
+{{else}}
+  <ul class="subscription-tiers__list">
+    {{#each tiers}}
+      <li class="subscription-tiers__card">
+        {{#if archived}}<span class="subscription-tiers__archive">В архиве</span>{{/if}}
+        <div class="subscription-tiers__header">
+          <h2 class="subscription-tiers__name">{{name}}</h2>
+          <p>{{price}} за 30 дней</p>
+        </div>
+        {{#if description}}<p class="subscription-tiers__description">{{description}}</p>{{/if}}
+      </li>
+    {{/each}}
+  </ul>
+{{/if}}

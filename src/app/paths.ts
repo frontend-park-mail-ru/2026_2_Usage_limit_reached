@@ -10,6 +10,7 @@ export const ROUTES = {
   becomeAuthor: '/become-author',
   publicProfile: '/users/:username',
   settings: '/settings',
+  settingsTiers: '/settings/tiers',
   donations: '/donations',
   postNew: '/posts/new',
   post: '/posts/:id',

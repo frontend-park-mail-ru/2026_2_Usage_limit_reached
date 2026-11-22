@@ -7,6 +7,7 @@ import { renderProfile, initProfile } from '@/pages/profile/profile.ts';
 import { renderBecomeAuthor, initBecomeAuthor } from '@/pages/becomeAuthor/becomeAuthor.ts';
 import { renderPublicProfile, initPublicProfile } from '@/pages/profile/publicProfile.ts';
 import { renderSettings, initSettings } from '@/pages/settings/settings.ts';
+import { renderAuthorTiers, initAuthorTiers } from '@/pages/authorTiers/authorTiers.ts';
 import { renderPostEditor, initPostEditor } from '@/pages/postEditor/postEditor.ts';
 import { renderPost, initPost } from '@/pages/post/post.ts';
 import { renderDonations, initDonations } from '@/pages/donations/donations.ts';
@@ -39,6 +40,7 @@ const routes: Record<RoutePattern, Route> = {
   [ROUTES.becomeAuthor]: { title: 'Стать автором', render: renderBecomeAuthor, init: initBecomeAuthor, layout: 'sidebar' },
   [ROUTES.publicProfile]: { title: 'Профиль', render: renderPublicProfile, init: initPublicProfile, layout: 'sidebar' },
   [ROUTES.settings]: { title: 'Настройки профиля', render: renderSettings, init: initSettings, layout: 'sidebar' },
+  [ROUTES.settingsTiers]: { title: 'Уровни подписки', render: renderAuthorTiers, init: initAuthorTiers, layout: 'sidebar' },
   [ROUTES.donations]: { title: 'Пожертвования', render: renderDonations, init: initDonations, layout: 'sidebar' },
   [ROUTES.postNew]: { title: 'Новый пост', render: renderPostEditor, init: initPostEditor, layout: 'sidebar' },
   [ROUTES.post]: { title: 'Публикация', render: renderPost, init: initPost, layout: 'sidebar' },
@@ -47,7 +49,9 @@ const routes: Record<RoutePattern, Route> = {
 
 const notFoundRoute: Route = { title: 'Страница не найдена', render: renderNotFound };
 
-const PRIVATE_ROUTES: readonly RoutePattern[] = [ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit];
+const PRIVATE_ROUTES: readonly RoutePattern[] = [
+  ROUTES.profile, ROUTES.becomeAuthor, ROUTES.settings, ROUTES.settingsTiers, ROUTES.donations, ROUTES.postNew, ROUTES.postEdit,
+];
 
 let currentLayout: Layout | undefined;
 let disposePage: (() => void) | undefined;
@@ -201,18 +205,20 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
   let active = true;
   setRefreshNotice = updateRefreshNotice;
   const unbindLinks = bindLinks(requireElement<HTMLElement>(document, '#app'), navigate);
-  let lastStatus = authStore.getState().status;
+  let { status: lastStatus, user: lastUser } = authStore.getState();
   const unsubscribeAuth = authStore.subscribe(() => {
-    const { status } = authStore.getState();
+    const { status, user } = authStore.getState();
     const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
+    const changedAccount = lastStatus === 'authenticated' && status === 'authenticated' && lastUser?.id !== user?.id;
     lastStatus = status;
+    lastUser = user;
     if (!active) {
       return;
     }
     if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
-    } else if (status === 'unknown'
-      && (window.location.pathname === ROUTES.profile || window.location.pathname === ROUTES.settings)) {
+    } else if ((status === 'unknown' && [ROUTES.profile, ROUTES.settings].some((path) => path === window.location.pathname))
+      || ((status === 'unknown' || changedAccount) && window.location.pathname === ROUTES.settingsTiers)) {
       renderCurrentRoute();
     } else {
       redirectByAuth();
