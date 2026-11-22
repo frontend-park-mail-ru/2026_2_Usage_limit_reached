@@ -1,5 +1,5 @@
 <section class="settings subscription" aria-labelledby="subscription-heading">
-  {{#if backHref}}<a class="settings__back" href="{{backHref}}" data-link>← {{#if confirmation}}К выбору уровня{{else}}К профилю автора{{/if}}</a>{{/if}}
+  {{#if backHref}}<a class="settings__back" href="{{backHref}}" data-link>← {{#if confirmation}}К выбору уровня{{else if postId}}К посту{{else}}К профилю автора{{/if}}</a>{{/if}}
   <div class="settings__container">
     <h1 class="settings__title" id="subscription-heading">{{heading}}</h1>
     {{#if confirmation}}
@@ -7,10 +7,17 @@
         <p>{{author.name}}</p>
         <p>Уровень «{{confirmation.name}}»</p>
         {{#if upgrade}}<p>Новый уровень заменит «{{currentName}}»</p>{{/if}}
-        <p class="subscription__tier subscription__price">{{confirmation.price}} в месяц</p>
-        <p class="settings__hint">{{#if upgrade}}Списаний не будет. Дата окончания подписки не изменится{{else}}Тестовая подписка на 30 дней. Списаний не будет{{/if}}.</p>
+        <p class="subscription__tier subscription__price">{{confirmation.price}} за 30 дней</p>
+        {{#if demo}}<p class="settings__hint">{{#if upgrade}}Списаний не будет. Дата окончания подписки не изменится{{else}}Тестовая подписка на 30 дней. Списаний не будет{{/if}}.</p>{{/if}}
+        {{#if sessionUnknown}}<p role="alert">Не удалось проверить, вошли ли вы в аккаунт</p>{{/if}}
         <div class="subscription__actions">
-          <button class="button button_view_primary tier-button" type="button" disabled>{{#if upgrade}}Повысить уровень{{else}}Подтвердить подписку{{/if}}</button>
+          {{#if sessionUnknown}}
+            <button class="button button_view_secondary tier-button" type="button" data-session-retry>Повторить</button>
+          {{else if loginHref}}
+            <a class="button button_view_primary tier-button" href="{{loginHref}}" data-link>Войти</a>
+          {{else}}
+            <button class="button button_view_primary tier-button" type="button" disabled>{{#if upgrade}}Повысить уровень{{else}}Подтвердить подписку{{/if}}</button>
+          {{/if}}
           <a class="button button_view_secondary tier-button subscription__back-button" href="{{backHref}}" data-link>Назад</a>
         </div>
       </div>
@@ -26,10 +33,13 @@
           <div class="subscription__tier">
             <div class="subscription-tiers__header">
               <h2 class="subscription-tiers__name" id="subscription-tier-{{@index}}">{{name}}</h2>
-              <p>{{price}} в месяц</p>
+              <p>{{price}} за 30 дней</p>
             </div>
             {{#if current}}
-              <p class="settings__hint">Текущий уровень</p>
+              <div class="subscription-tiers__header">
+                <p class="settings__hint">Текущий уровень</p>
+                <p class="settings__hint subscription__end">Подписка до {{../currentEnd}}</p>
+              </div>
             {{else}}
               {{#if description}}<p class="subscription__description">{{description}}</p>{{/if}}
               <button class="button {{#if ../upgrade}}button_view_primary{{else}}button_view_secondary{{/if}} tier-button" type="button" data-tier-id="{{id}}"
@@ -38,6 +48,7 @@
           </div>
         {{/each}}
         {{#if message}}<p role="status">{{message}}</p>{{/if}}
+        {{#if retry}}<button class="button button_view_secondary tier-button" type="button" data-options-retry>Повторить</button>{{/if}}
       </div>
     {{/if}}
   </div>

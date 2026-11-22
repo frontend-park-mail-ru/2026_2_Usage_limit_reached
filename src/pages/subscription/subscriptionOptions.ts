@@ -1,3 +1,5 @@
+import { request } from '@/modules/api/request.ts';
+
 export interface SubscriptionOption {
   id: string;
   name: string;
@@ -18,5 +20,8 @@ export interface SubscriptionOptions {
   items: SubscriptionOption[];
 }
 
-export const loadSubscriptionOptions: (authorId: string, signal: AbortSignal) => Promise<SubscriptionOptions | null> =
-  async () => null;
+/** Загружает доступные уровни и текущую подписку читателя. */
+export function loadSubscriptionOptions(authorId: string, signal: AbortSignal, postId?: string): Promise<SubscriptionOptions> {
+  const query = postId ? `?${new URLSearchParams({ post_id: postId })}` : '';
+  return request<SubscriptionOptions>(`/authors/${encodeURIComponent(authorId)}/subscription-options${query}`, { signal });
+}
