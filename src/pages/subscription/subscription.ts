@@ -1,5 +1,5 @@
-import { publicProfileRoute } from '@/app/paths.ts';
-import type { Navigate } from '@/app/paths.ts';
+import { publicProfileRoute, subscriptionRoute } from '@/app/paths.ts';
+import type { Navigate, NavigationPath } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { getPublicProfile } from '@/modules/api/profile.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
@@ -9,7 +9,6 @@ import { loadSubscriptionOptions } from './subscriptionOptions.ts';
 import subscriptionTemplate from './subscription.hbs';
 
 const CHOOSE = 'Выберите уровень';
-const UNAVAILABLE = 'Нет доступных уровней подписки';
 
 /** Показывает экран выбора до загрузки данных автора. */
 export function renderSubscription(): string {
@@ -17,10 +16,15 @@ export function renderSubscription(): string {
 }
 
 /** Загружает профиль и показывает варианты подписки. */
-export function initSubscription(root: HTMLElement, _navigate: Navigate, { username }: RouteParams): () => void {
+export function initSubscription(root: HTMLElement, navigate: Navigate, { username }: RouteParams): () => void {
   const lifecycle = new AbortController();
   const { signal } = lifecycle;
   const backHref = publicProfileRoute(username);
+  const route = subscriptionRoute(username);
+  const search = new URLSearchParams(window.location.search);
+  const selectedId = search.get('tier');
+  const choiceHref = (id: string, confirm = false): NavigationPath =>
+    `${route}?${new URLSearchParams(confirm ? { tier: id, step: 'confirm' } : { tier: id })}`;
   const unbindAvatar = bindAvatarFallback(root);
   root.innerHTML = subscriptionTemplate({ heading: CHOOSE, message: 'Загружаем уровни…', backHref });
 
@@ -35,17 +39,23 @@ export function initSubscription(root: HTMLElement, _navigate: Navigate, { usern
         return;
       }
       const subscription = options?.current_subscription;
-      const items = options?.items.map((tier) => ({ ...tier, price: formatMoney(tier.price_minor, tier.currency) })) ?? [];
+      const items = options?.items.map((tier) => ({
+        ...tier, price: formatMoney(tier.price_minor, tier.currency), selected: tier.id === selectedId,
+      })) ?? [];
+      const confirmation = search.get('step') === 'confirm' ? items.find((tier) => tier.selected) : undefined;
       const tiers = subscription
         ? [{ current: true, name: subscription.tier.name, price: formatMoney(subscription.price_minor, subscription.currency) }, ...items]
         : items;
       root.innerHTML = subscriptionTemplate({
-        heading: subscription ? 'Выберите новый уровень' : CHOOSE,
+        heading: confirmation ? (subscription ? 'Повышение уровня' : 'Оформление подписки')
+          : (subscription ? 'Выберите новый уровень' : CHOOSE),
         upgrade: !!subscription,
-        backHref,
+        backHref: confirmation ? choiceHref(confirmation.id) : backHref,
+        confirmation,
+        currentName: subscription?.tier.name,
         author: { name: user.nickname, avatar: user.avatar_url ?? AVATAR_PLACEHOLDER },
         tiers,
-        message: items.length ? undefined : UNAVAILABLE,
+        message: items.length ? undefined : 'Нет доступных уровней подписки',
       });
     } catch {
       if (!signal.aborted) {
@@ -55,12 +65,24 @@ export function initSubscription(root: HTMLElement, _navigate: Navigate, { usern
   }
 
   root.addEventListener('click', (event) => {
-    const button = event.target instanceof Element && event.target.closest<HTMLButtonElement>('[data-tier-id]');
-    if (button) {
-      root.querySelector('[data-tier-id][aria-pressed="true"]')?.setAttribute('aria-pressed', 'false');
-      button.setAttribute('aria-pressed', 'true');
+    const link = event.target instanceof Element && event.target.closest('a[data-link]');
+    if (selectedId && search.get('step') === 'confirm' && link && link.getAttribute('href') === choiceHref(selectedId)
+      && event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      if (history.state?.from === choiceHref(selectedId)) {
+        history.back();
+        return;
+      }
+      navigate(choiceHref(selectedId), { replace: true });
+      return;
     }
-  }, { signal });
+    const button = event.target instanceof Element && event.target.closest<HTMLButtonElement>('[data-tier-id]');
+    const id = button && button.dataset.tierId;
+    if (id) {
+      history.replaceState(history.state, '', choiceHref(id));
+      navigate(choiceHref(id, true));
+    }
+  }, { capture: true, signal });
   void load();
   return () => {
     lifecycle.abort();

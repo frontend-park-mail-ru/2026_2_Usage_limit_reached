@@ -179,7 +179,7 @@ export function navigate(path: NavigationPath, { replace = false, force = false 
   if (replace || redirect) {
     history.replaceState(history.state, '', nextPath);
   } else {
-    history.pushState({ from: currentPath }, '', nextPath);
+    history.pushState({ from: window.location.pathname + window.location.search }, '', nextPath);
   }
   renderCurrentRoute();
 }
