@@ -122,6 +122,61 @@
   opacity: 0.6;
 }
 
+.tier-archive {
+  gap: 12px;
+  padding-block: 24px;
+}
+
+.tier-archive__heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.tier-archive p {
+  color: rgba(61, 64, 91, 0.8);
+  font-size: 14px;
+  line-height: 17px;
+}
+
+.tier-archive .tier-button {
+  width: min(217px, 100%);
+  padding-inline: 8px;
+}
+
+#tier-archive-dialog .modal__window {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+
+#tier-archive-dialog .modal__header {
+  min-height: 24px;
+}
+
+#tier-archive-dialog .modal__title {
+  overflow-wrap: anywhere;
+}
+
+#tier-archive-dialog .confirm-dialog__text {
+  color: var(--color-text);
+  line-height: 19px;
+}
+
+#tier-archive-dialog .confirm-dialog__actions .button {
+  min-height: 44px;
+  height: auto;
+  padding-block: 8px;
+  line-height: 19px;
+}
+
+#tier-archive-dialog .confirm-dialog__button-cancel {
+  width: min(152px, 100%);
+}
+
+#tier-archive-dialog .confirm-dialog__button-confirm {
+  width: auto;
+}
+
 @media (max-width: 720px) {
   .app-layout-wrapper:has(.author-tiers) {
     grid-template-columns: minmax(0, 1fr);

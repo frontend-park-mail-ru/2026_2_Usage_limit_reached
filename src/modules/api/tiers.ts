@@ -15,8 +15,8 @@ export type TierInput = Pick<SubscriptionTier, 'name' | 'description' | 'price_m
 export const createTier = (data: TierInput) =>
   request<SubscriptionTier>('/profile/me/tiers', { method: 'POST', data });
 
-/** Сохраняет изменённые поля уровня. */
-export const updateTier = (id: string, data: Partial<TierInput>) =>
+/** Сохраняет изменённые поля или архивирует уровень. */
+export const updateTier = (id: string, data: Partial<TierInput> | { status: 'archived' }) =>
   request<SubscriptionTier>(`/profile/me/tiers/${encodeURIComponent(id)}`, { method: 'PATCH', data });
 
 /** Загружает уровни автора и проверяет структуру ответа. */
