@@ -25,3 +25,19 @@ export function loadSubscriptionOptions(authorId: string, signal: AbortSignal, p
   const query = postId ? `?${new URLSearchParams({ post_id: postId })}` : '';
   return request<SubscriptionOptions>(`/authors/${encodeURIComponent(authorId)}/subscription-options${query}`, { signal });
 }
+
+export interface SubscriptionConfirmation {
+  action: 'subscribe' | 'upgrade';
+  tier_id: string;
+  expected_subscription_id: string | null;
+  expected_current_tier_id: string | null;
+  expected_price_minor: number;
+  post_id?: string;
+  request_key: string;
+}
+
+/** Подтверждает выбранные условия подписки. */
+export function confirmSubscription(authorId: string, data: SubscriptionConfirmation) {
+  return request<Pick<SubscriptionOptions, 'mode' | 'current_subscription'>>(
+    `/authors/${encodeURIComponent(authorId)}/subscriptions`, { method: 'POST', data });
+}

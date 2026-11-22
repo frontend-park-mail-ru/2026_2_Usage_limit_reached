@@ -228,10 +228,11 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
     if (!active) {
       return;
     }
-    if (isLoggedOut) {
+    if (viewerChanged && matchRoute(window.location.pathname)?.pattern === ROUTES.subscription) {
+      renderCurrentRoute();
+    } else if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
-    } else if ((viewerChanged && matchRoute(window.location.pathname)?.pattern === ROUTES.subscription)
-      || (status === 'unknown' && [ROUTES.profile, ROUTES.settings].some((path) => path === window.location.pathname))
+    } else if ((status === 'unknown' && [ROUTES.profile, ROUTES.settings].some((path) => path === window.location.pathname))
       || ((status === 'unknown' || changedAccount)
         && [ROUTES.settingsTiers, ROUTES.settingsTierNew, ROUTES.settingsTierEdit]
           .some((pattern) => pattern === matchRoute(window.location.pathname)?.pattern))) {
