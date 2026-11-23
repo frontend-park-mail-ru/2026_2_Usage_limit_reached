@@ -71,3 +71,51 @@
 .auth-form__error:empty {
   display: none;
 }
+
+@media (max-width: 720px), (pointer: coarse) {
+  .auth-page {
+    min-height: calc(100dvh - env(safe-area-inset-top));
+    align-items: flex-start;
+    padding: 24px 16px max(24px, env(safe-area-inset-bottom));
+  }
+
+  .auth-form {
+    gap: 16px;
+    margin-block: auto;
+    padding: 24px 16px;
+  }
+
+  .auth-form__header {
+    text-align: center;
+  }
+
+  .auth-form .form-field__input {
+    height: 44px;
+  }
+
+  .auth-form .form-field__control:has(.form-field__toggle) .form-field__input {
+    padding-right: 52px;
+  }
+
+  .auth-form .form-field__toggle {
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+  }
+
+  .auth-form .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    min-height: 44px;
+    padding: 8px 12px;
+    line-height: 1.25;
+  }
+
+  .auth-form__submit {
+    margin-top: 4px;
+  }
+}
