@@ -1,4 +1,5 @@
 <section class="profile" aria-label="Публичный профиль">
+  <a class="profile__back" href="{{#if backHref}}{{backHref}}{{else}}/feed{{/if}}" data-link hidden>← Назад</a>
   {{#if message}}
     <div class="profile__summary">
       <p class="{{#if isError}}profile__error{{else}}profile__username{{/if}}" role="status"{{#if loading}} data-loading-delay="{{message}}"{{/if}}>{{message}}</p>
@@ -13,7 +14,11 @@
             {{#if isAuthor}}<span class="profile__badge">Автор</span>{{/if}}
           </div>
           <p class="profile__username">{{username}}</p>
-{{> profileBio}}
+          {{#if bio}}
+            <div class="profile__description">
+              {{> profileBio}}
+            </div>
+          {{/if}}
         </div>
       </div>
       {{#if isAuthor}}
