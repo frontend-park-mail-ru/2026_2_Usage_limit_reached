@@ -11,7 +11,7 @@ import { getPublicProfile } from '@/modules/api/profile.ts';
 import { getPublicPosts } from '@/modules/api/posts.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
-import { ROUTES } from '@/app/paths.ts';
+import { isRoutePath, ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -19,9 +19,27 @@ import { LOAD_ERROR, LOADING_MESSAGE } from './profile.constants.ts';
 import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
+/** Определяет адрес возврата для публичного профиля. */
+function getPublicProfileBackHref(): string {
+  const from: unknown = history.state?.from;
+  if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) {
+    return ROUTES.feed;
+  }
+  try {
+    const url = new URL(from, window.location.origin);
+    const path = url.pathname + url.search;
+    const current = window.location.pathname + window.location.search;
+    return url.origin === window.location.origin && !url.hash && isRoutePath(url.pathname) && path !== current
+      ? path
+      : ROUTES.feed;
+  } catch {
+    return ROUTES.feed;
+  }
+}
+
 /** Показывает состояние загрузки публичного профиля. */
 export function renderPublicProfile(): string {
-  return profileTemplate({ message: LOADING_MESSAGE, loading: true });
+  return profileTemplate({ message: LOADING_MESSAGE, loading: true, backHref: getPublicProfileBackHref() });
 }
 
 /**
@@ -31,6 +49,19 @@ export function renderPublicProfile(): string {
  * @param params
  */
 export function initPublicProfile(root: HTMLElement, navigate: Navigate, params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
+  const backHref = getPublicProfileBackHref();
+  const handleBack = (event: MouseEvent): void => {
+    if (event.defaultPrevented || event.button !== 0
+      || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey
+      || !(event.target instanceof Element) || !event.target.closest('.profile__back')
+      || history.state?.from !== backHref || history.length < 2) {
+      return;
+    }
+    event.preventDefault();
+    history.back();
+  };
+  root.addEventListener('click', handleBack, true);
+
   let active = true;
   let request = 0;
   let busy = false;
@@ -76,6 +107,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
         name: user.nickname, username: `@${user.username}`, avatarUrl: user.avatar_url ?? AVATAR_PLACEHOLDER,
         bio: author?.bio, isAuthor: !!author,
         offline,
+        backHref,
       });
       disposeBio = bindProfileBio(root);
       if (author) {
@@ -123,6 +155,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
         disposeBio?.();
         const missing = error instanceof ApiError && error.status === 404;
         root.innerHTML = profileTemplate({
+          backHref,
           message: missing ? 'Профиль не найден' : 'Не удалось загрузить профиль', isError: true,
         });
       }
@@ -175,6 +208,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
   void load();
   return () => {
     active = false;
+    root.removeEventListener('click', handleBack, true);
     cancelLoading(root);
     unsubscribe();
     unbindRecovery();
