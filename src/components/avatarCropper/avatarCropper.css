@@ -99,3 +99,30 @@
   border-radius: 50%;
   background: var(--color-primary);
 }
+
+@media (max-width: 720px), (pointer: coarse) {
+  .avatar-cropper {
+    gap: 16px;
+  }
+
+  .avatar-cropper__canvas {
+    align-self: center;
+    max-width: 464px;
+  }
+
+  .avatar-cropper__zoom {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 12px;
+    height: auto;
+  }
+
+  .avatar-cropper__step {
+    width: 44px;
+    height: 44px;
+  }
+
+  .avatar-cropper__range {
+    min-width: 0;
+    height: 44px;
+  }
+}
