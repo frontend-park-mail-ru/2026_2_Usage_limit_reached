@@ -13,6 +13,7 @@ import { RichEditor } from '@/components/richEditor/richEditor.ts';
 import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { bindAttachments } from './postAttachments.ts';
 import { bindPostCover } from './postCover.ts';
+import { bindPostAccess } from './postAccess.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -138,6 +139,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
+  bindPostAccess(form, loaded?.min_tier_id ?? null, context, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length

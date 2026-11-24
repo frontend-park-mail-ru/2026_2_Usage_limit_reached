@@ -40,6 +40,7 @@ export interface Post {
   body: string;
   attachments?: PostAttachment[];
   cover_url?: string | null;
+  min_tier_id?: string | null;
   status: PostStatus;
   published_at: string | null;
   created_at: string;

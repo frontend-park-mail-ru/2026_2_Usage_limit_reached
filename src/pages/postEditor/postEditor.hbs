@@ -62,15 +62,23 @@
       </template>
       <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
     </div>
-    <section class="post-cover" data-cover aria-labelledby="post-cover-heading">
-      <h2 class="post-cover__heading" id="post-cover-heading">Обложка поста</h2>
-      <img class="post-cover__preview" data-cover-preview alt="Обложка поста" hidden>
-      <button class="button button_view_secondary post-cover__choose" type="button" data-cover-choose>Добавить обложку</button>
-      <button class="post-cover__remove" type="button" data-cover-remove hidden>Удалить обложку</button>
-      <p class="post-cover__status" data-cover-status role="status"></p>
-      <p class="post-cover__hint">Обложка будет видна в ленте, если вы её добавите</p>
-      <input type="file" hidden>
-    </section>
+    <div class="post-editor__settings">
+      <section class="post-access" aria-labelledby="post-access-heading">
+        <h2 class="post-cover__heading" id="post-access-heading">Доступ к посту</h2>
+        {{> select id="post-access-tier" name="post-access-tier" label="При публикации"}}
+        <p class="post-cover__hint" data-post-access-hint></p>
+        <p class="post-cover__status" data-post-access-status role="status"></p>
+      </section>
+      <section class="post-cover" data-cover aria-labelledby="post-cover-heading">
+        <h2 class="post-cover__heading" id="post-cover-heading">Обложка поста</h2>
+        <img class="post-cover__preview" data-cover-preview alt="Обложка поста" hidden>
+        <button class="button button_view_secondary post-cover__choose" type="button" data-cover-choose>Добавить обложку</button>
+        <button class="post-cover__remove" type="button" data-cover-remove hidden>Удалить обложку</button>
+        <p class="post-cover__status" data-cover-status role="status"></p>
+        <p class="post-cover__hint">Обложка будет видна в ленте, если вы её добавите</p>
+        <input type="file" hidden>
+      </section>
+    </div>
   </form>
 
   {{> linkDialog}}

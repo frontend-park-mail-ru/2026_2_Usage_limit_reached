@@ -90,13 +90,36 @@
   margin: 0;
 }
 
-.post-cover {
+.post-editor__settings {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.post-cover,
+.post-access {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 24px;
   border-radius: 16px;
   background: var(--color-white);
+}
+
+.post-access {
+  gap: 12px;
+  padding: 16px;
+}
+
+.post-access .form-field {
+  gap: 12px;
+}
+
+.post-access .select__input {
+  height: 44px;
+  border-radius: 16px;
+  font-size: 14px;
+  text-overflow: ellipsis;
 }
 
 .post-cover__heading {
