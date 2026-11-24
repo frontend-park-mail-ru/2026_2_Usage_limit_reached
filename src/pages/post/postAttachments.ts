@@ -4,6 +4,7 @@ import { formatAttachmentSize, getAttachmentUrl } from '@/utils/helpers/attachme
 
 /** Показывает ошибку в том же месте, где было вложение. */
 function showUnavailable(figure: HTMLElement, message: string): void {
+  figure.classList.remove('post-page__attachment_media');
   figure.classList.add('post-page__attachment_unavailable');
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
@@ -48,7 +49,20 @@ export function bindPostAttachments(body: Element, attachments: PostAttachment[]
     }
     media.addEventListener('error', () => showUnavailable(figure, 'Не удалось открыть вложение'), { once: true, signal });
     media.src = url;
-    figure.append(media);
+    const name = document.createElement('figcaption');
+    name.className = 'post-page__file-name';
+    name.textContent = file.name;
+    name.title = file.name;
+
+    const size = document.createElement('span');
+    size.className = 'post-page__file-size';
+    const dot = file.name.lastIndexOf('.');
+    const extension = dot > 0 ? file.name.slice(dot + 1).toUpperCase() : '';
+    const sizeLabel = formatAttachmentSize(file.size_bytes);
+    size.textContent = extension ? `${extension} · ${sizeLabel}` : sizeLabel;
+
+    figure.classList.add('post-page__attachment_media');
+    figure.replaceChildren(name, media, size);
   }
 
   return () => {
