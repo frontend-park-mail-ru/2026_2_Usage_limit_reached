@@ -6,9 +6,11 @@ let hideTimer: number | undefined;
 /**
  * Показывает уведомление.
  * @param text
+ * @param kind
  */
-export function showToast(text: string): void {
+export function showToast(text: string, kind: 'success' | 'error' = 'success'): void {
   const toast = requireElement<HTMLElement>(document, '#toast');
+  toast.dataset.kind = kind;
   toast.textContent = text;
   window.clearTimeout(hideTimer);
   hideTimer = window.setTimeout(() => {
