@@ -398,6 +398,7 @@ audio.post-editor__attachment-preview {
     position: sticky;
     bottom: 0;
     z-index: 2;
+    align-self: stretch;
     justify-content: flex-end;
     gap: 8px;
     margin: auto calc(-1 * var(--post-editor-gutter)) 0;
