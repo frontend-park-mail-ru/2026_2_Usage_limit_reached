@@ -115,6 +115,17 @@
   gap: 12px;
 }
 
+.post-access .form-field__label,
+.post-access .form-field__error {
+  margin: 0;
+  padding: 0;
+}
+
+.post-access [data-post-access-retry][hidden],
+.post-access:has(.select__input[aria-invalid="true"]) [data-post-access-hint] {
+  display: none;
+}
+
 .post-access .select__input {
   height: 44px;
   border-radius: 16px;

@@ -199,7 +199,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving || !isSessionCurrent(context)) {
+    if (isSaving || !isSessionCurrent(context) || access.needsSelection()) {
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -252,6 +252,11 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         throw err;
       }
       if (err.isUnauthorized) {
+        return;
+      }
+      if (tierId && ((err.status === 400 && err.code === 'invalid_min_tier')
+        || (err.status === 409 && err.code === 'post_tier_archived'))) {
+        access.rejectTier(tierId);
         return;
       }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));

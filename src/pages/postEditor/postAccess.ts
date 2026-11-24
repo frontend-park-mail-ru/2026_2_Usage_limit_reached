@@ -12,28 +12,48 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
   const list = requireElement<HTMLElement>(root, '.select__list');
   const hint = requireElement<HTMLElement>(form, '[data-post-access-hint]');
   const status = requireElement<HTMLElement>(form, '[data-post-access-status]');
+  const error = requireElement<HTMLElement>(form, '#post-access-tier-error');
+  const retry = requireElement<HTMLButtonElement>(form, '[data-post-access-retry]');
   const publicLabel = 'Для всех';
   const savedLabel = 'Сохранённый уровень';
   let savedTierId = initialTierId;
   let selectedTierId = initialTierId;
+  let rejectedTierId: string | undefined;
   let tiers: SubscriptionTier[] = [];
   let select: Select | undefined;
   const updateHint = (tierId: string | null) => {
     hint.textContent = tierId ? 'Пост увидят подписчики этого уровня и уровней выше' : 'Пост будет доступен всем';
   };
   input.value = initialTierId ? savedLabel : publicLabel;
-  input.disabled = true;
   updateHint(initialTierId);
-  status.textContent = 'Загружаем уровни…';
   input.addEventListener('input', () => {
     selectedTierId = list.querySelector<HTMLElement>('[aria-selected="true"]')?.dataset.tierId || null;
     updateHint(selectedTierId);
+    if (selectedTierId !== rejectedTierId) {
+      error.textContent = '';
+      input.removeAttribute('aria-invalid');
+    }
   }, { signal });
+  retry.addEventListener('click', () => { void load(); }, { signal });
   signal.addEventListener('abort', () => select?.destroy(), { once: true });
 
   void load();
   return {
     getChange: () => selectedTierId === savedTierId ? undefined : selectedTierId,
+    needsSelection() {
+      if (selectedTierId !== rejectedTierId) {
+        return false;
+      }
+      root.scrollIntoView({ block: 'nearest' });
+      return true;
+    },
+    rejectTier(tierId: string) {
+      rejectedTierId = tierId;
+      error.textContent = 'Этот уровень больше недоступен. Выберите другой вариант';
+      input.setAttribute('aria-invalid', 'true');
+      root.scrollIntoView({ block: 'nearest' });
+      void load();
+    },
     markSaved() {
       if (selectedTierId !== savedTierId) {
         savedTierId = selectedTierId;
@@ -47,7 +67,7 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
     list.replaceChildren();
     const options: { id: string | null; label: string }[] = [{ id: null, label: publicLabel }];
     for (const tier of tiers) {
-      if (tier.status === 'open' || tier.id === savedTierId) {
+      if (tier.id === savedTierId || (tier.status === 'open' && tier.id !== rejectedTierId)) {
         options.push({ id: tier.id, label: tier.status === 'archived' ? `${tier.name} · В архиве` : tier.name });
       }
     }
@@ -72,6 +92,11 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
   }
 
   async function load(): Promise<void> {
+    select?.destroy();
+    select = undefined;
+    input.disabled = true;
+    retry.hidden = true;
+    status.textContent = 'Загружаем уровни…';
     try {
       const response = await runSessionRequest(context, () => getMyTiers(signal));
       if (!response || signal.aborted || !isSessionCurrent(context)) {
@@ -84,6 +109,7 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
     } catch {
       if (!signal.aborted && isSessionCurrent(context)) {
         status.textContent = 'Не удалось загрузить уровни подписки';
+        retry.hidden = false;
       }
     }
   }
