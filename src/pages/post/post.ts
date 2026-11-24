@@ -29,7 +29,7 @@ import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
+import { ROUTES, matchRoute, postEditRoute, publicProfileRoute, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -279,7 +279,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         const result = await loadOfflinePost(params.id ?? '', () => getPost(params.id ?? ''),
           () => isCurrent() && version === getSessionVersion());
         post = result;
-        offline = result.savedAt !== undefined;
+        offline = result.savedAt !== undefined || !navigator.onLine;
         hasOfflineAttachments = !!result.hasAttachments;
         needsRetry = offline;
       } catch (error) {
@@ -333,13 +333,26 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       document.title = post.title;
       if (post.locked) {
         const lockedCoverUrl = !offline && post.cover_url ? getAttachmentUrl(post.cover_url) : null;
+        const reason = post.access_restriction?.reason;
+        const accessAction = !offline && post.status === 'published' ? (
+          reason === 'subscription_required' ? 'Подписаться'
+            : reason === 'upgrade_required' ? 'Повысить уровень' : undefined
+        ) : undefined;
         root.innerHTML = postTemplate({
           ...buildViewModel(post, false),
           locked: true,
           lockedCoverUrl,
           accessNote: buildAccessNote(post.access_restriction),
+          accessAction,
+          accessHref: accessAction
+            ? `${subscriptionRoute(post.author.username)}?${new URLSearchParams({ post_id: post.id })}` : undefined,
         });
         const cover = root.querySelector<HTMLImageElement>('.post-page__cover');
+        root.querySelector('.post-page__access-action')?.addEventListener('click', (event) => {
+          if (offline || !navigator.onLine) {
+            event.preventDefault();
+          }
+        });
         cover?.addEventListener('error', () => {
           if (isCurrent() && cover.isConnected) {
             cover.parentElement?.classList.remove('post-page__card-with-cover');
@@ -407,6 +420,12 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     donateDialog?.setReadOnly(true);
     root.querySelectorAll<HTMLButtonElement>('.like-button, [data-donate], .post-page__menu button')
       .forEach((button) => { button.disabled = true; });
+    const accessAction = root.querySelector('.post-page__access-action');
+    if (accessAction) {
+      accessAction.setAttribute('role', 'link');
+      accessAction.setAttribute('aria-disabled', 'true');
+      accessAction.removeAttribute('href');
+    }
     setRefreshNotice({ pending: busy }, () => { void load(); });
   };
   window.addEventListener('offline', handleOffline);

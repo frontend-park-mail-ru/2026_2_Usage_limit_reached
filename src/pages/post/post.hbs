@@ -37,6 +37,9 @@
     <div class="post-page__access-note">
       <p class="post-page__unavailable-text">{{accessNote.message}}</p>
       {{#if accessNote.detail}}<p class="post-page__unavailable-text">{{accessNote.detail}}</p>{{/if}}
+      {{#if accessAction}}
+        <a class="button button_view_primary post-page__access-action" href="{{accessHref}}" data-link>{{accessAction}}</a>
+      {{/if}}
     </div>
     {{else}}
     <div class="rich-text post-page__body" data-post-body></div>
