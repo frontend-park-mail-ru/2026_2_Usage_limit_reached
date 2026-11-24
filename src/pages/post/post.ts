@@ -2,6 +2,7 @@ import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postTemplate from './post.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
 import { getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import {
@@ -65,6 +66,30 @@ function buildViewModel(post: Post, isOwner: boolean) {
     isOwner,
     menuItems: POST_MENU_ITEMS,
   };
+}
+
+/** Готовит причину ограничения и условия доступа к закрытому посту. */
+function buildAccessNote(restriction: Post['access_restriction']) {
+  switch (restriction?.reason) {
+    case 'subscription_required':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: restriction.lowest_available_price_minor === null ? undefined
+          : `От ${formatMoney(restriction.lowest_available_price_minor, restriction.currency)} за 30 дней`,
+      };
+    case 'upgrade_required':
+      return {
+        message: `Нужен уровень «${restriction.required_tier.name}»`,
+        detail: restriction.current_tier ? `Ваш уровень — «${restriction.current_tier.name}»` : undefined,
+      };
+    case 'no_eligible_tier':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: 'Среди доступных уровней сейчас нет подходящего',
+      };
+    default:
+      return { message: 'У вас нет доступа к этой публикации' };
+  }
 }
 
 /**
@@ -308,18 +333,17 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       document.title = post.title;
       if (post.locked) {
         const lockedCoverUrl = !offline && post.cover_url ? getAttachmentUrl(post.cover_url) : null;
-        const showRestricted = () => {
-          root.innerHTML = postTemplate({ unavailable: true, restricted: true });
-          bindBackLink(root);
-        };
-        if (!lockedCoverUrl) {
-          showRestricted();
-          return;
-        }
-        root.innerHTML = postTemplate({ ...buildViewModel(post, false), lockedCoverUrl });
-        requireElement(root, '.post-page__cover').addEventListener('error', () => {
-          if (isCurrent()) {
-            showRestricted();
+        root.innerHTML = postTemplate({
+          ...buildViewModel(post, false),
+          locked: true,
+          lockedCoverUrl,
+          accessNote: buildAccessNote(post.access_restriction),
+        });
+        const cover = root.querySelector<HTMLImageElement>('.post-page__cover');
+        cover?.addEventListener('error', () => {
+          if (isCurrent() && cover.isConnected) {
+            cover.parentElement?.classList.remove('post-page__card-with-cover');
+            cover.remove();
           }
         }, { once: true });
         bindBackLink(root);

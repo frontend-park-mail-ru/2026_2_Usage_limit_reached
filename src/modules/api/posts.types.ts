@@ -11,6 +11,14 @@ export interface PostAuthor {
   avatar_url?: string | null;
 }
 
+export interface PostAccessRestriction {
+  reason: 'subscription_required' | 'upgrade_required' | 'no_eligible_tier';
+  required_tier: { id: string; name: string; status: 'open' | 'archived' };
+  current_tier: { id: string; name: string } | null;
+  lowest_available_price_minor: number | null;
+  currency: string;
+}
+
 export interface PostPreview {
   id: string;
   author: PostAuthor;
@@ -46,6 +54,7 @@ export interface Post {
   created_at: string;
   updated_at: string;
   locked: boolean;
+  access_restriction?: PostAccessRestriction | null;
   likes_count: number;
   liked_by_user: boolean;
 }

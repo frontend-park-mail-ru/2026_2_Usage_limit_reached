@@ -121,6 +121,8 @@
 }
 
 .post-page__access-note {
+  display: grid;
+  gap: 16px;
   padding: 24px;
   border-radius: 16px;
   background: rgba(61, 64, 91, 0.04);
