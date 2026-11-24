@@ -139,7 +139,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
-  bindPostAccess(form, loaded?.min_tier_id ?? null, context, signal);
+  const access = bindPostAccess(form, loaded?.min_tier_id ?? null, context, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length
@@ -184,7 +184,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   });
 
   const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
-    || getUnfinished().length > 0 || cover.hasChanges();
+    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined;
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -210,7 +210,12 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     setBusy(true);
     setAlert(alert, null);
     const coverId = cover.getCoverId();
-    const data = { title: values.title.trim(), body: values.body, status, ...(coverId === undefined ? {} : { cover_id: coverId }) };
+    const tierId = access.getChange();
+    const data = {
+      title: values.title.trim(), body: values.body, status,
+      ...(coverId === undefined ? {} : { cover_id: coverId }),
+      ...(tierId === undefined ? {} : { min_tier_id: tierId }),
+    };
     try {
       const save = async () => {
         if (post) {
@@ -227,6 +232,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       }
       saved = snapshot;
       cover.markSaved();
+      access.markSaved();
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();

@@ -55,6 +55,7 @@ export interface PostInput {
   body: string;
   status: PostStatus;
   cover_id?: string | null;
+  min_tier_id?: string | null;
 }
 
 export interface PostUpdate extends PostInput {
