@@ -14,6 +14,7 @@ import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { bindAttachments } from './postAttachments.ts';
 import { bindPostCover } from './postCover.ts';
 import { bindPostAccess } from './postAccess.ts';
+import { bindPublicationEnd } from './publicationEnd.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -140,6 +141,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
   const access = bindPostAccess(form, loaded, context, signal);
+  const publicationEnd = bindPublicationEnd(form, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length
@@ -199,7 +201,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving || !isSessionCurrent(context) || access.needsSelection() || access.finishStageBeforeSaving()
+    if (isSaving || !isSessionCurrent(context) || !publicationEnd.validate()
+      || access.needsSelection() || access.finishStageBeforeSaving()
       || access.needsScheduleFix(post?.publication_ends_at)) {
       return;
     }

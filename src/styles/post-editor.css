@@ -212,6 +212,35 @@
   align-self: center;
 }
 
+.publication-end summary {
+  display: flex;
+  align-items: center;
+  border-color: rgba(61, 64, 91, 0.5);
+}
+
+.publication-end details[open] summary {
+  position: relative;
+  background-image: none;
+}
+
+.publication-end details[open] summary::before {
+  position: absolute;
+  inset: 0;
+  background: url('/assets/profile/chevron.svg') 16px center / 12px 7px no-repeat;
+  transform: scaleY(-1);
+  content: '';
+}
+
+.publication-end__fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.publication-end .button {
+  height: 44px;
+}
+
 .post-access .form-field__label,
 .post-access .form-field__error {
   margin: 0;
