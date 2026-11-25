@@ -186,7 +186,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   });
 
   const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
-    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined || access.hasScheduleChanges();
+    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined
+    || access.hasScheduleChanges() || publicationEnd.hasChanges();
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];

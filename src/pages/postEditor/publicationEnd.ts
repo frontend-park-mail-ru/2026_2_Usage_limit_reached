@@ -73,10 +73,13 @@ export function bindPublicationEnd(form: HTMLFormElement, savedEnd: string | nul
     explicitlyCleared = true;
     date.value = time.value = error.textContent = '';
     close();
+    form.dispatchEvent(new Event('input', { bubbles: true }));
   }, { signal });
   return {
     validate,
     getSavedEnd: () => savedEnd,
+    hasChanges: () => date.validity.badInput || time.validity.badInput
+      || (date.value || time.value ? enteredMinute() : '') !== savedMinute,
     getChange() {
       if (!date.value) {
         return savedEnd && explicitlyCleared ? null : undefined;
