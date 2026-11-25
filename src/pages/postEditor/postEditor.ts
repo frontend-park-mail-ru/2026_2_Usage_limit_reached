@@ -141,7 +141,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
   const access = bindPostAccess(form, loaded, context, signal);
-  const publicationEnd = bindPublicationEnd(form, signal);
+  const publicationEnd = bindPublicationEnd(form, loaded?.publication_ends_at ?? null, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length

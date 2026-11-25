@@ -1,9 +1,10 @@
 import { requireElement } from '@/utils/helpers/dom.ts';
+import { toLocalMinute } from './postDate.ts';
 
 const dateLabel = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
 
 /** Подключает поля и проверку даты завершения публикации. */
-export function bindPublicationEnd(form: HTMLFormElement, signal: AbortSignal) {
+export function bindPublicationEnd(form: HTMLFormElement, savedEnd: string | null, signal: AbortSignal) {
   const panel = requireElement(form, '[data-publication-end]');
   const details = requireElement<HTMLDetailsElement>(panel, 'details');
   const summary = requireElement<HTMLElement>(details, 'summary');
@@ -32,6 +33,11 @@ export function bindPublicationEnd(form: HTMLFormElement, signal: AbortSignal) {
       ? `${dateLabel.format(parsed)} ${date.value.slice(0, 4)}, ${time.value}`
       : 'Указать дату и время';
   };
+  const savedDate = savedEnd ? new Date(savedEnd) : null;
+  if (savedDate && Number.isFinite(+savedDate)) {
+    [date.value, time.value] = toLocalMinute(savedDate).split('T');
+    updateSummary();
+  }
   const close = () => {
     updateSummary();
     details.open = false;

@@ -5,11 +5,7 @@ import type { Post, PostAccessStage } from '@/modules/api/posts.types.ts';
 import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
-
-/** Представляет момент в местном времени для полей даты и времени. */
-function localStageTime(date: Date): string {
-  return new Date(+date - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-}
+import { toLocalMinute } from './postDate.ts';
 
 /** Подключает выбор минимального уровня подписки. */
 export function bindPostAccess(form: HTMLFormElement, post: Post | null, context: SessionContext, signal: AbortSignal) {
@@ -91,7 +87,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     const time = requireElement<HTMLTimeElement>(row, 'time');
     const title = requireElement(row, 'summary span');
     const dateError = requireElement(row, '[data-stage-date-error]');
-    const originalTime = initial ? localStageTime(new Date(initial.starts_at)) : '';
+    const originalTime = initial ? toLocalMinute(new Date(initial.starts_at)) : '';
     let start = initial?.starts_at ?? '';
     let tierId = initial?.min_tier_id ?? null;
     const keepsStageBinding = (id: string, date: string) => keepsBinding(id, date) && (
@@ -124,7 +120,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     stageEditors.set(row, {
       refresh,
       value: () => ({ starts_at: start, min_tier_id: tierId }),
-      unfinished: () => !start || enteredTime() !== localStageTime(new Date(start)) || (tierInput.value || null) !== tierId,
+      unfinished: () => !start || enteredTime() !== toLocalMinute(new Date(start)) || (tierInput.value || null) !== tierId,
       reveal() {
         row.open = true;
         dateError.textContent ||= 'Нажмите «Готово», чтобы применить изменения этапа';
@@ -139,7 +135,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       }
       const entered = enteredTime();
       const next = new Date(entered);
-      if (!Number.isFinite(+next) || localStageTime(next) !== entered) {
+      if (!Number.isFinite(+next) || toLocalMinute(next) !== entered) {
         dateError.textContent = 'Этого времени нет в выбранную дату. Укажите другое время';
         return;
       }
