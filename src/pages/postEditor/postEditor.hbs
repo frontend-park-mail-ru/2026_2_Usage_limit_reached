@@ -71,12 +71,25 @@
         <button class="button button_view_secondary" type="button" data-post-access-retry hidden>Повторить</button>
         <div class="post-access__schedule" data-access-schedule>
           <div data-access-stages></div>
-          <button class="button button_view_secondary" type="button" disabled>Добавить этап</button>
+          <button class="button button_view_secondary" type="button" data-stage-add>Добавить этап</button>
           <template data-access-stage>
-            <div class="post-access__stage">
-              <time class="post-cover__hint"></time>
-              <span></span>
-            </div>
+            <details class="post-access__stage">
+              <summary>
+                <time class="post-cover__hint"></time>
+                <span></span>
+              </summary>
+              <div class="post-access__stage-fields">
+                <div class="post-access__stage-dates">
+                  <label>Дата<input class="form-field__input" type="date" required></label>
+                  <label>Время<input class="form-field__input" type="time" required></label>
+                </div>
+                <label>Доступ с этого этапа<select class="form-field__input select__input"></select></label>
+                <div class="post-access__stage-actions">
+                  <button class="button button_view_secondary" type="button" data-stage-done>Готово</button>
+                  <button class="post-cover__remove" type="button" data-stage-delete>Удалить</button>
+                </div>
+              </div>
+            </details>
           </template>
         </div>
       </section>

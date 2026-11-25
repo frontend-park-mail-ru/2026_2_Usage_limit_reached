@@ -1,7 +1,7 @@
 import { Select } from '@/components/select/select.ts';
 import { getMyTiers } from '@/modules/api/tiers.ts';
 import type { SubscriptionTier } from '@/modules/api/tiers.ts';
-import type { Post } from '@/modules/api/posts.types.ts';
+import type { Post, PostAccessStage } from '@/modules/api/posts.types.ts';
 import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -21,7 +21,6 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   const schedule = requireElement<HTMLElement>(form, '[data-access-schedule]');
   const stages = requireElement(schedule, '[data-access-stages]');
   const stageTemplate = requireElement<HTMLTemplateElement>(schedule, '[data-access-stage]');
-  const savedStages = post?.access_schedule ?? [];
   const stageDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
   const stageTime = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
   let savedTierId = initialTierId;
@@ -29,20 +28,68 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   let rejectedTierId: string | undefined;
   let tiers: SubscriptionTier[] = [];
   let select: Select | undefined;
-  function renderStages(): void {
-    stages.replaceChildren(...savedStages.map((stage) => {
-      const row = stageTemplate.content.cloneNode(true) as DocumentFragment;
-      const time = requireElement<HTMLTimeElement>(row, 'time');
-      const tier = tiers.find(({ id }) => id === stage.min_tier_id);
-      time.dateTime = stage.starts_at;
-      const start = new Date(stage.starts_at);
-      time.textContent = `${stageDate.format(start)}, ${stageTime.format(start)}`;
-      requireElement(row, 'span').textContent = stage.min_tier_id ? tier?.name ?? savedLabel : publicLabel;
-      return row;
-    }));
+  const refreshStages = new Map<HTMLDetailsElement, () => void>();
+  const addStage = requireElement<HTMLButtonElement>(schedule, '[data-stage-add]');
+  function appendStage(initial?: PostAccessStage): void {
+    const fragment = stageTemplate.content.cloneNode(true) as DocumentFragment;
+    const row = requireElement<HTMLDetailsElement>(fragment, 'details');
+    const date = requireElement<HTMLInputElement>(row, 'input[type="date"]');
+    const clock = requireElement<HTMLInputElement>(row, 'input[type="time"]');
+    const tierInput = requireElement<HTMLSelectElement>(row, 'select');
+    const time = requireElement<HTMLTimeElement>(row, 'time');
+    const title = requireElement(row, 'summary span');
+    let start = initial?.starts_at ?? '';
+    let tierId = initial?.min_tier_id ?? null;
+    if (start) {
+      const local = new Date(start);
+      local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
+      [date.value, clock.value] = local.toISOString().slice(0, 16).split('T');
+    }
+    function updateTitle(): void {
+      time.dateTime = start;
+      time.textContent = start ? `${stageDate.format(new Date(start))}, ${stageTime.format(new Date(start))}` : '';
+      title.textContent = tierId ? tiers.find(({ id }) => id === tierId)?.name ?? savedLabel : publicLabel;
+    }
+    function refresh(): void {
+      const selected = tierInput.selectedIndex < 0 ? tierId ?? '' : tierInput.value;
+      const options = tiers.filter(({ id, status }) => status === 'open' || id === initial?.min_tier_id)
+        .map(({ name, id }) => new Option(name, id));
+      if (selected && !options.some(({ value }) => value === selected)) {
+        options.push(new Option(savedLabel, selected));
+      }
+      tierInput.replaceChildren(new Option(publicLabel, ''), ...options);
+      tierInput.value = selected;
+      updateTitle();
+    }
+    refreshStages.set(row, refresh);
+    refresh();
+    requireElement(row, '[data-stage-done]').addEventListener('click', () => {
+      if (!date.reportValidity() || !clock.reportValidity()) {
+        return;
+      }
+      const next = new Date(`${date.value}T${clock.value}`);
+      if (!start || Math.floor(+new Date(start) / 60000) !== Math.floor(+next / 60000)) {
+        start = next.toISOString();
+      }
+      tierId = tierInput.value || null;
+      updateTitle();
+      row.open = false;
+      requireElement<HTMLElement>(row, 'summary').focus();
+    });
+    requireElement(row, '[data-stage-delete]').addEventListener('click', () => {
+      refreshStages.delete(row);
+      row.remove();
+      addStage.focus();
+    });
+    row.open = !initial;
+    stages.append(fragment);
+    if (!initial) {
+      date.focus();
+    }
   }
 
-  renderStages();
+  post?.access_schedule?.forEach(appendStage);
+  addStage.addEventListener('click', () => appendStage(), { signal });
   const updateHint = (tierId: string | null) => {
     hint.textContent = tierId ? 'Пост увидят подписчики этого уровня и уровней выше' : 'Пост будет доступен всем';
   };
@@ -125,7 +172,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
         return;
       }
       tiers = response.items;
-      renderStages();
+      refreshStages.forEach((refresh) => refresh());
       renderOptions();
       status.textContent = '';
       input.disabled = false;
