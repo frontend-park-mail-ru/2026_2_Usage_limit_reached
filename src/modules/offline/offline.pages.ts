@@ -3,9 +3,9 @@ import type { Post, PostPreview, PostsPage, PostsQuery } from '@/modules/api/pos
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
-import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
+import { accessOfflineCopy, captureOfflineToken, cleanOfflinePublications, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
-import { clearExpiredPreviews, copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
+import { clearUnavailablePreviews, copyOfflinePreview, getOfflineDeadline, revokedPreviewIds } from './offline.deadline.ts';
 
 export interface OfflinePostsPage extends PostsPage {
   items: (PostPreview & { hasLikesCount?: boolean })[];
@@ -39,7 +39,7 @@ export function loadOfflinePosts(
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
       likes_count: item.likes_count, liked_by_user: item.liked_by_user,
     })),
-  }), isCurrent, { cleanCached: (page) => clearExpiredPreviews(page.items) });
+  }), isCurrent, { cleanCached: (page) => clearUnavailablePreviews(page.items), revokedIds: (page) => revokedPreviewIds(page.items) });
 }
 
 /** Сохраняет публичные сведения без контактов и платёжных данных. */
@@ -66,7 +66,7 @@ export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent
       published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
       likes_count: post.likes_count, liked_by_user: post.liked_by_user,
     };
-  }, isCurrent, { canRead: canCache });
+  }, isCurrent, { canRead: canCache, revokedIds: (post) => canCache(post) ? [] : [id] });
 }
 
 /** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
@@ -86,8 +86,8 @@ export function loadOfflineDonations(ownerId: string, direction: DonationsDirect
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
   key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
-  { ownerId, canRead, cleanCached }: {
-    ownerId?: string; canRead?: (page: T) => boolean; cleanCached?: (page: T) => boolean;
+  { ownerId, canRead, cleanCached, revokedIds }: {
+    ownerId?: string; canRead?: (page: T) => boolean; cleanCached?: (page: T) => boolean; revokedIds?: (page: T) => string[];
   } = {},
 ): Promise<T & { savedAt?: number }> {
   const captured = await captureOfflineToken();
@@ -136,6 +136,9 @@ async function loadOfflinePage<T extends object>(
     }
     if (saved && new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
       store.put(saved, key);
+    }
+    if (revokedIds) {
+      cleanOfflinePublications(store, token?.ownerId, new Set(revokedIds(page)));
     }
     const request = store.getAll(IDBKeyRange.bound([key[0]], [key[0], []]));
     request.onsuccess = () => {

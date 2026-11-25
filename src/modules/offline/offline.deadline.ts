@@ -21,12 +21,19 @@ export function copyOfflinePreview(item: CachedPreview, now = Date.now()) {
     : { body_preview: '', offline_cache_until: null };
 }
 
+export function revokedPreviewIds(items: (CachedPreview & { id: string })[]): string[] {
+  return items.filter((item) => copyOfflinePreview(item).offline_cache_until === null).map(({ id }) => id);
+}
+
 /** Удаляет из копии текст без разрешения и сообщает, нужно ли обновить запись. */
-export function clearExpiredPreviews(items: CachedPreview[]): boolean {
+export function clearUnavailablePreviews(items: (CachedPreview & { id: string })[], revoked?: ReadonlySet<string>): boolean {
   const now = Date.now();
   let changed = false;
   for (const item of items) {
-    const preview = copyOfflinePreview(item, now);
+    if (revoked && !revoked.has(item.id)) {
+      continue;
+    }
+    const preview = revoked ? { body_preview: '', offline_cache_until: null } : copyOfflinePreview(item, now);
     if (item.body_preview !== preview.body_preview || item.offline_cache_until !== preview.offline_cache_until) {
       Object.assign(item, preview);
       changed = true;

@@ -4,7 +4,7 @@ import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GE
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
 import type { PostsQuery } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { clearExpiredPreviews, copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
+import { clearUnavailablePreviews, copyOfflinePreview, getOfflineDeadline, revokedPreviewIds } from './offline.deadline.ts';
 
 const MAX_POST_PAGES = 20;
 const MAX_POST_BYTES = 512 * 1024;
@@ -201,28 +201,34 @@ export function accessOfflineCopy<T>(
   });
 }
 
-/** Удаляет просроченный контент из копий текущей ревизии. */
+/** Удаляет просроченный или отозванный контент в транзакции текущей ревизии. */
+export function cleanOfflinePublications(store: IDBObjectStore, ownerId?: string | null, revoked?: ReadonlySet<string>): void {
+  if (revoked?.size === 0) {
+    return;
+  }
+  const request = store.openCursor();
+  request.onsuccess = () => {
+    const cursor = request.result;
+    if (!cursor) {
+      return;
+    }
+    const [kind, section, page] = cursor.key as string[];
+    const entry = cursor.value;
+    if (kind === 'post' && (revoked ? revoked.has(section) : getOfflineDeadline(entry.page?.offline_cache_until) === undefined)) {
+      cursor.delete();
+    } else if (kind === 'feed' || (kind === 'public' && page === 'posts') || (kind === ownerId && section === 'posts')) {
+      if (clearUnavailablePreviews(entry.page?.items ?? entry.items ?? [], revoked)) {
+        cursor.update(entry);
+      }
+    }
+    cursor.continue();
+  };
+}
+
+/** Удаляет просроченные публикации из копий текущей ревизии. */
 export async function expireOfflinePublications(isCurrent: () => boolean): Promise<void> {
   const token = await captureOfflineToken();
-  await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
-    const request = store.openCursor();
-    request.onsuccess = () => {
-      const cursor = request.result;
-      if (!cursor || !isCurrent()) {
-        return;
-      }
-      const [kind, section, page] = cursor.key as string[];
-      const entry = cursor.value;
-      if (kind === 'post' && getOfflineDeadline(entry.page?.offline_cache_until) === undefined) {
-        cursor.delete();
-      } else if (kind === 'feed' || (kind === 'public' && page === 'posts') || (kind === token?.ownerId && section === 'posts')) {
-        if (clearExpiredPreviews(entry.page?.items ?? entry.items ?? [])) {
-          cursor.update(entry);
-        }
-      }
-      cursor.continue();
-    };
-  });
+  await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => cleanOfflinePublications(store, token?.ownerId));
 }
 
 /** undefined означает недоступность хранилища, null означает устаревший запрос. */
@@ -289,13 +295,16 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
       next_cursor: posts.next_cursor,
     };
     const key = [token.ownerId, 'posts', query.sort];
-    const request = tx.objectStore('copies').get(key);
+    const store = tx.objectStore('copies');
+    const revoked = new Set(revokedPreviewIds(posts.items));
+    const request = store.get(key);
     request.onsuccess = () => {
       const previous: SavedPosts | undefined = request.result;
       saved.pages = 1;
       if (query.cursor) {
         if (!previous || previous.next_cursor !== query.cursor || previous.query.limit !== saved.query.limit
           || (previous.pages ?? 1) >= MAX_POST_PAGES || Date.now() - previous.savedAt > MAX_POST_AGE) {
+          cleanOfflinePublications(store, token.ownerId, revoked);
           result(true);
           return;
         }
@@ -304,10 +313,11 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
         saved.items = [...new Map([...previous.items, ...saved.items].map((item) => [item.id, item])).values()];
       }
       if (new Blob([JSON.stringify(saved)]).size <= MAX_POST_BYTES) {
-        tx.objectStore('copies').put(saved, key);
+        store.put(saved, key);
       } else if (!query.cursor) {
-        tx.objectStore('copies').delete(key);
+        store.delete(key);
       }
+      cleanOfflinePublications(store, token.ownerId, revoked);
       result(true);
     };
   });
@@ -386,7 +396,7 @@ export function readOfflineCopy(ownerId?: string, sort: PostsQuery['sort'] = 'ne
       legacy.onsuccess = () => {
         const saved: SavedPosts | undefined = posts.result ?? legacy.result;
         if (saved?.query.sort === sort && !saved.query.cursor && Date.now() - saved.savedAt <= MAX_POST_AGE) {
-          if (clearExpiredPreviews(saved.items)) {
+          if (clearUnavailablePreviews(saved.items)) {
             store.put(saved, posts.result ? key : legacyKey);
           }
           copy.posts = saved;
