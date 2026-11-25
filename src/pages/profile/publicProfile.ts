@@ -72,7 +72,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
               if (error instanceof ApiError && error.isUnauthorized) {
                 navigate(ROUTES.login);
               } else {
-                showToast(error instanceof ApiError ? error.text : LOAD_ERROR);
+                showToast(error instanceof ApiError ? error.text : LOAD_ERROR, 'error');
               }
             }
           } finally {

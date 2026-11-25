@@ -276,7 +276,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         if (context && isSessionCurrent(context)) {
           return true;
         }
-        showToast('Не удалось подтвердить сессию. Проверяем её ещё раз');
+        showToast('Не удалось подтвердить сессию. Проверяем её ещё раз', 'error');
         void load();
         return false;
       };
