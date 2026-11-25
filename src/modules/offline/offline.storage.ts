@@ -4,7 +4,7 @@ import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GE
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
 import type { PostsQuery } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { clearExpiredPreviews, copyOfflinePreview } from './offline.deadline.ts';
+import { clearExpiredPreviews, copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
 
 const MAX_POST_PAGES = 20;
 const MAX_POST_BYTES = 512 * 1024;
@@ -198,6 +198,30 @@ export function accessOfflineCopy<T>(
     if (token.generation === expected.generation && token.ownerId === expected.ownerId && isCurrent()) {
       operation(tx.objectStore('copies'), result);
     }
+  });
+}
+
+/** Удаляет просроченный контент из копий текущей ревизии. */
+export async function expireOfflinePublications(isCurrent: () => boolean): Promise<void> {
+  const token = await captureOfflineToken();
+  await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
+    const request = store.openCursor();
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor || !isCurrent()) {
+        return;
+      }
+      const [kind, section, page] = cursor.key as string[];
+      const entry = cursor.value;
+      if (kind === 'post' && getOfflineDeadline(entry.page?.offline_cache_until) === undefined) {
+        cursor.delete();
+      } else if (kind === 'feed' || (kind === 'public' && page === 'posts') || (kind === token?.ownerId && section === 'posts')) {
+        if (clearExpiredPreviews(entry.page?.items ?? entry.items ?? [])) {
+          cursor.update(entry);
+        }
+      }
+      cursor.continue();
+    };
   });
 }
 

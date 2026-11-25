@@ -6,7 +6,9 @@ import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
 import type { PostPreview, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import type { OfflinePostsPage } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery, isBackendUnavailable, watchOfflineExpiry } from '@/modules/offline/offline.recovery.ts';
+import { getOfflineDeadline } from '@/modules/offline/offline.deadline.ts';
+import { expireOfflinePublications } from '@/modules/offline/offline.storage.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
@@ -47,6 +49,27 @@ export function bindPublicPosts(
   let unavailable = false;
   let recoverAfterLoad = false;
   let retryAction: (() => void) | undefined;
+  const expiry = watchOfflineExpiry(() => {
+    if (!offline) {
+      return undefined;
+    }
+    let next = Infinity;
+    let expired = false;
+    panel.querySelectorAll<HTMLElement>('[data-offline-preview]').forEach((element) => {
+      const deadline = getOfflineDeadline(element.dataset.offlinePreview);
+      if (deadline === undefined) {
+        element.textContent = '';
+        delete element.dataset.offlinePreview;
+        expired = true;
+      } else {
+        next = Math.min(next, deadline);
+      }
+    });
+    if (expired) {
+      void expireOfflinePublications(() => active);
+    }
+    return Number.isFinite(next) ? next : undefined;
+  });
 
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((entry) => entry.isIntersecting)) {
@@ -86,6 +109,7 @@ export function bindPublicPosts(
       }
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
+        offlineDeadline: item.body_preview ? item.offline_cache_until ?? 'invalid' : undefined,
         hasLikesCount: item.hasLikesCount ?? item.likes_count !== undefined,
         locked: item.locked,
         offline,
@@ -119,6 +143,7 @@ export function bindPublicPosts(
           }
         });
       }
+      expiry.refresh();
       const more = panel.querySelector<HTMLElement>('[data-posts-more]');
       retryAction = offline ? () => { void load(); } : undefined;
       if (more) {
@@ -135,6 +160,7 @@ export function bindPublicPosts(
       unavailable = isBackendUnavailable(error);
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+        expiry.refresh();
       }
       const message = append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
       if (moreText) {
@@ -177,6 +203,7 @@ export function bindPublicPosts(
       unavailable = true;
       offline = true;
       panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+      expiry.refresh();
       if (!busy) {
         void load();
       }
@@ -192,6 +219,7 @@ export function bindPublicPosts(
       setRefreshNotice(null);
       window.removeEventListener('offline', handleOffline);
       unbindRecovery();
+      expiry.destroy();
       unbindCovers();
       observer.disconnect();
       sortMenu.destroy();
