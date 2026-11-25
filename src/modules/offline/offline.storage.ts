@@ -4,6 +4,7 @@ import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GE
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
 import type { PostsQuery } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
+import { copyOfflinePreview } from './offline.deadline.ts';
 
 const MAX_POST_PAGES = 20;
 const MAX_POST_BYTES = 512 * 1024;
@@ -256,7 +257,7 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
         id: item.id,
         title: item.title,
         locked: item.locked,
-        body_preview: item.locked ? '' : item.body_preview,
+        ...copyOfflinePreview(item),
         likes_count: item.likes_count,
         liked_by_user: item.liked_by_user,
         published_or_updated_at: item.published_or_updated_at,
