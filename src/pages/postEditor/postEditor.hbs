@@ -70,6 +70,7 @@
         <p class="post-cover__status" data-post-access-status role="status"></p>
         <button class="button button_view_secondary" type="button" data-post-access-retry hidden>Повторить</button>
         <div class="post-access__schedule" data-access-schedule>
+          <p class="post-cover__hint" data-stage-zone hidden></p>
           <div data-access-stages></div>
           <button class="button button_view_secondary" type="button" data-stage-add>Добавить этап</button>
           <template data-access-stage>
@@ -83,6 +84,7 @@
                   <label>Дата<input class="form-field__input" type="date" required></label>
                   <label>Время<input class="form-field__input" type="time" required></label>
                 </div>
+                <p class="post-cover__status post-cover__status_error" data-stage-date-error role="status"></p>
                 <label>Доступ с этого этапа<select class="form-field__input select__input"></select></label>
                 <div class="post-access__stage-actions">
                   <button class="button button_view_secondary" type="button" data-stage-done>Готово</button>

@@ -219,6 +219,7 @@
 }
 
 .post-access [data-post-access-retry][hidden],
+.post-access:has([data-stage-zone]:not([hidden])) [data-post-access-hint],
 .post-access:has(.select__input[aria-invalid="true"]) [data-post-access-hint] {
   display: none;
 }

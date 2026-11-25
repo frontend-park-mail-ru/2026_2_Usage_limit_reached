@@ -6,6 +6,11 @@ import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 
+/** Представляет момент в местном времени для полей даты и времени. */
+function localStageTime(date: Date): string {
+  return new Date(+date - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
 /** Подключает выбор минимального уровня подписки. */
 export function bindPostAccess(form: HTMLFormElement, post: Post | null, context: SessionContext, signal: AbortSignal) {
   const initialTierId = post?.min_tier_id ?? null;
@@ -30,6 +35,14 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   let select: Select | undefined;
   const refreshStages = new Map<HTMLDetailsElement, () => void>();
   const addStage = requireElement<HTMLButtonElement>(schedule, '[data-stage-add]');
+  const zone = requireElement(schedule, '[data-stage-zone]');
+  const now = new Date();
+  const year = now.getFullYear();
+  const seasonal = new Date(year, 0, 1).getTimezoneOffset() !== new Date(year, 6, 1).getTimezoneOffset();
+  const zoneName = new Intl.DateTimeFormat('ru-RU', { timeZoneName: seasonal ? 'shortGeneric' : 'shortOffset' })
+    .formatToParts(now).find(({ type }) => type === 'timeZoneName')?.value.replace('GMT', 'UTC');
+  zone.textContent = `Часовой пояс ${zoneName ?? stageDate.resolvedOptions().timeZone}`;
+  const updateZone = () => { zone.toggleAttribute('hidden', !refreshStages.size); };
   function appendStage(initial?: PostAccessStage): void {
     const fragment = stageTemplate.content.cloneNode(true) as DocumentFragment;
     const row = requireElement<HTMLDetailsElement>(fragment, 'details');
@@ -38,12 +51,12 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     const tierInput = requireElement<HTMLSelectElement>(row, 'select');
     const time = requireElement<HTMLTimeElement>(row, 'time');
     const title = requireElement(row, 'summary span');
+    const dateError = requireElement(row, '[data-stage-date-error]');
+    const originalTime = initial ? localStageTime(new Date(initial.starts_at)) : '';
     let start = initial?.starts_at ?? '';
     let tierId = initial?.min_tier_id ?? null;
-    if (start) {
-      const local = new Date(start);
-      local.setMinutes(local.getMinutes() - local.getTimezoneOffset());
-      [date.value, clock.value] = local.toISOString().slice(0, 16).split('T');
+    if (originalTime) {
+      [date.value, clock.value] = originalTime.split('T');
     }
     function updateTitle(): void {
       time.dateTime = start;
@@ -63,32 +76,47 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     }
     refreshStages.set(row, refresh);
     refresh();
+    row.addEventListener('input', () => { dateError.textContent = ''; });
     requireElement(row, '[data-stage-done]').addEventListener('click', () => {
       if (!date.reportValidity() || !clock.reportValidity()) {
         return;
       }
-      const next = new Date(`${date.value}T${clock.value}`);
-      if (!start || Math.floor(+new Date(start) / 60000) !== Math.floor(+next / 60000)) {
-        start = next.toISOString();
+      const entered = `${date.value}T${clock.value}`;
+      const next = new Date(entered);
+      if (!Number.isFinite(+next) || localStageTime(next) !== entered) {
+        dateError.textContent = 'Этого времени нет в выбранную дату. Укажите другое время';
+        return;
       }
+      const nextStart = initial && entered === originalTime ? initial.starts_at : next.toISOString();
+      const others = [...stages.querySelectorAll('time')].filter((item) => item !== time);
+      if (others.some((item) => Date.parse(item.dateTime) === Date.parse(nextStart))) {
+        dateError.textContent = 'На это время уже есть этап. Укажите другое время';
+        return;
+      }
+      start = nextStart;
       tierId = tierInput.value || null;
+      dateError.textContent = '';
       updateTitle();
       row.open = false;
+      const following = others.find((item) => !item.dateTime || Date.parse(item.dateTime) > Date.parse(start));
+      stages.insertBefore(row, following?.closest('details') ?? null);
       requireElement<HTMLElement>(row, 'summary').focus();
     });
     requireElement(row, '[data-stage-delete]').addEventListener('click', () => {
       refreshStages.delete(row);
       row.remove();
+      updateZone();
       addStage.focus();
     });
     row.open = !initial;
     stages.append(fragment);
+    updateZone();
     if (!initial) {
       date.focus();
     }
   }
 
-  post?.access_schedule?.forEach(appendStage);
+  [...post?.access_schedule ?? []].sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)).forEach(appendStage);
   addStage.addEventListener('click', () => appendStage(), { signal });
   const updateHint = (tierId: string | null) => {
     hint.textContent = tierId ? 'Пост увидят подписчики этого уровня и уровней выше' : 'Пост будет доступен всем';
