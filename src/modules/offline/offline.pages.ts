@@ -101,7 +101,11 @@ async function loadOfflinePage<T extends object>(
     if (!isBackendUnavailable(error)) {
       if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
         await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
-          store.delete(IDBKeyRange.bound(group, [...group, []]));
+          if (key[0] === 'post' && error.status === 404) {
+            cleanOfflinePublications(store, token?.ownerId, new Set([key[1]]), true);
+          } else {
+            store.delete(IDBKeyRange.bound(group, [...group, []]));
+          }
         });
       }
       throw error;

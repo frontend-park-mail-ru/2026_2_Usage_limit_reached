@@ -201,8 +201,10 @@ export function accessOfflineCopy<T>(
   });
 }
 
-/** Удаляет просроченный или отозванный контент в транзакции текущей ревизии. */
-export function cleanOfflinePublications(store: IDBObjectStore, ownerId?: string | null, revoked?: ReadonlySet<string>): void {
+/** Очищает контент или удаляет карточки в транзакции текущей ревизии. */
+export function cleanOfflinePublications(
+  store: IDBObjectStore, ownerId?: string | null, revoked?: ReadonlySet<string>, removeCards = false,
+): void {
   if (revoked?.size === 0) {
     return;
   }
@@ -217,7 +219,15 @@ export function cleanOfflinePublications(store: IDBObjectStore, ownerId?: string
     if (kind === 'post' && (revoked ? revoked.has(section) : getOfflineDeadline(entry.page?.offline_cache_until) === undefined)) {
       cursor.delete();
     } else if (kind === 'feed' || (kind === 'public' && page === 'posts') || (kind === ownerId && section === 'posts')) {
-      if (clearUnavailablePreviews(entry.page?.items ?? entry.items ?? [], revoked)) {
+      const list = (entry.page ?? entry) as Pick<SavedPosts, 'items'>;
+      const items = list.items ?? [];
+      if (removeCards && revoked) {
+        const remaining = items.filter((item) => !revoked.has(item.id));
+        if (remaining.length !== items.length) {
+          list.items = remaining;
+          cursor.update(entry);
+        }
+      } else if (clearUnavailablePreviews(items, revoked)) {
         cursor.update(entry);
       }
     }
