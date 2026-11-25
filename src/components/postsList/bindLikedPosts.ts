@@ -5,7 +5,8 @@ import { bindPublicPosts } from '@/components/postsList/publicPosts.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { ROUTES } from '@/app/paths.ts';
+import { postRoute, ROUTES } from '@/app/paths.ts';
+import { getPostListPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
 
@@ -22,6 +23,7 @@ export function bindLikedPosts(
   navigate: Navigate,
   feed = false
 ): () => void {
+  const returnTo = getPostListPath(window.location.pathname + window.location.search);
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
   const posts = bindPublicPosts(root, async (query) => {
     if (authStore.getState().status === 'unknown') {
@@ -33,7 +35,7 @@ export function bindLikedPosts(
       await Promise.allSettled(pending.map(([request]) => request));
     }
     return loadPage(query);
-  }, (button, item) => {
+  }, (item) => withPostReturnPath(postRoute(item.id), returnTo), (button, item) => {
     new LikeButton(button, item, async (liked) => {
       if (authStore.getState().status === 'unknown') {
         await checkSession().catch(() => {});

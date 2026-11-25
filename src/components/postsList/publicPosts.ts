@@ -4,6 +4,7 @@ import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
+import type { NavigationPath } from '@/app/paths.ts';
 import type { PostPreview, PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -14,12 +15,14 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  * Подключает сортировку и подгрузку опубликованных постов.
  * @param root
  * @param loadPage
+ * @param getPostHref Адрес открытия поста.
  * @param bindLike
  * @param feed
  */
 export function bindPublicPosts(
   root: HTMLElement,
   loadPage: (query: PostsQuery) => Promise<PostsPage>,
+  getPostHref: (item: PostPreview) => NavigationPath,
   bindLike?: (button: HTMLButtonElement, item: PostPreview) => void,
   feed = false
 ) {
@@ -63,7 +66,7 @@ export function bindPublicPosts(
       }
       cursor = page.next_cursor;
       const cards = page.items.map((item) => ({
-        ...buildPostCard(item),
+        ...buildPostCard(item, getPostHref(item)),
         locked: item.locked,
         canLike: !!bindLike && !item.locked,
         liked: item.liked_by_user,

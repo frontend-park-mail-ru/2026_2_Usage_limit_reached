@@ -1,21 +1,20 @@
 import type { PostPreview } from '@/modules/api/posts.types.ts';
-import { postEditRoute, postRoute } from '@/app/paths.ts';
+import type { NavigationPath } from '@/app/paths.ts';
 import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
 import { htmlToText } from '@/modules/sanitize/sanitize.ts';
 import { DRAFT_MENU_ITEMS } from './postCard.constants.ts';
-import { getPostListPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 
 /**
  * Данные карточки поста или черновика.
  * @param item
+ * @param href Адрес открытия карточки.
  * @param isDraft
  */
-export function buildPostCard(item: PostPreview, isDraft = false) {
+export function buildPostCard(item: PostPreview, href: NavigationPath, isDraft = false) {
   const date = item.published_or_updated_at ?? '';
   return {
     id: item.id,
-    href: withPostReturnPath(isDraft ? postEditRoute(item.id) : postRoute(item.id),
-      getPostListPath(window.location.pathname + window.location.search)),
+    href,
     preview: item.locked ? '' : htmlToText(item.body_preview),
     title: item.title,
     isDraft,

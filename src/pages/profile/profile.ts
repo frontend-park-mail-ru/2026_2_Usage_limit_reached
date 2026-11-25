@@ -35,7 +35,8 @@ import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { Tabs } from '@/components/tabs/tabs.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { postEditRoute } from '@/app/paths.ts';
+import { postEditRoute, postRoute } from '@/app/paths.ts';
+import { getPostListPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -133,6 +134,7 @@ function bindPosts(
   let cardMenus: ActionMenu[] = [];
   let observer: IntersectionObserver | undefined;
   const pendingLikes = new Set<ReturnType<typeof sendLike>>();
+  const returnTo = getPostListPath(window.location.pathname + window.location.search);
   const isActive = () => active && panel.isConnected && isSessionCurrent(context);
   const setRetry = (action?: () => void) => {
     retryAction = action;
@@ -162,7 +164,7 @@ function bindPosts(
   };
 
   const buildCard = (item: PostPreview) => ({
-    ...buildPostCard(item, tab === 'drafts'),
+    ...buildPostCard(item, withPostReturnPath(tab === 'drafts' ? postEditRoute(item.id) : postRoute(item.id), returnTo), tab === 'drafts'),
     canLike: tab === 'posts' && !item.locked,
     liked: item.liked_by_user,
     canManage: tab === 'posts' && item.author.id === context.userId,
