@@ -52,8 +52,10 @@ export function loadOfflinePublicProfile(username: string, load: () => Promise<P
 
 /** Сохраняет тело открытого опубликованного поста с действующим разрешением. */
 export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent: () => boolean) {
+  const canCache = (post: Post) => !post.locked && post.status === 'published'
+    && getOfflineDeadline(post.offline_cache_until) !== undefined;
   return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => {
-    if (post.locked || post.status !== 'published' || getOfflineDeadline(post.offline_cache_until) === undefined) {
+    if (!canCache(post)) {
       return null;
     }
     return {
@@ -64,7 +66,7 @@ export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent
       published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
       likes_count: post.likes_count, liked_by_user: post.liked_by_user,
     };
-  }, isCurrent);
+  }, isCurrent, { canRead: canCache });
 }
 
 /** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
@@ -78,12 +80,13 @@ export function loadOfflineDonations(ownerId: string, direction: DonationsDirect
       user: item.is_anonymous || !item.user ? null
         : { username: item.user.username, nickname: item.user.nickname, avatar_url: null },
     })),
-  }), isCurrent, ownerId);
+  }), isCurrent, { ownerId });
 }
 
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
-  key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean, ownerId?: string,
+  key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
+  { ownerId, canRead }: { ownerId?: string; canRead?: (page: T) => boolean } = {},
 ): Promise<T & { savedAt?: number }> {
   const captured = await captureOfflineToken();
   const token = ownerId === undefined || captured?.ownerId === ownerId ? captured : undefined;
@@ -101,11 +104,20 @@ async function loadOfflinePage<T extends object>(
       }
       throw error;
     }
-    const saved = await accessOfflineCopy<SavedPage<T>>(token, 'readonly', isCurrent, (store, result) => {
+    const saved = await accessOfflineCopy<SavedPage<T>>(token, canRead ? 'readwrite' : 'readonly', isCurrent, (store, result) => {
       const request = store.get(key);
-      request.onsuccess = () => result(request.result);
+      request.onsuccess = () => {
+        const entry = request.result as SavedPage<T> | undefined;
+        if (entry && canRead && !canRead(entry.page)) {
+          store.delete(key);
+          return;
+        }
+        if (entry) {
+          result(entry);
+        }
+      };
     });
-    if (!isCurrent() || !saved || Date.now() - saved.savedAt > MAX_AGE) {
+    if (!isCurrent() || !saved || Date.now() - saved.savedAt > MAX_AGE || (canRead && !canRead(saved.page))) {
       throw new ApiError(0, hasOfflineStorageError() ? 'offline_storage_unavailable' : 'offline_copy_missing');
     }
     return { ...saved.page, savedAt: saved.savedAt };
