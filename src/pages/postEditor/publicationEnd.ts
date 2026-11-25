@@ -20,6 +20,11 @@ export function bindPublicationEnd(form: HTMLFormElement, savedEnd: string | nul
     return /^\d{4}-\d{2}-\d{2}$/.test(date.value) && Number.isFinite(parsed.getTime()) ? parsed : null;
   };
   const invalidDate = 'Укажите дату с четырёхзначным годом';
+  const showError = (message: string) => {
+    details.open = true;
+    error.textContent = message;
+    error.scrollIntoView({ block: 'nearest' });
+  };
   const validate = () => {
     const invalid = date.value && !parsedDate();
     const field = invalid || date.validity.badInput || (time.value && !date.value) ? date
@@ -77,6 +82,7 @@ export function bindPublicationEnd(form: HTMLFormElement, savedEnd: string | nul
   }, { signal });
   return {
     validate,
+    showError,
     getSavedEnd: () => savedEnd,
     hasChanges: () => date.validity.badInput || time.validity.badInput
       || (date.value || time.value ? enteredMinute() : '') !== savedMinute,

@@ -207,7 +207,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       return;
     }
     const end = publicationEnd.getChange();
-    if (access.needsScheduleFix(end === undefined ? publicationEnd.getSavedEnd() : end)) {
+    const effectiveEnd = end === undefined ? publicationEnd.getSavedEnd() : end;
+    if (access.needsScheduleFix(effectiveEnd)) {
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -264,6 +265,10 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         throw err;
       }
       if (err.isUnauthorized) {
+        return;
+      }
+      if (err.status === 400 && err.code === 'invalid_publication_end') {
+        publicationEnd.showError('Проверьте дату и время завершения или уберите дату');
         return;
       }
       if (err.status === 400 && err.code === 'invalid_access_schedule') {
