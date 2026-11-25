@@ -71,6 +71,7 @@ export interface PostInput {
   status: PostStatus;
   cover_id?: string | null;
   min_tier_id?: string | null;
+  access_schedule?: PostAccessStage[];
 }
 
 export interface PostUpdate extends PostInput {

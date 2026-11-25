@@ -33,7 +33,12 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   let rejectedTierId: string | undefined;
   let tiers: SubscriptionTier[] = [];
   let select: Select | undefined;
-  const refreshStages = new Map<HTMLDetailsElement, () => void>();
+  const stageEditors = new Map<HTMLDetailsElement, {
+    refresh: () => void;
+    value: () => PostAccessStage;
+    unfinished: () => boolean;
+    reveal: () => void;
+  }>();
   const addStage = requireElement<HTMLButtonElement>(schedule, '[data-stage-add]');
   const zone = requireElement(schedule, '[data-stage-zone]');
   const now = new Date();
@@ -42,7 +47,17 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   const zoneName = new Intl.DateTimeFormat('ru-RU', { timeZoneName: seasonal ? 'shortGeneric' : 'shortOffset' })
     .formatToParts(now).find(({ type }) => type === 'timeZoneName')?.value.replace('GMT', 'UTC');
   zone.textContent = `Часовой пояс ${zoneName ?? stageDate.resolvedOptions().timeZone}`;
-  const updateZone = () => { zone.toggleAttribute('hidden', !refreshStages.size); };
+  const updateZone = () => { zone.toggleAttribute('hidden', !stageEditors.size); };
+  const compareStages = (a: PostAccessStage, b: PostAccessStage) => Date.parse(a.starts_at) - Date.parse(b.starts_at);
+  let savedSchedule = [...post?.access_schedule ?? []].sort(compareStages);
+  const currentSchedule = () => [...stageEditors.values()].map((stage) => stage.value()).sort(compareStages);
+  const hasUnfinishedStages = () => [...stageEditors.values()].some((stage) => stage.unfinished());
+  function scheduleChange(): PostAccessStage[] | undefined {
+    const stages = currentSchedule();
+    return stages.length === savedSchedule.length && stages.every((stage, index) =>
+      stage.starts_at === savedSchedule[index].starts_at && stage.min_tier_id === savedSchedule[index].min_tier_id)
+      ? undefined : stages;
+  }
   function appendStage(initial?: PostAccessStage): void {
     const fragment = stageTemplate.content.cloneNode(true) as DocumentFragment;
     const row = requireElement<HTMLDetailsElement>(fragment, 'details');
@@ -74,14 +89,24 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       tierInput.value = selected;
       updateTitle();
     }
-    refreshStages.set(row, refresh);
+    const enteredTime = () => `${date.value}T${clock.value}`;
+    stageEditors.set(row, {
+      refresh,
+      value: () => ({ starts_at: start, min_tier_id: tierId }),
+      unfinished: () => !start || enteredTime() !== localStageTime(new Date(start)) || (tierInput.value || null) !== tierId,
+      reveal() {
+        row.open = true;
+        dateError.textContent = 'Нажмите «Готово», чтобы применить изменения этапа';
+        row.scrollIntoView({ block: 'nearest' });
+      },
+    });
     refresh();
     row.addEventListener('input', () => { dateError.textContent = ''; });
     requireElement(row, '[data-stage-done]').addEventListener('click', () => {
       if (!date.reportValidity() || !clock.reportValidity()) {
         return;
       }
-      const entered = `${date.value}T${clock.value}`;
+      const entered = enteredTime();
       const next = new Date(entered);
       if (!Number.isFinite(+next) || localStageTime(next) !== entered) {
         dateError.textContent = 'Этого времени нет в выбранную дату. Укажите другое время';
@@ -101,22 +126,25 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       const following = others.find((item) => !item.dateTime || Date.parse(item.dateTime) > Date.parse(start));
       stages.insertBefore(row, following?.closest('details') ?? null);
       requireElement<HTMLElement>(row, 'summary').focus();
+      form.dispatchEvent(new Event('input', { bubbles: true }));
     });
     requireElement(row, '[data-stage-delete]').addEventListener('click', () => {
-      refreshStages.delete(row);
+      stageEditors.delete(row);
       row.remove();
       updateZone();
       addStage.focus();
+      form.dispatchEvent(new Event('input', { bubbles: true }));
     });
     row.open = !initial;
     stages.append(fragment);
     updateZone();
     if (!initial) {
       date.focus();
+      form.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
 
-  [...post?.access_schedule ?? []].sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at)).forEach(appendStage);
+  savedSchedule.forEach(appendStage);
   addStage.addEventListener('click', () => appendStage(), { signal });
   const updateHint = (tierId: string | null) => {
     hint.textContent = tierId ? 'Пост увидят подписчики этого уровня и уровней выше' : 'Пост будет доступен всем';
@@ -137,6 +165,13 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   void load();
   return {
     getChange: () => selectedTierId === savedTierId ? undefined : selectedTierId,
+    scheduleChange,
+    hasScheduleChanges: () => hasUnfinishedStages() || scheduleChange() !== undefined,
+    finishStageBeforeSaving() {
+      const unfinished = [...stageEditors.values()].find((stage) => stage.unfinished());
+      unfinished?.reveal();
+      return !!unfinished;
+    },
     needsSelection() {
       if (selectedTierId !== rejectedTierId) {
         return false;
@@ -152,6 +187,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       void load();
     },
     markSaved() {
+      savedSchedule = currentSchedule();
       if (selectedTierId !== savedTierId) {
         savedTierId = selectedTierId;
         renderOptions();
@@ -200,7 +236,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
         return;
       }
       tiers = response.items;
-      refreshStages.forEach((refresh) => refresh());
+      stageEditors.forEach((stage) => stage.refresh());
       renderOptions();
       status.textContent = '';
       input.disabled = false;

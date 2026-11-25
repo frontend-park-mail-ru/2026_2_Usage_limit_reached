@@ -184,7 +184,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   });
 
   const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
-    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined;
+    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined || access.hasScheduleChanges();
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -199,7 +199,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving || !isSessionCurrent(context) || access.needsSelection()) {
+    if (isSaving || !isSessionCurrent(context) || access.needsSelection() || access.finishStageBeforeSaving()) {
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -211,10 +211,12 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     setAlert(alert, null);
     const coverId = cover.getCoverId();
     const tierId = access.getChange();
+    const schedule = access.scheduleChange();
     const data = {
       title: values.title.trim(), body: values.body, status,
       ...(coverId === undefined ? {} : { cover_id: coverId }),
       ...(tierId === undefined ? {} : { min_tier_id: tierId }),
+      ...(schedule === undefined ? {} : { access_schedule: schedule }),
     };
     try {
       const save = async () => {
