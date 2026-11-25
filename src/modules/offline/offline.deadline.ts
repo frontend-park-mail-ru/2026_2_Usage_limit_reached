@@ -12,9 +12,25 @@ export function getOfflineDeadline(value: unknown, now = Date.now()): number | u
   return deadline > now ? deadline : undefined;
 }
 
+type CachedPreview = Pick<PostPreview, 'locked' | 'body_preview' | 'offline_cache_until'>;
+
 /** Возвращает превью и срок из одной версии карточки. */
-export function copyOfflinePreview(item: Pick<PostPreview, 'locked' | 'body_preview' | 'offline_cache_until'>) {
-  return !item.locked && getOfflineDeadline(item.offline_cache_until) !== undefined
+export function copyOfflinePreview(item: CachedPreview, now = Date.now()) {
+  return !item.locked && getOfflineDeadline(item.offline_cache_until, now) !== undefined
     ? { body_preview: item.body_preview, offline_cache_until: item.offline_cache_until }
     : { body_preview: '', offline_cache_until: null };
+}
+
+/** Удаляет из копии текст без разрешения и сообщает, нужно ли обновить запись. */
+export function clearExpiredPreviews(items: CachedPreview[]): boolean {
+  const now = Date.now();
+  let changed = false;
+  for (const item of items) {
+    const preview = copyOfflinePreview(item, now);
+    if (item.body_preview !== preview.body_preview || item.offline_cache_until !== preview.offline_cache_until) {
+      Object.assign(item, preview);
+      changed = true;
+    }
+  }
+  return changed;
 }

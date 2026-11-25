@@ -4,7 +4,7 @@ import { OFFLINE_DATABASE, OFFLINE_CHANNEL, OFFLINE_REVOCATION, OFFLINE_KNOWN_GE
 import type { OfflineCopy, OfflineToken, OfflineClearToken, SavedPosts, SavedProfile } from './offline.types.ts';
 import type { PostsQuery } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { copyOfflinePreview } from './offline.deadline.ts';
+import { clearExpiredPreviews, copyOfflinePreview } from './offline.deadline.ts';
 
 const MAX_POST_PAGES = 20;
 const MAX_POST_BYTES = 512 * 1024;
@@ -345,20 +345,26 @@ export async function clearOfflineCopy(expected: OfflineClearToken | undefined, 
 
 /** Читает только копию текущего владельца, не меняя состояние авторизации. */
 export function readOfflineCopy(ownerId?: string, sort: PostsQuery['sort'] = 'new'): Promise<OfflineCopy | null | undefined> {
-  return transaction('readonly', (token, tx, result) => {
+  return transaction('readwrite', (token, tx, result) => {
     if (!token.ownerId || (ownerId !== undefined && token.ownerId !== ownerId)) {
       result(null);
       return;
     }
     const copy: OfflineCopy = { ownerId: token.ownerId, generation: token.generation };
-    const profile = tx.objectStore('copies').get([token.ownerId, 'profile']);
-    const posts = tx.objectStore('copies').get([token.ownerId, 'posts', sort]);
+    const store = tx.objectStore('copies');
+    const profile = store.get([token.ownerId, 'profile']);
+    const key = [token.ownerId, 'posts', sort];
+    const legacyKey = [token.ownerId, 'posts'];
+    const posts = store.get(key);
     profile.onsuccess = () => { copy.profile = profile.result; };
     posts.onsuccess = () => {
-      const legacy = tx.objectStore('copies').get([copy.ownerId, 'posts']);
+      const legacy = store.get(legacyKey);
       legacy.onsuccess = () => {
         const saved: SavedPosts | undefined = posts.result ?? legacy.result;
         if (saved?.query.sort === sort && !saved.query.cursor && Date.now() - saved.savedAt <= MAX_POST_AGE) {
+          if (clearExpiredPreviews(saved.items)) {
+            store.put(saved, posts.result ? key : legacyKey);
+          }
           copy.posts = saved;
         }
       };

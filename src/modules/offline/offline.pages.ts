@@ -5,7 +5,7 @@ import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
-import { copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
+import { clearExpiredPreviews, copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
 
 export interface OfflinePostsPage extends PostsPage {
   items: (PostPreview & { hasLikesCount?: boolean })[];
@@ -39,7 +39,7 @@ export function loadOfflinePosts(
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
       likes_count: item.likes_count, liked_by_user: item.liked_by_user,
     })),
-  }), isCurrent);
+  }), isCurrent, { cleanCached: (page) => clearExpiredPreviews(page.items) });
 }
 
 /** Сохраняет публичные сведения без контактов и платёжных данных. */
@@ -86,7 +86,9 @@ export function loadOfflineDonations(ownerId: string, direction: DonationsDirect
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
   key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
-  { ownerId, canRead }: { ownerId?: string; canRead?: (page: T) => boolean } = {},
+  { ownerId, canRead, cleanCached }: {
+    ownerId?: string; canRead?: (page: T) => boolean; cleanCached?: (page: T) => boolean;
+  } = {},
 ): Promise<T & { savedAt?: number }> {
   const captured = await captureOfflineToken();
   const token = ownerId === undefined || captured?.ownerId === ownerId ? captured : undefined;
@@ -104,7 +106,7 @@ async function loadOfflinePage<T extends object>(
       }
       throw error;
     }
-    const saved = await accessOfflineCopy<SavedPage<T>>(token, canRead ? 'readwrite' : 'readonly', isCurrent, (store, result) => {
+    const saved = await accessOfflineCopy<SavedPage<T>>(token, canRead || cleanCached ? 'readwrite' : 'readonly', isCurrent, (store, result) => {
       const request = store.get(key);
       request.onsuccess = () => {
         const entry = request.result as SavedPage<T> | undefined;
@@ -113,6 +115,9 @@ async function loadOfflinePage<T extends object>(
           return;
         }
         if (entry) {
+          if (cleanCached?.(entry.page)) {
+            store.put(entry, key);
+          }
           result(entry);
         }
       };
