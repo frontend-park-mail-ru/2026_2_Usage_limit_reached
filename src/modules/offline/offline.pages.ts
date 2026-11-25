@@ -5,7 +5,7 @@ import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
-import { getOfflineDeadline } from './offline.deadline.ts';
+import { copyOfflinePreview, getOfflineDeadline } from './offline.deadline.ts';
 
 export interface OfflinePostsPage extends PostsPage {
   items: (PostPreview & { hasLikesCount?: boolean })[];
@@ -34,7 +34,7 @@ export function loadOfflinePosts(
     next_cursor: page.next_cursor,
     items: page.items.map((item) => ({
       id: item.id, title: item.title, locked: item.locked,
-      body_preview: item.locked ? '' : item.body_preview,
+      ...copyOfflinePreview(item),
       published_or_updated_at: item.published_or_updated_at,
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
       likes_count: item.likes_count, liked_by_user: item.liked_by_user,
