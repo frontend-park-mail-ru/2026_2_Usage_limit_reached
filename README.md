@@ -10,7 +10,7 @@
 ### Внешние ссылки
  - [Figma](https://www.figma.com/design/DoxQoepIBqsBeURC9C0ZUY/Patreon)
  - [Backend](https://github.com/go-park-mail-ru/2026_2_usage_limit_reached)
- - [Deploy]()
+ - [Deploy](https://161.104.105.124/)
  - [Jira](https://drezz.atlassian.net/jira/software/projects/PTN/boards/34/backlog)
 
 ### Правила оформления Pull Requests

@@ -1,3 +1,4 @@
+import { setLoadingText } from '@/utils/helpers/delayedLoading.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import type { SetRefreshNotice } from './refreshNotice.types.ts';
 
@@ -18,6 +19,7 @@ export function initRefreshNotice(element: HTMLElement) {
   const observer = new ResizeObserver(reserveSpace);
   observer.observe(area);
   observer.observe(content);
+  let stopLoading: (() => void) | undefined;
   let retry: (() => void) | undefined;
   const click = () => {
     if (!button.disabled) {
@@ -30,7 +32,13 @@ export function initRefreshNotice(element: HTMLElement) {
     retry = state ? action : undefined;
     element.hidden = state === null;
     button.disabled = state?.pending ?? false;
-    label.textContent = state?.pending ? 'Обновляем…' : 'Повторить';
+    if (state?.pending) {
+      stopLoading ??= setLoadingText(label, 'Обновляем…', true);
+    } else {
+      stopLoading?.();
+      stopLoading = undefined;
+      label.textContent = 'Повторить';
+    }
   };
 
   return {

@@ -38,10 +38,18 @@
   overflow-wrap: anywhere;
 }
 
-.donation-card__date {
+.donation-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--color-input-placeholder);
   font-size: 14px;
   line-height: 17px;
+}
+
+.donation-card__status_error {
+  color: var(--color-error);
 }
 
 .donation-card__amount {

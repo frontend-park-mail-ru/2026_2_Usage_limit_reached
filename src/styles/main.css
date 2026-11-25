@@ -65,3 +65,7 @@ body {
   font-family: 'Inter', sans-serif;
   font-optical-sizing: none;
 }
+
+[data-loading-delay]:not([data-loading-visible]) {
+  visibility: hidden;
+}

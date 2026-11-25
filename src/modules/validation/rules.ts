@@ -12,7 +12,7 @@ export const required = (message = 'Обязательное поле'): Rule =>
  * @param min
  * @param message
  */
-export const minLength = (min: number, message = `Минимум ${min} символов`): Rule =>
+export const minLength = (min: number, message = `От ${min} символов`): Rule =>
   (value) => ([...value].length >= min ? null : message);
 
 /**
@@ -20,7 +20,7 @@ export const minLength = (min: number, message = `Минимум ${min} симв
  * @param max
  * @param message
  */
-export const maxLength = (max: number, message = `Максимум ${max} символов`): Rule =>
+export const maxLength = (max: number, message = `До ${max} символов`): Rule =>
   (value) => ([...value].length <= max ? null : message);
 
 /**
@@ -47,7 +47,7 @@ export const minNumber = (min: number, message: string): Rule =>
 export const pattern = (regexp: RegExp, message: string): Rule =>
   (value) => (regexp.test(value) ? null : message);
 
-export const email: Rule = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Введите корректный адрес электронной почты');
+export const email: Rule = pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Введите почту в формате name@example.com');
 
 /**
  * Значение должно совпадать со значением другого поля формы.

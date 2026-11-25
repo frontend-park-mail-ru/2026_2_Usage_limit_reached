@@ -26,3 +26,8 @@
 .toast:empty {
   display: none;
 }
+
+.toast[data-kind='error']::before {
+  background: var(--color-error);
+  mask: url('/assets/modal/close.svg') center / contain no-repeat;
+}

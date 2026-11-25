@@ -34,7 +34,7 @@ export async function sendLike(
     if (!err.isUnauthorized) {
       showToast(err.isCsrfError || err.isMutationTimeout || err.status === 0
         ? err.text
-        : 'Лайк не сохранён. Попробуйте позже');
+        : 'Лайк не сохранён. Попробуйте позже', 'error');
     }
     return null;
   }

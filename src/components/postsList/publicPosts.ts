@@ -1,8 +1,10 @@
+import { setLoadingText, startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postsListTemplate from '@/components/postsList/postsList.hbs';
 import postCardTemplate from '@/components/postCard/postCard.hbs';
 import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
+import type { NavigationPath } from '@/app/paths.ts';
 import type { PostPreview, PostsPage, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
@@ -13,12 +15,14 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  * Подключает сортировку и подгрузку опубликованных постов.
  * @param root
  * @param loadPage
+ * @param getPostHref Адрес открытия поста.
  * @param bindLike
  * @param feed
  */
 export function bindPublicPosts(
   root: HTMLElement,
   loadPage: (query: PostsQuery) => Promise<PostsPage>,
+  getPostHref: (item: PostPreview) => NavigationPath,
   bindLike?: (button: HTMLButtonElement, item: PostPreview) => void,
   feed = false
 ) {
@@ -49,13 +53,12 @@ export function bindPublicPosts(
     observer.disconnect();
     retry.hidden = true;
     if (!append) {
+      cancelLoading(panel);
       cursor = null;
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
-    if (moreText) {
-      moreText.textContent = LIST_LOADING_MESSAGE;
-    }
+    const stopLoading = moreText ? setLoadingText(moreText, LIST_LOADING_MESSAGE) : startLoading(panel);
     try {
       const page = await loadPage({ sort, cursor: next });
       if (!active || id !== request) {
@@ -63,7 +66,7 @@ export function bindPublicPosts(
       }
       cursor = page.next_cursor;
       const cards = page.items.map((item) => ({
-        ...buildPostCard(item),
+        ...buildPostCard(item, getPostHref(item)),
         locked: item.locked,
         canLike: !!bindLike && !item.locked,
         liked: item.liked_by_user,
@@ -113,6 +116,7 @@ export function bindPublicPosts(
       }
       retry.hidden = false;
     } finally {
+      stopLoading();
       if (id === request) {
         busy = false;
       }
@@ -131,6 +135,7 @@ export function bindPublicPosts(
   return {
     reload: () => { void load(); },
     destroy: () => {
+      cancelLoading(panel);
       active = false;
       observer.disconnect();
       sortMenu.destroy();

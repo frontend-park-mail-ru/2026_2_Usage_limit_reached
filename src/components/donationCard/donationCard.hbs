@@ -2,12 +2,18 @@
   <div class="donation-card__header">
     <div class="donation-card__meta">
       <p class="donation-card__name">{{name}}</p>
-      <time class="donation-card__date" datetime="{{paidAt}}">{{dateLabel}}</time>
+      <div class="donation-card__details">
+        <time class="donation-card__date" datetime="{{paidAt}}">{{dateLabel}}</time>
+        {{#if statusLabel}}
+          <span aria-hidden="true">·</span>
+          <span class="donation-card__status{{#if isFailed}} donation-card__status_error{{/if}}">{{statusLabel}}</span>
+        {{/if}}
+      </div>
     </div>
     <p class="donation-card__amount">{{amountLabel}}</p>
   </div>
   {{#if message}}
     <p class="donation-card__message">{{message}}</p>
-    <button class="donation-card__more" type="button" data-donation-more hidden>Прочитать полностью</button>
+    <button class="donation-card__more" type="button" data-donation-more hidden>Показать полностью</button>
   {{/if}}
 </article>

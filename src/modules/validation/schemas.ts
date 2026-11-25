@@ -2,37 +2,39 @@ import { required, minLength, maxLength, maxByteLength, minNumber, pattern, emai
 import type { Rule, Schema } from './validation.types.ts';
 import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX, DONATION_AMOUNT_MIN, DONATION_AMOUNT_MAX_DIGITS, DONATION_MESSAGE_MAX } from './schemas.constants.ts';
 
+const PASSWORD_REQUIREMENTS_ERROR = `Пароль должен содержать от ${PASSWORD_MIN} до ${PASSWORD_MAX} символов, хотя бы одну латинскую букву и цифру`;
+
 const usernameRules: Rule[] = [
   required('Введите имя пользователя'),
-  minLength(USERNAME_MIN, 'Минимальная длина имени пользователя — 3 символа'),
-  maxLength(USERNAME_MAX, 'Максимальная длина имени пользователя — 32 символа'),
+  minLength(USERNAME_MIN, 'От 3 символов'),
+  maxLength(USERNAME_MAX, 'До 32 символов'),
   pattern(/^[a-zA-Z0-9_]+$/, 'Только латинские буквы, цифры и _'),
 ];
 
 export const loginSchema: Schema = {
-  login: [required('Введите адрес электронной почты или имя пользователя')],
+  login: [required('Введите электронную почту или имя пользователя')],
   password: [required('Введите пароль')],
 };
 
 export const registerSchema: Schema = {
   email: [
-    required('Введите адрес электронной почты'),
-    maxLength(EMAIL_MAX, 'Максимальная длина адреса электронной почты — 254 символа'),
+    required('Введите электронную почту'),
+    maxLength(EMAIL_MAX, 'До 254 символов'),
     email,
   ],
   username: usernameRules,
   nickname: [
     required('Введите отображаемое имя'),
-    maxLength(NICKNAME_MAX, 'Максимальная длина отображаемого имени — 64 символа'),
-    pattern(/^[\p{L}\d _]+$/u, 'Только буквы, цифры 0–9, пробел и _'),
+    maxLength(NICKNAME_MAX, 'До 64 символов'),
+    pattern(/^[\p{L}\d _]+$/u, 'Только буквы, цифры, пробел и _'),
   ],
   password: [
-    required('Введите пароль'),
-    minLength(PASSWORD_MIN, 'Минимальная длина пароля — 8 символов'),
-    maxLength(PASSWORD_MAX, 'Максимальная длина пароля — 64 символа'),
-    maxByteLength(PASSWORD_MAX_BYTES, 'Пароль слишком длинный. Сократите его'),
-    pattern(/[a-zA-Z]/, 'Пароль должен содержать хотя бы одну латинскую букву'),
-    pattern(/\d/, 'Пароль должен содержать хотя бы одну цифру'),
+    required(PASSWORD_REQUIREMENTS_ERROR),
+    minLength(PASSWORD_MIN, PASSWORD_REQUIREMENTS_ERROR),
+    maxLength(PASSWORD_MAX, PASSWORD_REQUIREMENTS_ERROR),
+    maxByteLength(PASSWORD_MAX_BYTES, PASSWORD_REQUIREMENTS_ERROR),
+    pattern(/[a-zA-Z]/, PASSWORD_REQUIREMENTS_ERROR),
+    pattern(/\d/, PASSWORD_REQUIREMENTS_ERROR),
   ],
   passwordRepeat: [
     required('Повторите пароль'),
@@ -42,8 +44,8 @@ export const registerSchema: Schema = {
 
 export const userSettingsSchema: Schema = {
   nickname: [
-    required('Введите имя'),
-    maxLength(NICKNAME_MAX, 'Максимальная длина отображаемого имени — 64 символа'),
+    required('Введите отображаемое имя'),
+    maxLength(NICKNAME_MAX, 'До 64 символов'),
   ],
 };
 
@@ -65,7 +67,7 @@ export const authorSettingsSchema = (author: { bio: string; category?: string | 
 export const postSchema: Schema = {
   title: [
     required('Введите заголовок поста'),
-    maxLength(POST_TITLE_MAX, 'Максимальная длина заголовка — 255 символов'),
+    maxLength(POST_TITLE_MAX, 'До 255 символов'),
   ],
   body: [
     richTextRequired('Введите текст публикации'),
@@ -75,7 +77,7 @@ export const postSchema: Schema = {
 
 export const linkSchema: Schema = {
   text: [required('Введите текст ссылки')],
-  url: [httpsUrl('Укажите полный адрес, начинающийся с https://')],
+  url: [httpsUrl('Ссылка должна начинаться с https://')],
 };
 
 export const donationSchema: Schema = {
@@ -85,5 +87,5 @@ export const donationSchema: Schema = {
     maxLength(DONATION_AMOUNT_MAX_DIGITS, 'Слишком большая сумма'),
     minNumber(DONATION_AMOUNT_MIN, 'Введите сумму больше нуля'),
   ],
-  message: [maxLength(DONATION_MESSAGE_MAX, 'Максимальная длина сообщения — 200 символов')],
+  message: [maxLength(DONATION_MESSAGE_MAX, 'До 200 символов')],
 };

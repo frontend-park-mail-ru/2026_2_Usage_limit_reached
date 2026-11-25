@@ -1,3 +1,4 @@
+import { startLoading } from '@/utils/helpers/delayedLoading.ts';
 import settingsTemplate from './settings.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
@@ -32,7 +33,7 @@ import {
 
 /** Возвращает каркас с текстом загрузки. */
 export function renderSettings(): string {
-  return settingsTemplate({ message: LOADING_MESSAGE });
+  return settingsTemplate({ message: LOADING_MESSAGE, loading: true });
 }
 
 /**
@@ -262,25 +263,30 @@ function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, c
  * @param navigate
  */
 export async function initSettings(root: HTMLElement, navigate: Navigate): Promise<void> {
-  const loadingPage = root.firstElementChild;
-  let profile: Profile | undefined;
+  const stopLoading = startLoading(root);
   try {
-    profile = await checkSession();
-  } catch (err) {
-    if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+    const loadingPage = root.firstElementChild;
+    let profile: Profile | undefined;
+    try {
+      profile = await checkSession();
+    } catch (err) {
+      if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+        return;
+      }
+      const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;
+      root.innerHTML = settingsTemplate({ message, isError: true });
       return;
     }
-    const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;
-    root.innerHTML = settingsTemplate({ message, isError: true });
-    return;
+    if (!profile || root.firstElementChild !== loadingPage) {
+      return;
+    }
+    const context = getSessionContext();
+    if (!context || context.userId !== profile.user.id) {
+      return;
+    }
+    root.innerHTML = settingsTemplate(buildSettingsViewModel(profile));
+    bindSettings(root, profile, navigate, context);
+  } finally {
+    stopLoading();
   }
-  if (!profile || root.firstElementChild !== loadingPage) {
-    return;
-  }
-  const context = getSessionContext();
-  if (!context || context.userId !== profile.user.id) {
-    return;
-  }
-  root.innerHTML = settingsTemplate(buildSettingsViewModel(profile));
-  bindSettings(root, profile, navigate, context);
 }

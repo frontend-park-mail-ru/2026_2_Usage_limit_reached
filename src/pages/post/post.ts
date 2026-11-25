@@ -1,6 +1,8 @@
+import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postTemplate from './post.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import {
   checkSession,
   getSessionContext,
@@ -36,7 +38,7 @@ import {
 
 /** Возвращает каркас с текстом загрузки. */
 export function renderPost(): string {
-  return postTemplate({ message: LOADING_MESSAGE });
+  return postTemplate({ message: LOADING_MESSAGE, loading: true });
 }
 
 /**
@@ -66,16 +68,15 @@ function buildViewModel(post: Post, isOwner: boolean) {
  */
 function bindBackLink(root: HTMLElement): void {
   const link = requireElement<HTMLAnchorElement>(root, '[data-back]');
-  const from = history.state?.from;
-  const origin = typeof from === 'string' ? matchRoute(from.split('?')[0])?.pattern : undefined;
-  const fromFeed = origin === ROUTES.home || origin === ROUTES.feed;
-  const fromProfile = origin === ROUTES.profile || origin === ROUTES.publicProfile;
-  if (!fromProfile) {
-    link.href = fromFeed ? origin : ROUTES.home;
-    link.textContent = '← Лента';
-  }
+  const returnTo = getPostReturnPath();
+  const pattern = matchRoute(returnTo.split('?')[0])?.pattern;
+  const fromProfile = pattern === ROUTES.profile || pattern === ROUTES.publicProfile;
+  link.href = returnTo;
+  link.textContent = fromProfile ? '← Профиль' : '← Лента';
   link.addEventListener('click', (event) => {
-    if (fromProfile || fromFeed) {
+    if (!event.defaultPrevented && event.button === 0
+      && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
+      && history.state?.from === returnTo) {
       event.preventDefault();
       history.back();
     }
@@ -146,7 +147,7 @@ function bindOwnerActions(root: HTMLElement, post: Post, navigate: Navigate, bef
       return;
     }
     if (action === 'edit') {
-      navigate(postEditRoute(post.id));
+      navigate(withPostReturnPath(postEditRoute(post.id), getPostReturnPath()));
     } else if (action === 'delete') {
       dialog.open(post.title, () => removePost(post.id, navigate, context, isActive));
     }
@@ -221,76 +222,82 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     disposeActions?.();
     disposeActions = undefined;
     renderedSession = undefined;
+    cancelLoading(root);
     root.innerHTML = renderPost();
 
-    await checkSession().catch(() => undefined);
-    if (!isCurrent()) {
-      return;
-    }
-    const version = getSessionVersion();
-    let post: Post;
+    const stopLoading = startLoading(root);
     try {
-      post = await getPost(params.id ?? '');
-    } catch (error) {
+      await checkSession().catch(() => undefined);
       if (!isCurrent()) {
         return;
       }
-      const status = error instanceof ApiError ? error.status : undefined;
-      const restricted = status === 403;
-      const unavailable = restricted || status === 400 || status === 404;
-      root.innerHTML = unavailable
-        ? postTemplate({ unavailable: true, restricted })
-        : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
-      if (unavailable) {
-        renderedSession = sessionKey();
-        bindBackLink(root);
+      const version = getSessionVersion();
+      let post: Post;
+      try {
+        post = await getPost(params.id ?? '');
+      } catch (error) {
+        if (!isCurrent()) {
+          return;
+        }
+        const status = error instanceof ApiError ? error.status : undefined;
+        const restricted = status === 403;
+        const unavailable = restricted || status === 400 || status === 404;
+        root.innerHTML = unavailable
+          ? postTemplate({ unavailable: true, restricted })
+          : postTemplate({ message: error instanceof ApiError && error.status === 0 ? error.text : LOAD_ERROR, isError: true });
+        if (unavailable) {
+          renderedSession = sessionKey();
+          bindBackLink(root);
+        }
+        return;
       }
-      return;
-    }
-    if (!isCurrent()) {
-      return;
-    }
-    if (version !== getSessionVersion()) {
-      void load();
-      return;
-    }
-
-    const context = getSessionContext();
-    const isOwner = context?.userId === post.author.id;
-    if (isOwner && post.status !== 'published') {
-      navigate(postEditRoute(post.id), { replace: true });
-      return;
-    }
-    const beforeAction = () => {
       if (!isCurrent()) {
-        return false;
+        return;
       }
-      if (authStore.getState().status === 'guest') {
-        navigate(ROUTES.login);
-        return false;
+      if (version !== getSessionVersion()) {
+        void load();
+        return;
       }
-      if (context && isSessionCurrent(context)) {
-        return true;
-      }
-      showToast('Не удалось подтвердить сессию. Проверяем её ещё раз');
-      void load();
-      return false;
-    };
 
-    renderedSession = sessionKey();
-    document.title = post.title;
-    if (post.locked) {
-      root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+      const context = getSessionContext();
+      const isOwner = context?.userId === post.author.id;
+      if (isOwner && post.status !== 'published') {
+        navigate(withPostReturnPath(postEditRoute(post.id), getPostReturnPath()), { replace: true });
+        return;
+      }
+      const beforeAction = () => {
+        if (!isCurrent()) {
+          return false;
+        }
+        if (authStore.getState().status === 'guest') {
+          navigate(ROUTES.login);
+          return false;
+        }
+        if (context && isSessionCurrent(context)) {
+          return true;
+        }
+        showToast('Не удалось подтвердить сессию. Проверяем её ещё раз', 'error');
+        void load();
+        return false;
+      };
+
+      renderedSession = sessionKey();
+      document.title = post.title;
+      if (post.locked) {
+        root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+        bindBackLink(root);
+        return;
+      }
+      root.innerHTML = postTemplate(buildViewModel(post, isOwner));
+      requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
       bindBackLink(root);
-      return;
+      bindLike(root, post, beforeAction);
+      disposeActions = isOwner
+        ? bindOwnerActions(root, post, navigate, beforeAction)
+        : bindDonate(root, post, beforeAction, () => !!context && isSessionCurrent(context));
+    } finally {
+      stopLoading();
     }
-    root.innerHTML = postTemplate(buildViewModel(post, isOwner));
-    requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
-    bindBackLink(root);
-    bindLike(root, post, beforeAction);
-    disposeActions = isOwner
-      ? bindOwnerActions(root, post, navigate, beforeAction)
-      : bindDonate(root, post, beforeAction, () => !!context && isSessionCurrent(context));
   };
 
   const unsubscribe = authStore.subscribe(() => {

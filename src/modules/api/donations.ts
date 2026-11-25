@@ -18,5 +18,5 @@ export const sendDonation = (authorId: string, data: DonationInput) =>
  */
 export const getDonations = (direction: DonationsDirection, cursor?: string | null) => {
   const query = cursor ? `?${new URLSearchParams({ cursor }).toString()}` : '';
-  return request<DonationsPage>(`/profile/me/donations/${direction}${query}`);
+  return request<DonationsPage>(`/profile/me/donations/${direction}${query}`, { cache: 'no-store' });
 };
