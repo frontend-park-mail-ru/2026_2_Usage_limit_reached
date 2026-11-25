@@ -28,6 +28,7 @@
   <form class="post-editor__form" id="post-editor-form" novalidate>
     <div class="post-editor__card">
       {{> alert className="post-editor__alert"}}
+      <button class="button button_view_secondary post-editor__refresh" type="button" data-refresh-post hidden>Обновить пост</button>
       {{> alert className="post-editor__attachments-alert" title="Вложения ещё не готовы"}}
       <input
         class="post-editor__title"

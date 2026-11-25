@@ -90,6 +90,10 @@
   margin: 0;
 }
 
+.post-editor__refresh[hidden] {
+  display: none;
+}
+
 .post-editor__settings {
   display: grid;
   min-width: 0;

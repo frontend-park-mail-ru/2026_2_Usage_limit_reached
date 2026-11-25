@@ -128,13 +128,16 @@ function getErrorText(err: ApiError): string {
  * @param loaded
  * @param navigate
  * @param context
- * @param signal
+ * @param pageSignal
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, signal: AbortSignal): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, pageSignal: AbortSignal): void {
+  const binding = new AbortController();
+  const signal = AbortSignal.any([pageSignal, binding.signal]);
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
   const alert = requireElement<HTMLElement>(form, '[data-alert]');
+  const refreshPost = requireElement<HTMLButtonElement>(form, '[data-refresh-post]');
   const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
@@ -197,11 +200,15 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     isSaving = busy;
     form.inert = busy;
     for (const button of buttons) {
-      button.disabled = busy || !isSessionCurrent(context);
+      button.disabled = busy || !refreshPost.hidden || !isSessionCurrent(context);
     }
   };
 
   const submit = async (values: FormValues) => {
+    if (!refreshPost.hidden) {
+      alert.scrollIntoView({ block: 'nearest' });
+      return;
+    }
     if (isSaving || !isSessionCurrent(context) || !publicationEnd.validate()
       || access.needsSelection() || access.finishStageBeforeSaving()) {
       return;
@@ -284,6 +291,9 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         }
         return;
       }
+      if (post && err.status === 409 && !err.isCsrfError && !err.isMutationTimeout && err.code !== 'post_tier_archived') {
+        refreshPost.hidden = false;
+      }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));
       alert.scrollIntoView({ block: 'nearest' });
     } finally {
@@ -292,6 +302,30 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       }
     }
   };
+
+  refreshPost.addEventListener('click', async () => {
+    if (!post || isSaving || !isSessionCurrent(context)) {
+      return;
+    }
+    const { id } = post;
+    setBusy(true);
+    try {
+      const fresh = await runSessionRequest(context, () => getPost(id));
+      if (!signal.aborted && fresh?.author.id === context.userId) {
+        binding.abort();
+        root.innerHTML = postEditorTemplate(buildViewModel(fresh));
+        bindEditor(root, fresh, navigate, context, pageSignal);
+      }
+    } catch {
+      if (!signal.aborted && isSessionCurrent(context)) {
+        setAlert(alert, 'Попробуйте ещё раз. После обновления несохранённые изменения будут потеряны', 'Не удалось обновить пост');
+      }
+    } finally {
+      if (!signal.aborted) {
+        setBusy(false);
+      }
+    }
+  }, { signal });
 
   for (const button of buttons) {
     button.addEventListener('click', () => {
