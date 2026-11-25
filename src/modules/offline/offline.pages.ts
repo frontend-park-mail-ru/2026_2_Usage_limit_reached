@@ -5,6 +5,7 @@ import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
 import { accessOfflineCopy, captureOfflineToken, hasOfflineStorageError } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
+import { getOfflineDeadline } from './offline.deadline.ts';
 
 export interface OfflinePostsPage extends PostsPage {
   items: (PostPreview & { hasLikesCount?: boolean })[];
@@ -49,15 +50,21 @@ export function loadOfflinePublicProfile(username: string, load: () => Promise<P
   }), isCurrent);
 }
 
-/** Сохраняет только открытые опубликованные посты, черновики и закрытые тела исключает. */
+/** Сохраняет тело открытого опубликованного поста с действующим разрешением. */
 export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent: () => boolean) {
-  return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => post.locked || post.status !== 'published' ? null : ({
-    id: post.id, title: post.title, body: sanitizeHtml(post.body), status: post.status, locked: false,
-    hasAttachments: !!new DOMParser().parseFromString(post.body, 'text/html').body.querySelector('figure[data-attachment-id]'),
-    author: { id: post.author.id, nickname: post.author.nickname, username: post.author.username },
-    published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
-    likes_count: post.likes_count, liked_by_user: post.liked_by_user,
-  }), isCurrent);
+  return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => {
+    if (post.locked || post.status !== 'published' || getOfflineDeadline(post.offline_cache_until) === undefined) {
+      return null;
+    }
+    return {
+      id: post.id, title: post.title, body: sanitizeHtml(post.body), status: post.status, locked: false,
+      offline_cache_until: post.offline_cache_until,
+      hasAttachments: !!new DOMParser().parseFromString(post.body, 'text/html').body.querySelector('figure[data-attachment-id]'),
+      author: { id: post.author.id, nickname: post.author.nickname, username: post.author.username },
+      published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
+      likes_count: post.likes_count, liked_by_user: post.liked_by_user,
+    };
+  }, isCurrent);
 }
 
 /** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
