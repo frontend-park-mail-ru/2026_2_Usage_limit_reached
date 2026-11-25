@@ -10,7 +10,7 @@ import { checkSession } from '@/modules/auth/auth.actions.ts';
 import { getDonations } from '@/modules/api/donations.ts';
 import type { Donation, DonationsDirection } from '@/modules/api/donations.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { ANONYMOUS_DONOR, DONATIONS_TABS, DONATIONS_TEXTS, LOADING_MESSAGE, LOAD_ERROR } from './donations.constants.ts';
+import { ANONYMOUS_DONOR, DONATION_STATUSES, DONATIONS_TABS, DONATIONS_TEXTS, LOADING_MESSAGE, LOAD_ERROR } from './donations.constants.ts';
 
 /** Возвращает каркас страницы. */
 export function renderDonations(): string {
@@ -22,8 +22,11 @@ export function renderDonations(): string {
 /**
  * Данные карточки пожертвования.
  * @param donation
+ * @param direction
  */
-function buildCard(donation: Donation) {
+function buildCard(donation: Donation, direction?: DonationsDirection) {
+  const statusLabel = Object.hasOwn(DONATION_STATUSES, donation.status)
+    ? DONATION_STATUSES[donation.status] : 'Статус неизвестен';
   return {
     id: donation.id,
     name: donation.is_anonymous || !donation.user ? ANONYMOUS_DONOR : donation.user.nickname,
@@ -31,6 +34,8 @@ function buildCard(donation: Donation) {
     dateLabel: formatPostDate(donation.created_or_paid_at),
     amountLabel: formatMoney(donation.amount_minor, donation.currency),
     message: donation.message ?? '',
+    statusLabel: direction === 'sent' ? statusLabel : undefined,
+    isFailed: donation.status === 'failed',
   };
 }
 
@@ -100,6 +105,7 @@ export function initDonations(root: HTMLElement): () => void {
   const moreText = requireElement<HTMLElement>(more, '[data-donations-more-text]');
   const retry = requireElement<HTMLButtonElement>(more, '[data-donations-retry]');
   const donations = new Map<string, Donation>();
+  const requestedDirection = new URLSearchParams(window.location.search).get('tab') === 'sent' ? 'sent' : 'received';
   let direction: DonationsDirection | undefined;
   let tabs: Tabs | undefined;
   let cursor: string | null = null;
@@ -168,7 +174,7 @@ export function initDonations(root: HTMLElement): () => void {
       for (const donation of page.items) {
         donations.set(donation.id, donation);
       }
-      list.insertAdjacentHTML('beforeend', page.items.map((donation) => donationCardTemplate(buildCard(donation))).join(''));
+      list.insertAdjacentHTML('beforeend', page.items.map((donation) => donationCardTemplate(buildCard(donation, direction))).join(''));
       updateMoreLinks(list);
       empty.hidden = donations.size > 0;
       moreText.textContent = '';
@@ -206,16 +212,21 @@ export function initDonations(root: HTMLElement): () => void {
         return;
       }
       if (profile.author) {
+        toolbar.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((button) => {
+          const selected = button.dataset.tab === requestedDirection;
+          button.setAttribute('aria-selected', String(selected));
+          button.tabIndex = selected ? 0 : -1;
+        });
         toolbar.hidden = false;
         panel.setAttribute('role', 'tabpanel');
-        panel.setAttribute('aria-labelledby', 'donations-tabs-tab-received');
+        panel.setAttribute('aria-labelledby', `donations-tabs-tab-${requestedDirection}`);
         tabs = new Tabs(requireElement<HTMLElement>(toolbar, '.tabs'), (value) => {
           const next = value === 'sent' ? 'sent' : 'received';
           panel.setAttribute('aria-labelledby', `donations-tabs-tab-${next}`);
           showDirection(next);
         });
       }
-      await showDirection(profile.author ? 'received' : 'sent', true);
+      await showDirection(profile.author ? requestedDirection : 'sent', true);
     } catch (err) {
       if (!(err instanceof ApiError)) {
         throw err;

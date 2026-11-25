@@ -4,6 +4,13 @@ import type { DonationsTabItem, DonationsTexts } from './donations.types.ts';
 export const LOADING_MESSAGE = 'Загрузка пожертвований...';
 export const LOAD_ERROR = 'Не удалось загрузить пожертвования. Попробуйте позже';
 export const ANONYMOUS_DONOR = 'Аноним';
+export const DONATION_STATUSES: Readonly<Record<string, string>> = {
+  paid: 'Отправлено',
+  pending: 'В обработке',
+  processing: 'В обработке',
+  failed: 'Не отправлено',
+  canceled: 'Отменено',
+};
 
 export const DONATIONS_TABS: DonationsTabItem[] = [
   { value: 'received', label: 'Полученные' },

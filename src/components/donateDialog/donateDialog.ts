@@ -12,9 +12,13 @@ import { ApiError } from '@/modules/api/request.ts';
 import type { PostAuthor } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
+import { getSessionContext } from '@/modules/auth/auth.actions.ts';
+import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import {
   DEFAULT_AMOUNT,
   DONATE_ERROR,
+  DONATE_ERROR_TITLE,
+  DONATE_CONFLICT_TITLE,
   DONATE_ERROR_MESSAGES,
   DONATE_TITLES,
   PAYMENT_FAILED_ERROR,
@@ -44,6 +48,9 @@ export class DonateDialog {
   private sendLabel = '';
   private hasSubmitted = false;
   private isSending = false;
+  private needsCheck = false;
+  private context: SessionContext | undefined;
+  private destroyed = false;
 
   /**
    * @param dialog
@@ -53,7 +60,7 @@ export class DonateDialog {
     this.dialog = dialog;
     this.unbindAvatarFallback = bindAvatarFallback(dialog);
     this.isSessionValid = isSessionValid;
-    this.modal = new Modal(dialog);
+    this.modal = new Modal(dialog, () => {}, () => !this.isSending);
     this.title = requireElement<HTMLElement>(dialog, '.modal__title');
     this.form = requireElement<HTMLFormElement>(dialog, '.donate-dialog__form');
     this.amountInput = requireElement<HTMLInputElement>(this.form, '[name="amount"]');
@@ -70,18 +77,28 @@ export class DonateDialog {
   }
 
   /**
-   * Открывает пустую форму для автора.
+   * Открывает форму, сохраняя конфликтную попытку для того же автора и сессии.
    * @param author
    */
   open(author: PostAuthor): void {
+    const context = getSessionContext();
+    if (!context || this.isSending || this.destroyed) {
+      return;
+    }
+    if (!this.needsCheck || this.author?.id !== author.id || this.context !== context) {
+      this.needsCheck = false;
+      this.requestKey = null;
+      this.hasSubmitted = false;
+      this.form.reset();
+      this.amountInput.value = DEFAULT_AMOUNT;
+    }
+    this.context = context;
     this.author = author;
-    this.requestKey = null;
-    this.hasSubmitted = false;
-    this.form.reset();
-    this.amountInput.value = DEFAULT_AMOUNT;
     setFieldError(this.form, 'amount', null);
     setFieldError(this.form, 'message', null);
-    setAlert(this.error, null);
+    setAlert(this.error, this.needsCheck ? DONATE_ERROR_MESSAGES[409] : null,
+      this.needsCheck ? DONATE_CONFLICT_TITLE : DONATE_ERROR_TITLE);
+    this.setSending(false);
     this.fillAuthor(author);
     this.updatePresets();
     this.modal.open();
@@ -90,6 +107,7 @@ export class DonateDialog {
 
   /** Снимает обработчики. */
   destroy(): void {
+    this.destroyed = true;
     this.unbindAvatarFallback();
     this.dialog.removeEventListener('click', this.onClick);
     this.form.removeEventListener('input', this.onInput);
@@ -127,7 +145,8 @@ export class DonateDialog {
       element.hidden = element.dataset.donateStep !== step;
     });
     this.title.textContent = DONATE_TITLES[step];
-    requireElement<HTMLElement>(this.dialog, `[data-donate-step="${step}"] [data-donate-focus]`).focus();
+    const focus = this.needsCheck ? '[data-donate-check]' : `[data-donate-step="${step}"] [data-donate-focus]`;
+    requireElement<HTMLElement>(this.dialog, focus).focus();
   }
 
   /** Подсвечивает кнопку суммы, равной введённой. */
@@ -153,7 +172,7 @@ export class DonateDialog {
    * @param event
    */
   private handleClick(event: MouseEvent): void {
-    if (!(event.target instanceof Element)) {
+    if (!(event.target instanceof Element) || this.needsCheck || this.isSending) {
       return;
     }
     const preset = event.target.closest<HTMLButtonElement>('[data-amount]');
@@ -169,6 +188,9 @@ export class DonateDialog {
 
   /** Новый ключ и свежие ошибки после правки формы */
   private handleInput(): void {
+    if (this.needsCheck || this.isSending) {
+      return;
+    }
     this.requestKey = null;
     this.updatePresets();
     if (this.hasSubmitted) {
@@ -182,6 +204,9 @@ export class DonateDialog {
    */
   private handleSubmit(event: SubmitEvent): void {
     event.preventDefault();
+    if (this.needsCheck || this.isSending) {
+      return;
+    }
     this.hasSubmitted = true;
     if (!this.checkForm()) {
       this.form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -204,14 +229,22 @@ export class DonateDialog {
    */
   private setSending(isSending: boolean): void {
     this.isSending = isSending;
-    this.sendButton.disabled = isSending;
+    this.sendButton.disabled = isSending || this.needsCheck;
     this.backButton.disabled = isSending;
     this.sendButton.textContent = isSending ? SENDING_LABEL : this.sendLabel;
+    this.form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement>('input, textarea, button')
+      .forEach((element) => { element.disabled = isSending || this.needsCheck; });
+    requireElement<HTMLElement>(this.form, '[data-donate-continue]').hidden = this.needsCheck;
+    requireElement<HTMLElement>(this.form, '[data-donate-check]').hidden = !this.needsCheck;
+    this.dialog.querySelectorAll<HTMLButtonElement>('[data-modal-close]')
+      .forEach((button) => { button.disabled = isSending; });
   }
 
   /** Отправляет пожертвование и показывает итог. */
   private async send(): Promise<void> {
-    if (!this.author || this.isSending || !this.isSessionValid()) {
+    const context = this.context;
+    if (!this.author || !context || context !== getSessionContext() || this.isSending
+      || this.needsCheck || this.destroyed || !this.isSessionValid()) {
       return;
     }
     const { amount, message } = this.values();
@@ -227,7 +260,7 @@ export class DonateDialog {
         message: message || null,
         is_anonymous: false,
       });
-      if (!this.isSessionValid()) {
+      if (this.destroyed || context !== getSessionContext() || !this.isSessionValid()) {
         return;
       }
       if (!this.dialog.open || this.requestKey !== requestKey) {
@@ -238,11 +271,18 @@ export class DonateDialog {
       }
       if (result.status === 'paid') {
         this.showSuccess(this.author, amountMinor, !!message);
-      } else {
+      } else if (result.status === 'failed' || result.status === 'canceled') {
         this.requestKey = null;
         this.showError(PAYMENT_FAILED_ERROR);
+      } else {
+        this.needsCheck = true;
+        this.setSending(false);
+        this.showError(DONATE_ERROR_MESSAGES[409]);
       }
     } catch (err) {
+      if (this.destroyed || context !== getSessionContext() || !this.isSessionValid()) {
+        return;
+      }
       if (!(err instanceof ApiError)) {
         throw err;
       }
@@ -250,7 +290,8 @@ export class DonateDialog {
         return;
       }
       if (!err.isCsrfError && err.status === 409) {
-        this.requestKey = null;
+        this.needsCheck = true;
+        this.setSending(false);
       }
       this.showError(err.isCsrfError || err.isMutationTimeout ? err.text : DONATE_ERROR_MESSAGES[err.status] ?? DONATE_ERROR);
     } finally {
@@ -263,7 +304,7 @@ export class DonateDialog {
    * @param text
    */
   private showError(text: string): void {
-    setAlert(this.error, text);
+    setAlert(this.error, text, this.needsCheck ? DONATE_CONFLICT_TITLE : DONATE_ERROR_TITLE);
     this.showStep('form');
   }
 

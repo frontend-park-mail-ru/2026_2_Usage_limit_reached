@@ -10,6 +10,8 @@ export const DONATE_TITLES: Record<DonateStep, string> = {
 
 export const SENDING_LABEL = 'Отправляем…';
 export const SENT_MESSAGE = 'Пожертвование отправлено';
+export const DONATE_ERROR_TITLE = 'Не удалось отправить пожертвование';
+export const DONATE_CONFLICT_TITLE = 'Результат пожертвования не подтверждён';
 
 export const PAYMENT_FAILED_ERROR = 'Платёж не прошёл. Сумма и сообщение остались в форме. Попробуйте ещё раз';
 export const DONATE_ERROR = 'Сумма и сообщение остались в форме. Попробуйте позже';
@@ -20,5 +22,5 @@ export const DONATE_ERROR_MESSAGES: Record<number, string> = {
   401: 'Войдите в аккаунт, чтобы отправить пожертвование',
   403: 'Нельзя отправить пожертвование самому себе',
   404: 'Автор не найден',
-  409: 'Предыдущее пожертвование могло пройти. Пока не отправляйте его повторно',
+  409: 'Проверьте статус в отправленных пожертвованиях. Пока не отправляйте его повторно',
 };

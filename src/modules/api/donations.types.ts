@@ -1,6 +1,6 @@
 export type DonationCurrency = 'RUB';
 
-export type DonationStatus = 'paid' | 'failed';
+export type DonationStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'canceled';
 
 export type DonationsDirection = 'received' | 'sent';
 

@@ -10,7 +10,8 @@
 }
 
 .donate-dialog__step[hidden],
-.donate-dialog__message[hidden] {
+.donate-dialog__message[hidden],
+.donate-dialog__button[hidden] {
   display: none;
 }
 
