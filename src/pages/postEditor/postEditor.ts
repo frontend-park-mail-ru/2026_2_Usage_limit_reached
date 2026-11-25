@@ -139,7 +139,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
-  const access = bindPostAccess(form, loaded?.min_tier_id ?? null, context, signal);
+  const access = bindPostAccess(form, loaded, context, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length

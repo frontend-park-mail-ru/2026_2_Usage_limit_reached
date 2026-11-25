@@ -1,12 +1,14 @@
 import { Select } from '@/components/select/select.ts';
 import { getMyTiers } from '@/modules/api/tiers.ts';
 import type { SubscriptionTier } from '@/modules/api/tiers.ts';
+import type { Post } from '@/modules/api/posts.types.ts';
 import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 
 /** Подключает выбор минимального уровня подписки. */
-export function bindPostAccess(form: HTMLFormElement, initialTierId: string | null, context: SessionContext, signal: AbortSignal) {
+export function bindPostAccess(form: HTMLFormElement, post: Post | null, context: SessionContext, signal: AbortSignal) {
+  const initialTierId = post?.min_tier_id ?? null;
   const input = requireElement<HTMLInputElement>(form, '#post-access-tier');
   const root = requireElement<HTMLElement>(form, '.post-access .select');
   const list = requireElement<HTMLElement>(root, '.select__list');
@@ -16,11 +18,31 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
   const retry = requireElement<HTMLButtonElement>(form, '[data-post-access-retry]');
   const publicLabel = 'Для всех';
   const savedLabel = 'Сохранённый уровень';
+  const schedule = requireElement<HTMLElement>(form, '[data-access-schedule]');
+  const stages = requireElement(schedule, '[data-access-stages]');
+  const stageTemplate = requireElement<HTMLTemplateElement>(schedule, '[data-access-stage]');
+  const savedStages = post?.access_schedule ?? [];
+  const stageDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+  const stageTime = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' });
   let savedTierId = initialTierId;
   let selectedTierId = initialTierId;
   let rejectedTierId: string | undefined;
   let tiers: SubscriptionTier[] = [];
   let select: Select | undefined;
+  function renderStages(): void {
+    stages.replaceChildren(...savedStages.map((stage) => {
+      const row = stageTemplate.content.cloneNode(true) as DocumentFragment;
+      const time = requireElement<HTMLTimeElement>(row, 'time');
+      const tier = tiers.find(({ id }) => id === stage.min_tier_id);
+      time.dateTime = stage.starts_at;
+      const start = new Date(stage.starts_at);
+      time.textContent = `${stageDate.format(start)}, ${stageTime.format(start)}`;
+      requireElement(row, 'span').textContent = stage.min_tier_id ? tier?.name ?? savedLabel : publicLabel;
+      return row;
+    }));
+  }
+
+  renderStages();
   const updateHint = (tierId: string | null) => {
     hint.textContent = tierId ? 'Пост увидят подписчики этого уровня и уровней выше' : 'Пост будет доступен всем';
   };
@@ -103,6 +125,7 @@ export function bindPostAccess(form: HTMLFormElement, initialTierId: string | nu
         return;
       }
       tiers = response.items;
+      renderStages();
       renderOptions();
       status.textContent = '';
       input.disabled = false;

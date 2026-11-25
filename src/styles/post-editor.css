@@ -115,6 +115,27 @@
   gap: 12px;
 }
 
+.post-access__schedule {
+  display: grid;
+  gap: 12px;
+}
+
+.post-access__schedule > :empty:not(template) {
+  display: none;
+}
+
+.post-access__schedule .button {
+  height: 44px;
+}
+
+.post-access__stage {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-bottom: 1px solid var(--color-input-border);
+  overflow-wrap: anywhere;
+}
+
 .post-access .form-field__label,
 .post-access .form-field__error {
   margin: 0;

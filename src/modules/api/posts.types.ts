@@ -41,6 +41,11 @@ export interface PostsQuery {
   cursor?: string | null;
 }
 
+export interface PostAccessStage {
+  starts_at: string;
+  min_tier_id: string | null;
+}
+
 export interface Post {
   id: string;
   author: PostAuthor;
@@ -49,6 +54,7 @@ export interface Post {
   attachments?: PostAttachment[];
   cover_url?: string | null;
   min_tier_id?: string | null;
+  access_schedule?: PostAccessStage[];
   status: PostStatus;
   published_at: string | null;
   created_at: string;
