@@ -25,6 +25,7 @@ export interface PostPreview {
   locked: boolean;
   title: string;
   body_preview: string;
+  offline_cache_until?: string | null;
   cover_url?: string | null;
   likes_count: number;
   liked_by_user: boolean;
@@ -51,6 +52,7 @@ export interface Post {
   author: PostAuthor;
   title: string;
   body: string;
+  offline_cache_until?: string | null;
   attachments?: PostAttachment[];
   cover_url?: string | null;
   min_tier_id?: string | null;
