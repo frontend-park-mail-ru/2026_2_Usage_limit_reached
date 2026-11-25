@@ -55,6 +55,7 @@ export interface Post {
   cover_url?: string | null;
   min_tier_id?: string | null;
   access_schedule?: PostAccessStage[];
+  publication_ends_at?: string | null;
   status: PostStatus;
   published_at: string | null;
   created_at: string;

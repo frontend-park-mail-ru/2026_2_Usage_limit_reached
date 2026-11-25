@@ -199,7 +199,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving || !isSessionCurrent(context) || access.needsSelection() || access.finishStageBeforeSaving()) {
+    if (isSaving || !isSessionCurrent(context) || access.needsSelection() || access.finishStageBeforeSaving()
+      || access.needsScheduleFix(post?.publication_ends_at)) {
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -256,9 +257,17 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (err.isUnauthorized) {
         return;
       }
-      if (tierId && ((err.status === 400 && err.code === 'invalid_min_tier')
+      if (err.status === 400 && err.code === 'invalid_access_schedule') {
+        access.rejectSchedule(false);
+        return;
+      }
+      if ((tierId || schedule) && ((err.status === 400 && err.code === 'invalid_min_tier')
         || (err.status === 409 && err.code === 'post_tier_archived'))) {
-        access.rejectTier(tierId);
+        if (schedule) {
+          access.rejectSchedule(true);
+        } else if (tierId) {
+          access.rejectTier(tierId);
+        }
         return;
       }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));

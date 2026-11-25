@@ -23,7 +23,9 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   const retry = requireElement<HTMLButtonElement>(form, '[data-post-access-retry]');
   const publicLabel = 'Для всех';
   const savedLabel = 'Сохранённый уровень';
+  const unavailableTier = 'Один из уровней больше недоступен. Выберите другой уровень или «Для всех»';
   const schedule = requireElement<HTMLElement>(form, '[data-access-schedule]');
+  const scheduleError = requireElement(schedule, '[data-schedule-error]');
   const stages = requireElement(schedule, '[data-access-stages]');
   const stageTemplate = requireElement<HTMLTemplateElement>(schedule, '[data-access-stage]');
   const stageDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
@@ -31,6 +33,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   let savedTierId = initialTierId;
   let selectedTierId = initialTierId;
   let rejectedTierId: string | undefined;
+  let rejectedBindings = new Map<Element, string>();
   let tiers: SubscriptionTier[] = [];
   let select: Select | undefined;
   const stageEditors = new Map<HTMLDetailsElement, {
@@ -53,6 +56,24 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   const keepsBinding = (id: string, start: string) =>
     savedSchedule.some((stage) => stage.min_tier_id === id && stage.starts_at === start);
   const tierLabel = ({ name, status }: SubscriptionTier) => status === 'archived' ? `${name} · В архиве` : name;
+  const isOpenTier = (tierId: string) => tiers.some(({ id, status }) => id === tierId && status === 'open');
+  function changedBindings(): Map<Element, string> {
+    const bindings = new Map<Element, string>();
+    if (selectedTierId && selectedTierId !== savedTierId) {
+      bindings.set(input, selectedTierId);
+    }
+    stageEditors.forEach((editor, row) => {
+      const { starts_at, min_tier_id } = editor.value();
+      if (min_tier_id && !keepsBinding(min_tier_id, starts_at)) {
+        bindings.set(row, min_tier_id);
+      }
+    });
+    return bindings;
+  }
+  function showScheduleError(message: string): void {
+    scheduleError.textContent = message;
+    schedule.scrollIntoView({ block: 'nearest' });
+  }
   const currentSchedule = () => [...stageEditors.values()].map((stage) => stage.value()).sort(compareStages);
   const hasUnfinishedStages = () => [...stageEditors.values()].some((stage) => stage.unfinished());
   function scheduleChange(): PostAccessStage[] | undefined {
@@ -92,7 +113,8 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
         || (id === initial?.min_tier_id && keepsBinding(id, initial.starts_at)))
         .map((tier) => new Option(tierLabel(tier), tier.id));
       if (selected && !options.some(({ value }) => value === selected)) {
-        options.push(new Option(savedLabel, selected));
+        const tier = tiers.find(({ id }) => id === selected);
+        options.push(new Option(tier ? tierLabel(tier) : tierInput.selectedOptions[0]?.text ?? savedLabel, selected));
       }
       tierInput.replaceChildren(new Option(publicLabel, ''), ...options);
       tierInput.value = selected;
@@ -124,7 +146,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       const nextStart = initial && entered === originalTime ? initial.starts_at : next.toISOString();
       const nextTierId = tierInput.value;
       if (nextTierId && !keepsStageBinding(nextTierId, nextStart)
-        && !tiers.some(({ id, status }) => id === nextTierId && status === 'open')) {
+        && !isOpenTier(nextTierId)) {
         dateError.textContent = 'Выберите открытый уровень или «Для всех»';
         return;
       }
@@ -181,6 +203,31 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   return {
     getChange: () => selectedTierId === savedTierId ? undefined : selectedTierId,
     scheduleChange,
+    needsScheduleFix(endsAt?: string | null) {
+      if (endsAt && scheduleChange()?.some(({ starts_at }) => Date.parse(starts_at) >= Date.parse(endsAt))) {
+        showScheduleError('Этапы должны начинаться до завершения публикации');
+        return true;
+      }
+      if (rejectedBindings.size) {
+        const bindings = changedBindings();
+        const unchanged = [...rejectedBindings].every(([field, id]) => bindings.get(field) === id);
+        if (unchanged || (bindings.size > 0 && input.disabled) || [...bindings.values()].some((id) => !isOpenTier(id))) {
+          showScheduleError(unavailableTier);
+          return true;
+        }
+      }
+      scheduleError.textContent = '';
+      return false;
+    },
+    rejectSchedule(refreshTiers: boolean) {
+      if (refreshTiers) {
+        rejectedBindings = changedBindings();
+        showScheduleError(unavailableTier);
+        void load();
+      } else {
+        showScheduleError('Проверьте даты и время этапов');
+      }
+    },
     hasScheduleChanges: () => hasUnfinishedStages() || scheduleChange() !== undefined,
     finishStageBeforeSaving() {
       const unfinished = [...stageEditors.values()].find((stage) => stage.unfinished());
@@ -202,6 +249,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       void load();
     },
     markSaved() {
+      rejectedBindings.clear();
       savedSchedule = currentSchedule();
       stageEditors.forEach((stage) => stage.refresh());
       if (selectedTierId !== savedTierId) {
