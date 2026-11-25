@@ -50,6 +50,9 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   const updateZone = () => { zone.toggleAttribute('hidden', !stageEditors.size); };
   const compareStages = (a: PostAccessStage, b: PostAccessStage) => Date.parse(a.starts_at) - Date.parse(b.starts_at);
   let savedSchedule = [...post?.access_schedule ?? []].sort(compareStages);
+  const keepsBinding = (id: string, start: string) =>
+    savedSchedule.some((stage) => stage.min_tier_id === id && stage.starts_at === start);
+  const tierLabel = ({ name, status }: SubscriptionTier) => status === 'archived' ? `${name} · В архиве` : name;
   const currentSchedule = () => [...stageEditors.values()].map((stage) => stage.value()).sort(compareStages);
   const hasUnfinishedStages = () => [...stageEditors.values()].some((stage) => stage.unfinished());
   function scheduleChange(): PostAccessStage[] | undefined {
@@ -70,18 +73,24 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     const originalTime = initial ? localStageTime(new Date(initial.starts_at)) : '';
     let start = initial?.starts_at ?? '';
     let tierId = initial?.min_tier_id ?? null;
+    const keepsStageBinding = (id: string, date: string) => keepsBinding(id, date) && (
+      (id === tierId && date === start) || (id === initial?.min_tier_id && date === initial.starts_at)
+    );
     if (originalTime) {
       [date.value, clock.value] = originalTime.split('T');
     }
     function updateTitle(): void {
       time.dateTime = start;
       time.textContent = start ? `${stageDate.format(new Date(start))}, ${stageTime.format(new Date(start))}` : '';
-      title.textContent = tierId ? tiers.find(({ id }) => id === tierId)?.name ?? savedLabel : publicLabel;
+      const tier = tiers.find(({ id }) => id === tierId);
+      title.textContent = tier ? tierLabel(tier) : tierId ? savedLabel : publicLabel;
     }
     function refresh(): void {
       const selected = tierInput.selectedIndex < 0 ? tierId ?? '' : tierInput.value;
-      const options = tiers.filter(({ id, status }) => status === 'open' || id === initial?.min_tier_id)
-        .map(({ name, id }) => new Option(name, id));
+      const options = tiers.filter(({ id, status }) => status === 'open'
+        || (id === tierId && keepsBinding(id, start))
+        || (id === initial?.min_tier_id && keepsBinding(id, initial.starts_at)))
+        .map((tier) => new Option(tierLabel(tier), tier.id));
       if (selected && !options.some(({ value }) => value === selected)) {
         options.push(new Option(savedLabel, selected));
       }
@@ -96,7 +105,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       unfinished: () => !start || enteredTime() !== localStageTime(new Date(start)) || (tierInput.value || null) !== tierId,
       reveal() {
         row.open = true;
-        dateError.textContent = 'Нажмите «Готово», чтобы применить изменения этапа';
+        dateError.textContent ||= 'Нажмите «Готово», чтобы применить изменения этапа';
         row.scrollIntoView({ block: 'nearest' });
       },
     });
@@ -113,15 +122,21 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
         return;
       }
       const nextStart = initial && entered === originalTime ? initial.starts_at : next.toISOString();
+      const nextTierId = tierInput.value;
+      if (nextTierId && !keepsStageBinding(nextTierId, nextStart)
+        && !tiers.some(({ id, status }) => id === nextTierId && status === 'open')) {
+        dateError.textContent = 'Выберите открытый уровень или «Для всех»';
+        return;
+      }
       const others = [...stages.querySelectorAll('time')].filter((item) => item !== time);
       if (others.some((item) => Date.parse(item.dateTime) === Date.parse(nextStart))) {
         dateError.textContent = 'На это время уже есть этап. Укажите другое время';
         return;
       }
       start = nextStart;
-      tierId = tierInput.value || null;
+      tierId = nextTierId || null;
       dateError.textContent = '';
-      updateTitle();
+      refresh();
       row.open = false;
       const following = others.find((item) => !item.dateTime || Date.parse(item.dateTime) > Date.parse(start));
       stages.insertBefore(row, following?.closest('details') ?? null);
@@ -188,6 +203,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     },
     markSaved() {
       savedSchedule = currentSchedule();
+      stageEditors.forEach((stage) => stage.refresh());
       if (selectedTierId !== savedTierId) {
         savedTierId = selectedTierId;
         renderOptions();
@@ -201,7 +217,7 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
     const options: { id: string | null; label: string }[] = [{ id: null, label: publicLabel }];
     for (const tier of tiers) {
       if (tier.id === savedTierId || (tier.status === 'open' && tier.id !== rejectedTierId)) {
-        options.push({ id: tier.id, label: tier.status === 'archived' ? `${tier.name} · В архиве` : tier.name });
+        options.push({ id: tier.id, label: tierLabel(tier) });
       }
     }
     if (savedTierId && !options.some(({ id }) => id === savedTierId)) {
