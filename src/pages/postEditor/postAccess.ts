@@ -199,8 +199,8 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   return {
     getChange: () => selectedTierId === savedTierId ? undefined : selectedTierId,
     scheduleChange,
-    needsScheduleFix(endsAt?: string | null) {
-      if (endsAt && scheduleChange()?.some(({ starts_at }) => Date.parse(starts_at) >= Date.parse(endsAt))) {
+    needsScheduleFix(endsAt: string | null) {
+      if (endsAt && currentSchedule().some(({ starts_at }) => Date.parse(starts_at) >= Date.parse(endsAt))) {
         showScheduleError('Этапы должны начинаться до завершения публикации');
         return true;
       }

@@ -73,6 +73,7 @@ export interface PostInput {
   cover_id?: string | null;
   min_tier_id?: string | null;
   access_schedule?: PostAccessStage[];
+  publication_ends_at?: string | null;
 }
 
 export interface PostUpdate extends PostInput {

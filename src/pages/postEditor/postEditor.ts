@@ -202,8 +202,11 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
 
   const submit = async (values: FormValues) => {
     if (isSaving || !isSessionCurrent(context) || !publicationEnd.validate()
-      || access.needsSelection() || access.finishStageBeforeSaving()
-      || access.needsScheduleFix(post?.publication_ends_at)) {
+      || access.needsSelection() || access.finishStageBeforeSaving()) {
+      return;
+    }
+    const end = publicationEnd.getChange();
+    if (access.needsScheduleFix(end === undefined ? publicationEnd.getSavedEnd() : end)) {
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -221,6 +224,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       ...(coverId === undefined ? {} : { cover_id: coverId }),
       ...(tierId === undefined ? {} : { min_tier_id: tierId }),
       ...(schedule === undefined ? {} : { access_schedule: schedule }),
+      ...(end === undefined ? {} : { publication_ends_at: end }),
     };
     try {
       const save = async () => {
@@ -239,6 +243,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       saved = snapshot;
       cover.markSaved();
       access.markSaved();
+      publicationEnd.markSaved(end);
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();
