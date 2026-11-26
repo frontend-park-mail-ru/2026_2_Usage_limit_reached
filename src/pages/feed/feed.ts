@@ -62,10 +62,13 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const filterButton = requireElement<HTMLButtonElement>(root, '[popovertarget="feed-filters"]');
   const panel = requireElement<HTMLFormElement>(root, '#feed-filters');
   const attachment = panel.elements.namedItem('attachment_type') as RadioNodeList;
+  const accessible = requireElement<HTMLInputElement>(panel, '[name="accessible_only"]');
   let appliedAttachment: FeedQuery['attachment_type'];
+  let appliedAccessible = false;
   panel.addEventListener('beforetoggle', (event) => {
     if (event.newState === 'open') {
       panel.reset();
+      accessible.checked = appliedAccessible;
       if (appliedAttachment) {
         attachment.value = appliedAttachment;
       }
@@ -74,8 +77,9 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   panel.addEventListener('submit', (event) => {
     event.preventDefault();
     appliedAttachment = (attachment.value || undefined) as FeedQuery['attachment_type'];
-    filterButton.toggleAttribute('data-applied', Boolean(appliedAttachment));
-    posts.updateFilters({ attachment_type: appliedAttachment });
+    appliedAccessible = accessible.checked;
+    filterButton.toggleAttribute('data-applied', Boolean(appliedAttachment) || appliedAccessible);
+    posts.updateFilters({ attachment_type: appliedAttachment, accessible_only: appliedAccessible });
     panel.hidePopover();
   }, { signal });
   return () => {
