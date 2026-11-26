@@ -1,6 +1,11 @@
 <section class="feed" aria-labelledby="feed-title">
+  <h1 class="feed__title" id="feed-title">Лента</h1>
   <div class="feed__toolbar">
-    <h1 class="feed__title" id="feed-title">Лента</h1>
+    <form class="feed__search" role="search" data-feed-search>
+      <button type="submit" aria-label="Найти посты"><img src="/assets/feed/search.svg" width="20" height="20" alt=""></button>
+      <input type="search" name="q" aria-label="Поиск по постам" placeholder="Поиск по постам">
+      <button type="reset" aria-label="Очистить поиск" hidden>×</button>
+    </form>
     <div class="feed__sort" data-public-sort></div>
   </div>
   <div data-public-posts></div>
