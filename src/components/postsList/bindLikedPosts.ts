@@ -36,8 +36,10 @@ export function bindLikedPosts(
   let offline = false;
   let filters: FeedFilters = {};
   const offlineEnabled = feed || offlineProfile !== undefined;
+  const onlineOnly = () => Boolean(filters.q || filters.tag || filters.attachment_type || filters.accessible_only);
   const posts = bindPublicPosts(root, async (query, isCurrent) => {
     const selection = filters;
+    const filtered = onlineOnly();
     if (authStore.getState().status === 'unknown' || (offlineEnabled && offline)) {
       await checkSession().catch(() => {});
     }
@@ -52,10 +54,10 @@ export function bindLikedPosts(
       return { items: [], next_cursor: null };
     }
     const load = () => loadPage({ ...query, ...selection });
-    if (!offlineEnabled || selection.q || selection.tag || selection.attachment_type || selection.accessible_only) {
+    if (!offlineEnabled) {
       return load();
     }
-    const page = await loadOfflinePosts(query, load, current, offlineProfile);
+    const page = await loadOfflinePosts(query, load, current, offlineProfile, filtered);
     if (current()) {
       offline = page.savedAt !== undefined;
     }
@@ -85,7 +87,7 @@ export function bindLikedPosts(
         pendingLikes.delete(request);
       }
     });
-  }, feed, offlineEnabled, readOnly, setRefreshNotice);
+  }, feed, offlineEnabled, readOnly, setRefreshNotice, onlineOnly);
   let previous = authStore.getState();
   const unsubscribe = authStore.subscribe(() => {
     const current = authStore.getState();

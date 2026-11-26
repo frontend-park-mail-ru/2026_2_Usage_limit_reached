@@ -25,6 +25,7 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
  * @param offlineEnabled
  * @param readOnly
  * @param setRefreshNotice
+ * @param onlineOnly Текущая выдача доступна только онлайн.
  */
 export function bindPublicPosts(
   root: HTMLElement,
@@ -34,6 +35,7 @@ export function bindPublicPosts(
   offlineEnabled = feed,
   readOnly = false,
   setRefreshNotice: SetRefreshNotice = () => {},
+  onlineOnly = () => false,
 ) {
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const unbindCovers = bindPostCardCovers(panel);
@@ -156,13 +158,14 @@ export function bindPublicPosts(
       if (!active || id !== request) {
         return;
       }
-      offline ||= offlineEnabled && isBackendUnavailable(error);
       unavailable = isBackendUnavailable(error);
+      offline ||= !onlineOnly() && offlineEnabled && unavailable;
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
         expiry.refresh();
       }
-      const message = append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
+      const message = onlineOnly() && !navigator.onLine ? 'Результаты недоступны без интернета'
+        : append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
       if (moreText) {
         moreText.textContent = message;
       } else {
@@ -200,6 +203,10 @@ export function bindPublicPosts(
   }, () => offlineEnabled && active && unavailable);
   const handleOffline = () => {
     if (offlineEnabled && active) {
+      if (onlineOnly()) {
+        void load();
+        return;
+      }
       unavailable = true;
       offline = true;
       panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });

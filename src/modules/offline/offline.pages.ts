@@ -28,6 +28,7 @@ export function loadOfflinePosts(
   load: () => Promise<PostsPage>,
   isCurrent: () => boolean,
   username?: string,
+  onlineOnly = false,
 ): Promise<OfflinePostsPage> {
   const key = [...(username === undefined ? ['feed'] : ['public', username, 'posts']), query.sort, query.cursor ?? ''];
   return loadOfflinePage(key, load, (page) => ({
@@ -39,7 +40,7 @@ export function loadOfflinePosts(
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
       likes_count: item.likes_count, liked_by_user: item.liked_by_user,
     })),
-  }), isCurrent, { postList: (page) => page });
+  }), isCurrent, { postList: (page) => page, onlineOnly });
 }
 
 /** Сохраняет публичные сведения без контактов и платёжных данных. */
@@ -82,8 +83,9 @@ export function loadOfflineDonations(ownerId: string, direction: DonationsDirect
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
   key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
-  { ownerId, canRead, postList }: {
+  { ownerId, canRead, postList, onlineOnly = false }: {
     ownerId?: string; canRead?: (page: T) => boolean; postList?: (page: T) => PostsPage;
+    onlineOnly?: boolean;
   } = {},
 ): Promise<T & { savedAt?: number }> {
   const isPost = key[0] === 'post';
@@ -94,8 +96,14 @@ async function loadOfflinePage<T extends object>(
     : key[0] === 'post' ? key : key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
   let page: T;
   try {
+    if (onlineOnly && !navigator.onLine) {
+      throw new ApiError(0, 'network error');
+    }
     page = await load();
   } catch (error) {
+    if (onlineOnly) {
+      throw error;
+    }
     if (!isBackendUnavailable(error)) {
       if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
         await accessOfflineCopy(token, 'readwrite', isCurrent, (store, _, current) => {
@@ -134,7 +142,7 @@ async function loadOfflinePage<T extends object>(
     }
     return { ...saved.page, savedAt: saved.savedAt };
   }
-  const value = copy(page);
+  const value = onlineOnly ? null : copy(page);
   const saved = value && { key, savedAt: Date.now(), page: value };
   const accepted = await accessOfflineCopy<boolean>(token, 'readwrite', isCurrent, (store, result, current) => {
     const list = postList?.(page);
@@ -146,6 +154,10 @@ async function loadOfflinePage<T extends object>(
       return;
     }
     list?.items.splice(0, list.items.length, ...list.items.filter(({ id }) => !stale.has(id)));
+    if (onlineOnly) {
+      cleanOfflinePublications(store, current, revoked);
+      return;
+    }
     if (key[0] === 'donations' && key[3] === '') {
       store.delete(IDBKeyRange.bound(group, [...group, []]));
     }
