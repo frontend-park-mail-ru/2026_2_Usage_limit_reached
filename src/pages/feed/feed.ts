@@ -7,10 +7,20 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { PROFILE_CATEGORIES } from '@/pages/settings/settings.constants.ts';
+import type { FeedQuery } from '@/modules/api/posts.types.ts';
+
+const ATTACHMENT_FILTERS = [
+  { value: '', label: 'Все посты', selected: true },
+  { value: 'any', label: 'Любое вложение' },
+  { value: 'video', label: 'Видео' },
+  { value: 'image', label: 'Фото' },
+  { value: 'audio', label: 'Аудио' },
+  { value: 'file', label: 'Файл' },
+];
 
 /** Показывает каркас общей ленты. */
 export function renderFeed(): string {
-  return feedTemplate({ topics: PROFILE_CATEGORIES });
+  return feedTemplate({ topics: PROFILE_CATEGORIES, attachments: ATTACHMENT_FILTERS });
 }
 
 /**
@@ -49,6 +59,25 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     topics.forEach((button) => button.setAttribute('aria-pressed', String(button === topic)));
     posts.updateFilters({ tag: topic.dataset.topic || undefined });
   }, { signal }));
+  const filterButton = requireElement<HTMLButtonElement>(root, '[popovertarget="feed-filters"]');
+  const panel = requireElement<HTMLFormElement>(root, '#feed-filters');
+  const attachment = panel.elements.namedItem('attachment_type') as RadioNodeList;
+  let appliedAttachment: FeedQuery['attachment_type'];
+  panel.addEventListener('beforetoggle', (event) => {
+    if (event.newState === 'open') {
+      panel.reset();
+      if (appliedAttachment) {
+        attachment.value = appliedAttachment;
+      }
+    }
+  }, { signal });
+  panel.addEventListener('submit', (event) => {
+    event.preventDefault();
+    appliedAttachment = (attachment.value || undefined) as FeedQuery['attachment_type'];
+    filterButton.toggleAttribute('data-applied', Boolean(appliedAttachment));
+    posts.updateFilters({ attachment_type: appliedAttachment });
+    panel.hidePopover();
+  }, { signal });
   return () => {
     events.abort();
     unbindAvatarFallback();

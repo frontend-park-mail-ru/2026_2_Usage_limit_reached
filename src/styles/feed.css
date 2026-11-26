@@ -78,6 +78,137 @@
   line-height: 44px;
 }
 
+.feed__tools {
+  display: grid;
+  grid-template-columns: minmax(0, 152px) 1px 184px;
+  align-items: center;
+  width: 337px;
+  max-width: 100%;
+  border-radius: 16px;
+  background: var(--color-white);
+}
+
+.feed__tools::before {
+  content: '';
+  grid-column: 2;
+  grid-row: 1;
+  height: 24px;
+  background: rgb(61 64 91 / 24%);
+}
+
+.feed__filters-button {
+  position: relative;
+  isolation: isolate;
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.feed__filters-button[data-applied]::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 4px;
+  border: 1px solid rgb(61 64 91 / 24%);
+  border-radius: 12px;
+  background: rgb(61 64 91 / 8%);
+}
+
+.feed__filters {
+  position-area: bottom span-left;
+  justify-self: end;
+  position-try-fallbacks: flip-inline, flip-block;
+  inset: auto;
+  box-sizing: border-box;
+  width: 304px;
+  max-width: calc(100vw - 32px);
+  max-height: min(65dvh, 500px);
+  margin: 8px 0 0;
+  padding: 16px;
+  overflow: auto;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: 0 6px 16px rgb(61 64 91 / 12%);
+  color: var(--color-text);
+}
+
+.feed__attachment-options > span {
+  display: block;
+  font-weight: 500;
+}
+
+.feed__attachment-options small {
+  display: block;
+  margin: 4px 0 8px;
+  color: rgb(61 64 91 / 80%);
+  font-size: 14px;
+}
+
+.feed__attachment-options label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.feed__attachment-options label + label {
+  margin-top: 4px;
+}
+
+.feed__attachment-options input {
+  position: absolute;
+  opacity: 0;
+}
+
+.feed__attachment-options label:has(:focus-visible) {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.feed__attachment-options label:hover,
+.feed__attachment-options label:has(:checked) {
+  background: rgb(61 64 91 / 4%);
+}
+
+.feed__attachment-options label:not(:has(:checked)) span {
+  visibility: hidden;
+}
+
+.feed__filter-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 14px 0 4px;
+  border-top: 1px solid rgb(61 64 91 / 12%);
+}
+
+.feed__filter-actions [type='reset'] {
+  background: transparent;
+  color: inherit;
+}
+
+.feed__filter-actions [type='reset']:hover {
+  background: rgb(61 64 91 / 4%);
+}
+
 .feed__topics {
   display: flex;
   flex-wrap: wrap;
@@ -149,5 +280,20 @@
 @media (max-width: 720px) {
   .feed {
     padding: 24px 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .feed__filters-button {
+    padding-inline: 4px;
+  }
+
+  .feed__tools {
+    grid-template-columns: minmax(0, 1fr) 1px auto;
+  }
+
+  .feed__sort .sort-menu__button {
+    min-width: 0;
+    padding-right: 8px;
   }
 }
