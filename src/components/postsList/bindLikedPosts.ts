@@ -99,7 +99,8 @@ export function bindLikedPosts(
     }
   });
   return {
-    setFilters(next: FeedFilters) {
+    updateFilters(changes: FeedFilters) {
+      const next = { ...filters, ...changes };
       const q = next.q?.trim() || undefined;
       const accessible_only = next.accessible_only || undefined;
       if (q !== filters.q || next.tag !== filters.tag || next.attachment_type !== filters.attachment_type

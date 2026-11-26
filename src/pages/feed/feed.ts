@@ -6,10 +6,11 @@ import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
+import { PROFILE_CATEGORIES } from '@/pages/settings/settings.constants.ts';
 
 /** Показывает каркас общей ленты. */
 export function renderFeed(): string {
-  return feedTemplate({});
+  return feedTemplate({ topics: PROFILE_CATEGORIES });
 }
 
 /**
@@ -28,12 +29,12 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const { signal } = events;
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    posts.setFilters({ q: input.value });
+    posts.updateFilters({ q: input.value });
   }, { signal });
   const syncSearchClear = () => {
     clear.hidden = !input.value;
     if (clear.hidden) {
-      posts.setFilters({});
+      posts.updateFilters({ q: undefined });
     }
   };
   input.addEventListener('input', syncSearchClear, { signal });
@@ -43,6 +44,11 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     syncSearchClear();
     input.focus();
   }, { signal });
+  const topics = root.querySelectorAll<HTMLButtonElement>('[data-topic]');
+  topics.forEach((topic) => topic.addEventListener('click', () => {
+    topics.forEach((button) => button.setAttribute('aria-pressed', String(button === topic)));
+    posts.updateFilters({ tag: topic.dataset.topic || undefined });
+  }, { signal }));
   return () => {
     events.abort();
     unbindAvatarFallback();

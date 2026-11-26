@@ -8,5 +8,11 @@
     </form>
     <div class="feed__sort" data-public-sort></div>
   </div>
+  <div class="feed__topics" role="group" aria-label="Темы постов">
+    <button class="button button_borderless" type="button" data-topic="" aria-pressed="true">Все темы</button>
+    {{#each topics}}
+      <button class="button button_borderless" type="button" data-topic="{{this}}" aria-pressed="false">{{this}}</button>
+    {{/each}}
+  </div>
   <div data-public-posts></div>
 </section>
