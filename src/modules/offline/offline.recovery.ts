@@ -32,16 +32,14 @@ export function watchOfflineExpiry(check: () => number | undefined) {
       timer = window.setTimeout(refresh, Math.max(0, Math.min(deadline - Date.now(), 2_147_483_647)));
     }
   };
-  window.addEventListener('focus', refresh);
+  const unbind = bindOfflineRecovery(refresh, () => true);
   window.addEventListener('pageshow', refresh);
-  document.addEventListener('visibilitychange', refresh);
   return {
     refresh,
     destroy() {
       window.clearTimeout(timer);
-      window.removeEventListener('focus', refresh);
+      unbind();
       window.removeEventListener('pageshow', refresh);
-      document.removeEventListener('visibilitychange', refresh);
     },
   };
 }

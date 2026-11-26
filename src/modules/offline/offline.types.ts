@@ -4,6 +4,8 @@ import type { ProfilePost, ProfilePostsQuery } from '@/modules/api/profile.types
 export interface OfflineToken {
   generation: string;
   ownerId: string | null;
+  publicationSequence?: number;
+  publicationOrders?: Map<string, { body?: number; preview?: number; revoked?: number }>;
 }
 
 /** Резервные ревизии захватываются до запроса, без подтверждения владельца. */

@@ -3,7 +3,7 @@ import type { Post, PostPreview, PostsPage, PostsQuery } from '@/modules/api/pos
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
 import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
-import { accessOfflineCopy, captureOfflineToken, cleanOfflinePublications, hasOfflineStorageError } from './offline.storage.ts';
+import { accessOfflineCopy, captureOfflineToken, cleanOfflinePublications, hasOfflineStorageError, staleOfflinePublications } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
 import { clearUnavailablePreviews, copyOfflinePreview, getOfflineDeadline, revokedPreviewIds } from './offline.deadline.ts';
 
@@ -39,7 +39,7 @@ export function loadOfflinePosts(
       author: { id: item.author.id, username: item.author.username, nickname: item.author.nickname },
       likes_count: item.likes_count, liked_by_user: item.liked_by_user,
     })),
-  }), isCurrent, { cleanCached: (page) => clearUnavailablePreviews(page.items), revokedIds: (page) => revokedPreviewIds(page.items) });
+  }), isCurrent, { postList: (page) => page });
 }
 
 /** Сохраняет публичные сведения без контактов и платёжных данных. */
@@ -54,19 +54,15 @@ export function loadOfflinePublicProfile(username: string, load: () => Promise<P
 export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent: () => boolean) {
   const canCache = (post: Post) => !post.locked && post.status === 'published'
     && getOfflineDeadline(post.offline_cache_until) !== undefined;
-  return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => {
-    if (!canCache(post)) {
-      return null;
-    }
-    return {
+  return loadOfflinePage<Post & { hasAttachments?: boolean }>(['post', id], load, (post) => canCache(post)
+    ? {
       id: post.id, title: post.title, body: sanitizeHtml(post.body), status: post.status, locked: false,
       offline_cache_until: post.offline_cache_until,
       hasAttachments: !!new DOMParser().parseFromString(post.body, 'text/html').body.querySelector('figure[data-attachment-id]'),
       author: { id: post.author.id, nickname: post.author.nickname, username: post.author.username },
       published_at: post.published_at, created_at: post.created_at, updated_at: post.updated_at,
       likes_count: post.likes_count, liked_by_user: post.liked_by_user,
-    };
-  }, isCurrent, { canRead: canCache, revokedIds: (post) => canCache(post) ? [] : [id] });
+    } : null, isCurrent, { canRead: canCache });
 }
 
 /** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
@@ -86,12 +82,14 @@ export function loadOfflineDonations(ownerId: string, direction: DonationsDirect
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */
 async function loadOfflinePage<T extends object>(
   key: string[], load: () => Promise<T>, copy: (page: T) => T | null, isCurrent: () => boolean,
-  { ownerId, canRead, cleanCached, revokedIds }: {
-    ownerId?: string; canRead?: (page: T) => boolean; cleanCached?: (page: T) => boolean; revokedIds?: (page: T) => string[];
+  { ownerId, canRead, postList }: {
+    ownerId?: string; canRead?: (page: T) => boolean; postList?: (page: T) => PostsPage;
   } = {},
 ): Promise<T & { savedAt?: number }> {
-  const captured = await captureOfflineToken();
+  const isPost = key[0] === 'post';
+  const captured = await captureOfflineToken(isPost || !!postList);
   const token = ownerId === undefined || captured?.ownerId === ownerId ? captured : undefined;
+  const order = token?.publicationSequence ?? 0;
   const group = key[0] === 'donations' ? key.slice(0, 3)
     : key[0] === 'post' ? key : key[0] === 'public' ? key.slice(0, 2) : key.slice(0, 1);
   let page: T;
@@ -100,9 +98,14 @@ async function loadOfflinePage<T extends object>(
   } catch (error) {
     if (!isBackendUnavailable(error)) {
       if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
-        await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
-          if (key[0] === 'post' && error.status === 404) {
-            cleanOfflinePublications(store, token?.ownerId, new Set([key[1]]), true);
+        await accessOfflineCopy(token, 'readwrite', isCurrent, (store, _, current) => {
+          const missing = isPost && error.status === 404;
+          const revoked = new Set(missing ? [key[1]] : []);
+          if (isPost && staleOfflinePublications(store, current, order, [key[1]], revoked, 'body', missing).size) {
+            return;
+          }
+          if (missing) {
+            cleanOfflinePublications(store, current, revoked, true);
           } else {
             store.delete(IDBKeyRange.bound(group, [...group, []]));
           }
@@ -110,7 +113,7 @@ async function loadOfflinePage<T extends object>(
       }
       throw error;
     }
-    const saved = await accessOfflineCopy<SavedPage<T>>(token, canRead || cleanCached ? 'readwrite' : 'readonly', isCurrent, (store, result) => {
+    const saved = await accessOfflineCopy<SavedPage<T>>(token, canRead || postList ? 'readwrite' : 'readonly', isCurrent, (store, result) => {
       const request = store.get(key);
       request.onsuccess = () => {
         const entry = request.result as SavedPage<T> | undefined;
@@ -119,7 +122,7 @@ async function loadOfflinePage<T extends object>(
           return;
         }
         if (entry) {
-          if (cleanCached?.(entry.page)) {
+          if (postList && clearUnavailablePreviews(postList(entry.page).items)) {
             store.put(entry, key);
           }
           result(entry);
@@ -133,20 +136,36 @@ async function loadOfflinePage<T extends object>(
   }
   const value = copy(page);
   const saved = value && { key, savedAt: Date.now(), page: value };
-  await accessOfflineCopy(token, 'readwrite', isCurrent, (store) => {
-    store.delete(key);
+  const accepted = await accessOfflineCopy<boolean>(token, 'readwrite', isCurrent, (store, result, current) => {
+    const list = postList?.(page);
+    const revoked = list ? revokedPreviewIds(list.items) : new Set(isPost && !value ? [key[1]] : []);
+    const ids = list ? list.items.map(({ id }) => id) : isPost ? [key[1]] : [];
+    const stale = ids.length ? staleOfflinePublications(store, current, order, ids, revoked, isPost ? 'body' : 'preview') : new Set<string>();
+    if (isPost && stale.size) {
+      result(false);
+      return;
+    }
+    list?.items.splice(0, list.items.length, ...list.items.filter(({ id }) => !stale.has(id)));
     if (key[0] === 'donations' && key[3] === '') {
       store.delete(IDBKeyRange.bound(group, [...group, []]));
     }
-    if (saved && new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
-      store.put(saved, key);
-    }
-    if (revokedIds) {
-      cleanOfflinePublications(store, token?.ownerId, new Set(revokedIds(page)));
-    }
     const request = store.getAll(IDBKeyRange.bound([key[0]], [key[0], []]));
     request.onsuccess = () => {
-      const pages = (request.result as SavedPage<T>[]).sort((a, b) => b.savedAt - a.savedAt);
+      const pages = request.result as SavedPage<T>[];
+      const index = pages.findIndex((entry) => indexedDB.cmp(entry.key, key) === 0);
+      const previous = index < 0 ? undefined : pages.splice(index, 1)[0];
+      if (saved && postList && stale.size) {
+        const cached = postList(saved.page);
+        const old = previous && postList(previous.page);
+        cached.items = cached.items.flatMap((item) => stale.has(item.id) ? old?.items.find(({ id }) => id === item.id) ?? [] : item);
+      }
+      store.delete(key);
+      if (saved && new Blob([JSON.stringify(saved)]).size <= MAX_PAGE_SIZE) {
+        store.put(saved, key);
+        pages.push(saved);
+      }
+      cleanOfflinePublications(store, current, revoked);
+      pages.sort((a, b) => b.savedAt - a.savedAt);
       if (key[0] === 'donations') {
         const current = pages.filter((entry) => entry.key[1] === key[1] && entry.key[2] === key[2]);
         const byCursor = new Map(current.map((entry) => [entry.key[3], entry]));
@@ -177,5 +196,8 @@ async function loadOfflinePage<T extends object>(
       });
     };
   });
+  if (accepted === false) {
+    throw new ApiError(0, 'offline_copy_missing');
+  }
   return page;
 }

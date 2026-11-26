@@ -13,16 +13,17 @@ export function getOfflineDeadline(value: unknown, now = Date.now()): number | u
 }
 
 type CachedPreview = Pick<PostPreview, 'locked' | 'body_preview' | 'offline_cache_until'>;
+const EMPTY_PREVIEW = { body_preview: '', offline_cache_until: null };
 
 /** Возвращает превью и срок из одной версии карточки. */
 export function copyOfflinePreview(item: CachedPreview, now = Date.now()) {
   return !item.locked && getOfflineDeadline(item.offline_cache_until, now) !== undefined
     ? { body_preview: item.body_preview, offline_cache_until: item.offline_cache_until }
-    : { body_preview: '', offline_cache_until: null };
+    : EMPTY_PREVIEW;
 }
 
-export function revokedPreviewIds(items: (CachedPreview & { id: string })[]): string[] {
-  return items.filter((item) => copyOfflinePreview(item).offline_cache_until === null).map(({ id }) => id);
+export function revokedPreviewIds(items: (CachedPreview & { id: string })[]): Set<string> {
+  return new Set(items.filter((item) => copyOfflinePreview(item).offline_cache_until === null).map(({ id }) => id));
 }
 
 /** Удаляет из копии текст без разрешения и сообщает, нужно ли обновить запись. */
@@ -30,10 +31,7 @@ export function clearUnavailablePreviews(items: (CachedPreview & { id: string })
   const now = Date.now();
   let changed = false;
   for (const item of items) {
-    if (revoked && !revoked.has(item.id)) {
-      continue;
-    }
-    const preview = revoked ? { body_preview: '', offline_cache_until: null } : copyOfflinePreview(item, now);
+    const preview = revoked ? (revoked.has(item.id) ? EMPTY_PREVIEW : item) : copyOfflinePreview(item, now);
     if (item.body_preview !== preview.body_preview || item.offline_cache_until !== preview.offline_cache_until) {
       Object.assign(item, preview);
       changed = true;

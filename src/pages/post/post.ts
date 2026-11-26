@@ -271,7 +271,6 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   const load = async () => {
     const id = ++request;
     offlinePost = undefined;
-    expiry.refresh();
     busy = true;
     setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
