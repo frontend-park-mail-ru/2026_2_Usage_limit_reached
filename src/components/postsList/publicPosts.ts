@@ -97,6 +97,10 @@ export function bindPublicPosts(
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
+    const moreRetry = panel.querySelector<HTMLButtonElement>('[data-feed-retry]');
+    if (moreRetry) {
+      moreRetry.hidden = true;
+    }
     const stopLoading = moreText ? setLoadingText(moreText, LIST_LOADING_MESSAGE) : startLoading(panel);
     try {
       const page = await loadPage({ sort, cursor: next }, () => active && id === request);
@@ -132,8 +136,12 @@ export function bindPublicPosts(
           moreText.textContent = '';
         }
       } else {
+        const isEmpty = cards.length === 0 && cursor === null;
+        const filteredEmpty = isEmpty && onlineOnly();
         panel.innerHTML = postsListTemplate({
-          publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && cursor === null, hasMore: cursor !== null,
+          publicProfile: !feed, feed, cards, isEmpty, hasMore: cursor !== null,
+          feedStatus: filteredEmpty ? 'Посты не найдены' : undefined,
+          feedStatusDetail: filteredEmpty ? 'Попробуйте изменить запрос, тему или фильтры' : undefined,
         });
       }
       if (!offline && bindLike && cards.length > 0) {
@@ -158,20 +166,30 @@ export function bindPublicPosts(
       if (!active || id !== request) {
         return;
       }
-      unavailable = isBackendUnavailable(error);
+      unavailable = isBackendUnavailable(error) && (!onlineOnly() || !navigator.onLine);
       offline ||= !onlineOnly() && offlineEnabled && unavailable;
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
         expiry.refresh();
       }
-      const message = onlineOnly() && !navigator.onLine ? 'Результаты недоступны без интернета'
-        : append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
+      const filteredOffline = onlineOnly() && !navigator.onLine;
+      const message = append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
       if (moreText) {
         moreText.textContent = message;
       } else {
-        panel.innerHTML = postsListTemplate({ message, isError: true });
+        panel.innerHTML = postsListTemplate(feed ? {
+          feedStatus: filteredOffline ? 'Результаты недоступны без интернета' : 'Не удалось загрузить посты',
+          feedStatusDetail: onlineOnly() && !filteredOffline ? 'Запрос и фильтры сохранены' : undefined,
+          isError: true,
+        } : { message, isError: true });
       }
-      retryAction = () => { void load(append && !offline); };
+      const retry = () => { void load(append && (feed || !offline)); };
+      const button = panel.querySelector<HTMLButtonElement>('[data-feed-retry]');
+      if (button) {
+        button.hidden = false;
+        button.onclick = retry;
+      }
+      retryAction = button ? undefined : retry;
     } finally {
       stopLoading();
       if (id === request) {

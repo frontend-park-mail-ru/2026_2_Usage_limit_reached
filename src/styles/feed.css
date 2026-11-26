@@ -102,6 +102,44 @@
   color: var(--color-white);
 }
 
+.feed__state {
+  display: grid;
+  gap: 12px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--color-white);
+  line-height: 19px;
+}
+
+.feed__state_error {
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgb(179 38 30 / 25%);
+  border-radius: 12px;
+  background: rgb(179 38 30 / 6%);
+}
+
+.feed__state p {
+  margin: 0;
+}
+
+.feed__state p:first-child {
+  font-weight: 500;
+}
+
+.feed__retry {
+  width: 120px;
+  max-width: 100%;
+}
+
+.feed__state + .feed__retry {
+  margin-top: 24px;
+}
+
+.feed__retry[hidden] {
+  display: none;
+}
+
 @media (max-width: 1280px) {
   .feed {
     padding: 40px;
