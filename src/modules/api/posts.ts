@@ -1,16 +1,16 @@
 import { request } from './request.ts';
-import type { CreatedPost, Post, PostInput, PostLikes, PostsPage, PostsQuery, PostUpdate } from './posts.types.ts';
+import type { CreatedPost, FeedQuery, Post, PostInput, PostLikes, PostsPage, PostsQuery, PostUpdate } from './posts.types.ts';
 
 /**
  * Собирает параметры списка постов.
  * @param query
  */
-const buildPostsQuery = ({ sort, cursor }: PostsQuery): string => {
+const buildPostsQuery = ({ sort, cursor }: PostsQuery): URLSearchParams => {
   const params = new URLSearchParams({ sort });
   if (cursor) {
     params.set('cursor', cursor);
   }
-  return params.toString();
+  return params;
 };
 
 /**
@@ -28,10 +28,26 @@ export const getMyPosts = (query: PostsQuery) => request<PostsPage>(`/profile/me
 
 /**
  * Получает страницу общей ленты опубликованных постов.
- * @param query Сортировка и курсор следующей страницы.
+ * @param query Сортировка, курсор, поиск и фильтры.
  * @throws {ApiError}
  */
-export const getFeed = (query: PostsQuery) => request<PostsPage>(`/feed?${buildPostsQuery(query)}`);
+export function getFeed(query: FeedQuery) {
+  const params = buildPostsQuery(query);
+  const q = query.q?.trim();
+  if (q) {
+    params.set('q', q);
+  }
+  if (query.tag) {
+    params.set('tag', query.tag);
+  }
+  if (query.attachment_type) {
+    params.set('attachment_type', query.attachment_type);
+  }
+  if (query.accessible_only) {
+    params.set('accessible_only', 'true');
+  }
+  return request<PostsPage>(`/feed?${params}`);
+}
 
 /** Получает опубликованные посты пользователя для публичного профиля. */
 export const getPublicPosts = (username: string, query: PostsQuery) =>
