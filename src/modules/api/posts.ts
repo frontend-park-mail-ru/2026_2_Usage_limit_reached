@@ -7,7 +7,7 @@ import type { CreatedPost, FeedQuery, Post, PostInput, PostLikes, PostsPage, Pos
  */
 const buildPostsQuery = ({ sort, cursor }: PostsQuery): URLSearchParams => {
   const params = new URLSearchParams({ sort });
-  if (cursor) {
+  if (cursor !== null && cursor !== undefined) {
     params.set('cursor', cursor);
   }
   return params;

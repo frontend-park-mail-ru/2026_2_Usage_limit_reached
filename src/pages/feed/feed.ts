@@ -19,9 +19,9 @@ export function renderFeed(): string {
  */
 export function initFeed(root: HTMLElement, navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
-  const disposePosts = bindLikedPosts(root, getFeed, navigate, true, undefined, false, setRefreshNotice);
+  const posts = bindLikedPosts(root, getFeed, navigate, true, undefined, false, setRefreshNotice);
   return () => {
     unbindAvatarFallback();
-    disposePosts();
+    posts.destroy();
   };
 }

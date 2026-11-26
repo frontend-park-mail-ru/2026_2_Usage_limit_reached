@@ -78,7 +78,7 @@ export function bindPublicPosts(
   }, { rootMargin: '200px' });
 
   async function load(append = false): Promise<void> {
-    if (!active || (append && (busy || !cursor))) {
+    if (!active || (append && (busy || cursor === null))) {
       return;
     }
     const id = ++request;
@@ -131,7 +131,7 @@ export function bindPublicPosts(
         }
       } else {
         panel.innerHTML = postsListTemplate({
-          publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && !cursor, hasMore: !!cursor,
+          publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && cursor === null, hasMore: cursor !== null,
         });
       }
       if (!offline && bindLike && cards.length > 0) {
@@ -147,8 +147,8 @@ export function bindPublicPosts(
       const more = panel.querySelector<HTMLElement>('[data-posts-more]');
       retryAction = offline ? () => { void load(); } : undefined;
       if (more) {
-        more.hidden = !cursor;
-        if (cursor) {
+        more.hidden = cursor === null;
+        if (cursor !== null) {
           observer.observe(more);
         }
       }
