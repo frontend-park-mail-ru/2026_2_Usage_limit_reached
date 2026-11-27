@@ -6,7 +6,32 @@
       <input type="search" name="q" aria-label="Поиск по постам" placeholder="Поиск по постам">
       <button type="reset" aria-label="Очистить поиск" hidden>×</button>
     </form>
-    <div class="feed__sort" data-public-sort></div>
+    <div class="feed__tools">
+      <button class="feed__filters-button" type="button" popovertarget="feed-filters">
+        <img src="/assets/feed/filters.svg" width="20" height="20" alt="">Фильтры
+      </button>
+      <div class="feed__sort" data-public-sort></div>
+      <form class="feed__filters" id="feed-filters" popover aria-label="Фильтры">
+        <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">
+          <span id="feed-attachments">Вложения</span>
+          <small id="feed-attachments-hint">Обложки постов не учитываются</small>
+          {{#each attachments}}
+            <label>
+              <input type="radio" name="attachment_type" value="{{value}}"{{#if selected}} checked{{/if}}>
+              {{label}}<span aria-hidden="true">✓</span>
+            </label>
+          {{/each}}
+        </div>
+        <label class="feed__access-filter">
+          Доступно мне
+          <input type="checkbox" name="accessible_only" role="switch">
+        </label>
+        <div class="feed__filter-actions">
+          <button class="button button_borderless" type="reset">Сбросить</button>
+          <button class="button button_view_primary" type="submit">Применить</button>
+        </div>
+      </form>
+    </div>
   </div>
   <div class="feed__topics" role="group" aria-label="Темы постов">
     <button class="button button_borderless" type="button" data-topic="" aria-pressed="true">Все темы</button>

@@ -1,6 +1,6 @@
 <article class="post-card" aria-labelledby="post-card-title-{{id}}" data-post-id="{{id}}">
   {{#if href}}
-    <a class="post-card__link" href="{{href}}"{{#if feedAuthor}} target="_blank" rel="noopener noreferrer"{{/if}} data-link aria-labelledby="post-card-title-{{id}}"{{#if locked}} aria-describedby="post-card-access-{{id}}"{{/if}}></a>
+    <a class="post-card__link" href="{{href}}"{{#unless isDraft}} target="_blank" rel="noopener noreferrer"{{/unless}} data-link aria-labelledby="post-card-title-{{id}}"{{#if locked}} aria-describedby="post-card-access-{{id}}"{{/if}}></a>
   {{/if}}
   {{#if feedAuthor}}
     <a class="post-card__author" href="{{feedAuthor.href}}" data-link>
