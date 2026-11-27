@@ -22,6 +22,7 @@
 
   <form class="post-editor__form" id="post-editor-form" novalidate>
     {{> alert className="post-editor__alert"}}
+    <button class="button button_view_secondary post-editor__refresh" type="button" data-refresh-post hidden>Обновить пост</button>
     <div class="post-editor__card" data-editor-content>
       {{> alert className="post-editor__attachments-alert" title="Вложения ещё не готовы"}}
       <textarea
@@ -57,6 +58,57 @@
       <p class="post-editor__status" data-editor-status role="status">{{statusText}}</p>
     </div>
     <div class="post-editor__settings" data-editor-settings>
+      <section class="post-access" aria-labelledby="post-access-heading">
+        <h2 class="post-cover__heading" id="post-access-heading">Доступ к посту</h2>
+        {{> select id="post-access-tier" name="post-access-tier" label="При публикации"}}
+        <p class="post-cover__hint" data-post-access-hint></p>
+        <p class="post-cover__status" data-post-access-status role="status"></p>
+        <button class="button button_view_secondary" type="button" data-post-access-retry hidden>Повторить</button>
+        <div class="post-access__schedule" data-access-schedule>
+          <p class="post-cover__hint" data-stage-zone hidden></p>
+          <p class="post-cover__status post-cover__status_error" data-schedule-error role="status"></p>
+          <div data-access-stages></div>
+          <button class="button button_view_secondary" type="button" data-stage-add>Добавить этап</button>
+          <template data-access-stage>
+            <details class="post-access__stage">
+              <summary>
+                <time class="post-cover__hint"></time>
+                <span></span>
+              </summary>
+              <div class="post-access__stage-fields">
+                <div class="post-access__stage-dates">
+                  <label>Дата<input class="form-field__input" type="date" required></label>
+                  <label>Время<input class="form-field__input" type="time" required></label>
+                </div>
+                <p class="post-cover__status post-cover__status_error" data-stage-date-error role="status"></p>
+                <label>Доступ с этого этапа<select class="form-field__input select__input"></select></label>
+                <div class="post-access__stage-actions">
+                  <button class="button button_view_secondary" type="button" data-stage-done>Готово</button>
+                  <button class="post-cover__remove" type="button" data-stage-delete>Удалить</button>
+                </div>
+              </div>
+            </details>
+          </template>
+        </div>
+        <section class="post-access__stage-fields publication-end" data-publication-end aria-labelledby="publication-end-heading">
+          <h3 class="post-cover__heading" id="publication-end-heading">Завершение публикации</h3>
+          <p class="post-cover__hint">В это время пост переместится в черновики</p>
+          <details>
+            <summary class="form-field__input select__input">Указать дату и время</summary>
+            <div class="publication-end__fields">
+              <div class="post-access__stage-dates">
+                <label>Дата<input class="form-field__input" type="date" aria-describedby="publication-end-error"></label>
+                <label>Время<input class="form-field__input" type="time" aria-describedby="publication-end-error"></label>
+              </div>
+              <p class="post-cover__status post-cover__status_error" id="publication-end-error" data-publication-end-error role="status"></p>
+              <div class="post-access__stage-actions">
+                <button class="button button_view_secondary" type="button" data-end-done>Готово</button>
+                <button class="post-cover__remove" type="button" data-end-clear>Убрать дату</button>
+              </div>
+            </div>
+          </details>
+        </section>
+      </section>
       <section class="post-cover" data-cover aria-labelledby="post-cover-heading">
         <h2 class="post-cover__heading" id="post-cover-heading">Обложка поста</h2>
         <img class="post-cover__preview" data-cover-preview alt="Обложка поста" hidden>

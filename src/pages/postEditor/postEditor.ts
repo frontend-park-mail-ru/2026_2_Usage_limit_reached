@@ -13,6 +13,8 @@ import { RichEditor } from '@/components/richEditor/richEditor.ts';
 import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { bindAttachments } from './postAttachments.ts';
 import { bindPostCover } from './postCover.ts';
+import { bindPostAccess } from './postAccess.ts';
+import { bindPublicationEnd } from './publicationEnd.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -227,13 +229,16 @@ function bindPublishSettings(
  * @param loaded
  * @param navigate
  * @param context
- * @param signal
+ * @param pageSignal
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, signal: AbortSignal): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, pageSignal: AbortSignal): void {
+  const binding = new AbortController();
+  const signal = AbortSignal.any([pageSignal, binding.signal]);
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLTextAreaElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
   const alert = requireElement<HTMLElement>(form, '[data-alert]');
+  const refreshPost = requireElement<HTMLButtonElement>(form, '[data-refresh-post]');
   const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const stepButtons = root.querySelectorAll<HTMLButtonElement>('[data-editor-settings-back] button, [data-editor-settings-next] button');
@@ -243,6 +248,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
+  const access = bindPostAccess(form, loaded, context, signal);
+  const publicationEnd = bindPublicationEnd(form, loaded?.publication_ends_at ?? null, signal);
   const showAttachmentErrors = (): boolean => {
     const unfinished = getUnfinished();
     setAlert(attachmentsAlert, unfinished.length
@@ -289,7 +296,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   });
 
   const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
-    || getUnfinished().length > 0 || cover.hasChanges();
+    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined
+    || access.hasScheduleChanges() || publicationEnd.hasChanges();
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -298,13 +306,31 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const setBusy = (busy: boolean) => {
     isSaving = busy;
     form.inert = busy;
-    for (const button of [...buttons, ...stepButtons]) {
-      button.disabled = busy || !isSessionCurrent(context);
+    const disabled = busy || !isSessionCurrent(context);
+    for (const button of stepButtons) {
+      button.disabled = disabled;
+    }
+    for (const button of buttons) {
+      button.disabled = disabled || !refreshPost.hidden;
     }
   };
 
   const submit = async (values: FormValues) => {
+    if (!refreshPost.hidden) {
+      alert.scrollIntoView({ block: 'nearest' });
+      return;
+    }
     if (isSaving || !isSessionCurrent(context)) {
+      return;
+    }
+    if (!publicationEnd.validate() || access.needsSelection() || access.finishStageBeforeSaving()) {
+      publishSettings.showSettings();
+      return;
+    }
+    const end = publicationEnd.getChange();
+    const effectiveEnd = end === undefined ? publicationEnd.getSavedEnd() : end;
+    if (access.needsScheduleFix(effectiveEnd)) {
+      publishSettings.showSettings();
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -315,7 +341,15 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
     setBusy(true);
     setAlert(alert, null);
     const coverId = cover.getCoverId();
-    const data = { title: values.title.trim(), body: values.body, status, ...(coverId === undefined ? {} : { cover_id: coverId }) };
+    const tierId = access.getChange();
+    const schedule = access.scheduleChange();
+    const data = {
+      title: values.title.trim(), body: values.body, status,
+      ...(coverId === undefined ? {} : { cover_id: coverId }),
+      ...(tierId === undefined ? {} : { min_tier_id: tierId }),
+      ...(schedule === undefined ? {} : { access_schedule: schedule }),
+      ...(end === undefined ? {} : { publication_ends_at: end }),
+    };
     try {
       const save = async () => {
         if (post) {
@@ -332,6 +366,8 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       }
       saved = snapshot;
       cover.markSaved();
+      access.markSaved();
+      publicationEnd.markSaved(end);
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();
@@ -353,6 +389,29 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (err.isUnauthorized) {
         return;
       }
+      if (err.status === 400 && err.code === 'invalid_publication_end') {
+        publishSettings.showSettings();
+        publicationEnd.showError('Проверьте дату и время завершения или уберите дату');
+        return;
+      }
+      if (err.status === 400 && err.code === 'invalid_access_schedule') {
+        publishSettings.showSettings();
+        access.rejectSchedule(false);
+        return;
+      }
+      if ((tierId || schedule) && ((err.status === 400 && err.code === 'invalid_min_tier')
+        || (err.status === 409 && err.code === 'post_tier_archived'))) {
+        publishSettings.showSettings();
+        if (schedule) {
+          access.rejectSchedule(true);
+        } else if (tierId) {
+          access.rejectTier(tierId);
+        }
+        return;
+      }
+      if (post && err.status === 409 && !err.isCsrfError && !err.isMutationTimeout && err.code !== 'post_tier_archived') {
+        refreshPost.hidden = false;
+      }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));
       alert.scrollIntoView({ block: 'nearest' });
     } finally {
@@ -361,6 +420,30 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       }
     }
   };
+
+  refreshPost.addEventListener('click', async () => {
+    if (!post || isSaving || !isSessionCurrent(context)) {
+      return;
+    }
+    const { id } = post;
+    setBusy(true);
+    try {
+      const fresh = await runSessionRequest(context, () => getPost(id));
+      if (!signal.aborted && fresh?.author.id === context.userId) {
+        binding.abort();
+        root.innerHTML = postEditorTemplate(buildViewModel(fresh));
+        bindEditor(root, fresh, navigate, context, pageSignal);
+      }
+    } catch {
+      if (!signal.aborted && isSessionCurrent(context)) {
+        setAlert(alert, 'Попробуйте ещё раз. После обновления несохранённые изменения будут потеряны', 'Не удалось обновить пост');
+      }
+    } finally {
+      if (!signal.aborted) {
+        setBusy(false);
+      }
+    }
+  }, { signal });
 
   for (const button of buttons) {
     button.addEventListener('click', () => {
