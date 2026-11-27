@@ -122,7 +122,7 @@ function getErrorText(err: ApiError): string {
   return texts[err.status] ?? NETWORK_ERROR;
 }
 
-function bindTitleInput(title: HTMLTextAreaElement, saveButton: HTMLButtonElement, signal: AbortSignal): void {
+function bindTitleInput(title: HTMLTextAreaElement, saveButton: HTMLButtonElement, signal: AbortSignal): () => void {
   title.style.boxSizing = 'border-box';
 
   const resize = () => {
@@ -158,6 +158,69 @@ function bindTitleInput(title: HTMLTextAreaElement, saveButton: HTMLButtonElemen
 
   window.addEventListener('resize', resize, { signal });
   update();
+  return resize;
+}
+
+function bindPublishSettings(
+  root: HTMLElement, saveButton: HTMLButtonElement, resizeTitle: () => void, signal: AbortSignal,
+) {
+  const page = requireElement<HTMLElement>(root, '.post-editor_form');
+  const heading = requireElement<HTMLHeadingElement>(page, '#post-editor-heading');
+  const editorHeading = heading.textContent;
+  const content = requireElement<HTMLElement>(page, '[data-editor-content]');
+  const settings = requireElement<HTMLElement>(page, '[data-editor-settings]');
+  const exit = requireElement<HTMLElement>(page, '[data-editor-exit]');
+  const back = requireElement<HTMLElement>(page, '[data-editor-settings-back]');
+  const next = requireElement<HTMLElement>(page, '[data-editor-settings-next]');
+  const publish = page.querySelector<HTMLButtonElement>('[data-intent="publish"]');
+  const mobile = window.matchMedia('(max-width: 1024px)');
+  let settingsOpen = false;
+
+  const setHidden = (element: HTMLElement, hidden: boolean) => {
+    element.hidden = hidden;
+    element.style.display = hidden ? 'none' : '';
+  };
+
+  const showStep = (showSettings: boolean, focus = true) => {
+    const open = mobile.matches && showSettings;
+    const changed = open !== settingsOpen;
+    settingsOpen = open;
+    page.dataset.editorStep = open ? 'settings' : 'content';
+    heading.textContent = open ? 'Настройки поста' : editorHeading;
+    setHidden(content, open);
+    setHidden(settings, mobile.matches && !open);
+    setHidden(exit, open);
+    setHidden(back, !open);
+    setHidden(next, !mobile.matches || open);
+    if (publish) {
+      setHidden(saveButton, open);
+      setHidden(publish, mobile.matches && !open);
+    }
+    if (!open) {
+      resizeTitle();
+    }
+    if (focus && changed) {
+      heading.focus();
+    }
+  };
+
+  back.addEventListener('click', () => showStep(false), { signal });
+  next.addEventListener('click', () => showStep(true), { signal });
+  mobile.addEventListener('change', () => showStep(false, false), { signal });
+  showStep(false, false);
+
+  const focusInvalid = () => {
+    const invalid = content.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (!settingsOpen || !invalid) {
+      return;
+    }
+    showStep(false);
+    const field = invalid instanceof HTMLInputElement && invalid.type === 'hidden'
+      ? content.querySelector<HTMLElement>('.rich-editor__content') : invalid;
+    field?.focus();
+  };
+
+  return { showEditor: () => showStep(false), showSettings: () => showStep(true), focusInvalid };
 }
 
 /**
@@ -178,8 +241,10 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const refreshPost = requireElement<HTMLButtonElement>(form, '[data-refresh-post]');
   const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
+  const stepButtons = root.querySelectorAll<HTMLButtonElement>('[data-editor-settings-back] button, [data-editor-settings-next] button');
   const saveButton = requireElement<HTMLButtonElement>(root, '[data-intent="save"]');
-  bindTitleInput(titleInput, saveButton, signal);
+  const resizeTitle = bindTitleInput(titleInput, saveButton, signal);
+  const publishSettings = bindPublishSettings(root, saveButton, resizeTitle, signal);
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
@@ -207,8 +272,10 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       event.preventDefault();
       event.stopImmediatePropagation();
       if (hasAttachmentErrors) {
+        publishSettings.showEditor();
         attachmentsAlert.scrollIntoView({ block: 'nearest' });
       } else {
+        publishSettings.showSettings();
         cover.reveal();
       }
     }
@@ -239,8 +306,12 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const setBusy = (busy: boolean) => {
     isSaving = busy;
     form.inert = busy;
+    const disabled = busy || !isSessionCurrent(context);
+    for (const button of stepButtons) {
+      button.disabled = disabled;
+    }
     for (const button of buttons) {
-      button.disabled = busy || !refreshPost.hidden || !isSessionCurrent(context);
+      button.disabled = disabled || !refreshPost.hidden;
     }
   };
 
@@ -249,13 +320,17 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       alert.scrollIntoView({ block: 'nearest' });
       return;
     }
-    if (isSaving || !isSessionCurrent(context) || !publicationEnd.validate()
-      || access.needsSelection() || access.finishStageBeforeSaving()) {
+    if (isSaving || !isSessionCurrent(context)) {
+      return;
+    }
+    if (!publicationEnd.validate() || access.needsSelection() || access.finishStageBeforeSaving()) {
+      publishSettings.showSettings();
       return;
     }
     const end = publicationEnd.getChange();
     const effectiveEnd = end === undefined ? publicationEnd.getSavedEnd() : end;
     if (access.needsScheduleFix(effectiveEnd)) {
+      publishSettings.showSettings();
       return;
     }
     const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
@@ -315,15 +390,18 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
         return;
       }
       if (err.status === 400 && err.code === 'invalid_publication_end') {
+        publishSettings.showSettings();
         publicationEnd.showError('Проверьте дату и время завершения или уберите дату');
         return;
       }
       if (err.status === 400 && err.code === 'invalid_access_schedule') {
+        publishSettings.showSettings();
         access.rejectSchedule(false);
         return;
       }
       if ((tierId || schedule) && ((err.status === 400 && err.code === 'invalid_min_tier')
         || (err.status === 409 && err.code === 'post_tier_archived'))) {
+        publishSettings.showSettings();
         if (schedule) {
           access.rejectSchedule(true);
         } else if (tierId) {
@@ -376,6 +454,7 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   bindValidation(form, postSchema, (values) => {
     void submit(values);
   });
+  form.addEventListener('submit', publishSettings.focusInvalid, { signal });
 
   requireElement(root, '[data-leave="save"]').addEventListener('click', () => {
     const go = leave;
