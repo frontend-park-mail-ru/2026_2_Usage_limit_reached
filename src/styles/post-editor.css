@@ -300,6 +300,10 @@
   text-overflow: ellipsis;
 }
 
+.post-access__option-detail {
+  display: none;
+}
+
 .post-cover__heading {
   margin: 0;
   font-size: 16px;
@@ -608,6 +612,68 @@ audio.post-editor__attachment-preview {
     display: flex;
   }
 
+  .post-access__heading {
+    display: none;
+  }
+
+  .post-access .form-field__label {
+    font-weight: 500;
+  }
+
+  .post-access .select__list {
+    position: static;
+    max-height: min(320px, 50dvh);
+    margin-top: 12px;
+    padding: 8px;
+    box-shadow: none;
+  }
+
+  .post-access .select__option {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 76px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+  }
+
+  .post-access__option-name {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .post-access__option-detail {
+    display: block;
+    color: rgba(61, 64, 91, 0.8);
+    font-weight: 400;
+  }
+
+  .post-access .select__option[aria-selected='true'] {
+    background-color: var(--color-toggle-hover-background);
+  }
+
+  .post-access .select__option[aria-selected='true']::before {
+    display: none;
+  }
+
+  .post-access .button {
+    min-height: 44px;
+    height: auto;
+    padding: 8px 12px;
+    line-height: 1.25;
+  }
+
+  .post-access__stage summary,
+  .post-access__stage-actions .post-cover__remove {
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .post-access__stage-fields .form-field__input {
+    font-size: 16px;
+  }
+
   .post-editor_form[data-editor-step='settings'] .post-cover {
     gap: 12px;
     padding: 16px;
@@ -645,6 +711,12 @@ audio.post-editor__attachment-preview {
 
   .post-editor__button:first-child {
     flex: 1;
+  }
+}
+
+@media (max-width: 400px) {
+  .post-access__stage-dates {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
