@@ -59,12 +59,12 @@
     </div>
     <div class="post-editor__settings" data-editor-settings>
       <section class="post-access" aria-labelledby="post-access-heading">
-        <h2 class="post-cover__heading" id="post-access-heading">Доступ к посту</h2>
-        {{> select id="post-access-tier" name="post-access-tier" label="При публикации"}}
+        <h2 class="post-cover__heading post-access__heading" id="post-access-heading">Доступ к посту</h2>
+        {{> select id="post-access-tier" name="post-access-tier" label="Минимальный уровень"}}
         <p class="post-cover__hint" data-post-access-hint></p>
         <p class="post-cover__status" data-post-access-status role="status"></p>
         <button class="button button_view_secondary" type="button" data-post-access-retry hidden>Повторить</button>
-        <div class="post-access__schedule" data-access-schedule>
+        <div class="post-access__schedule" data-access-schedule role="group" aria-label="Этапы доступа">
           <p class="post-cover__hint" data-stage-zone hidden></p>
           <p class="post-cover__status post-cover__status_error" data-schedule-error role="status"></p>
           <div data-access-stages></div>

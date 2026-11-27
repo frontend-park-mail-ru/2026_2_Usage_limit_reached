@@ -5,6 +5,7 @@ import type { Post, PostAccessStage } from '@/modules/api/posts.types.ts';
 import { isSessionCurrent, runSessionRequest } from '@/modules/auth/auth.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
 import { toLocalMinute } from './postDate.ts';
 
 /** Подключает выбор минимального уровня подписки. */
@@ -258,16 +259,22 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
   function renderOptions(): void {
     select?.destroy();
     list.replaceChildren();
-    const options: { id: string | null; label: string }[] = [{ id: null, label: publicLabel }];
+    const options: { id: string | null; label: string; detail?: string }[] = [
+      { id: null, label: publicLabel, detail: 'Без подписки' },
+    ];
     for (const tier of tiers) {
       if (tier.id === savedTierId || (tier.status === 'open' && tier.id !== rejectedTierId)) {
-        options.push({ id: tier.id, label: tierLabel(tier) });
+        options.push({
+          id: tier.id,
+          label: tierLabel(tier),
+          detail: `${formatMoney(tier.price_minor, tier.currency)} в месяц`,
+        });
       }
     }
     if (savedTierId && !options.some(({ id }) => id === savedTierId)) {
       options.push({ id: savedTierId, label: savedLabel });
     }
-    options.forEach(({ id, label }, index) => {
+    options.forEach(({ id, label, detail }, index) => {
       const option = document.createElement('li');
       option.id = `${input.id}-option-${index}`;
       option.className = 'select__option';
@@ -275,7 +282,16 @@ export function bindPostAccess(form: HTMLFormElement, post: Post | null, context
       option.setAttribute('aria-selected', String(id === selectedTierId));
       option.dataset.value = label;
       option.dataset.tierId = id ?? '';
-      option.textContent = label;
+      const name = document.createElement('span');
+      name.className = 'post-access__option-name';
+      name.textContent = label;
+      option.append(name);
+      if (detail) {
+        const subtitle = document.createElement('span');
+        subtitle.className = 'post-access__option-detail';
+        subtitle.textContent = detail;
+        option.append(' ', subtitle);
+      }
       list.append(option);
       if (id === selectedTierId) {
         input.value = label;
