@@ -57,6 +57,7 @@ function updateSidebarMenu(): void {
  * @param navigate
  */
 export function initSidebar(navigate: Navigate): void {
+  const sidebar = requireElement<HTMLElement>(document, '.sidebar');
   hintController = new AbortController();
   const { signal } = hintController;
   const hideHints = () => document.querySelectorAll<HTMLElement>('.sidebar__hint').forEach((hint) => {
@@ -67,15 +68,31 @@ export function initSidebar(navigate: Navigate): void {
     const showHint = () => {
       hideHints();
       const rect = item.getBoundingClientRect();
-      hint.style.left = `${requireElement<HTMLElement>(document, '.sidebar').getBoundingClientRect().right + 8}px`;
       hint.hidden = false;
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const sidebarStyle = getComputedStyle(sidebar);
+      if (sidebarStyle.getPropertyValue('--mobile-nav-height')) {
+        const minLeft = sidebarRect.left + Number.parseFloat(sidebarStyle.paddingLeft) + 8;
+        const maxLeft = sidebarRect.right - Number.parseFloat(sidebarStyle.paddingRight) - hint.offsetWidth - 8;
+        const centeredLeft = rect.left + (rect.width - hint.offsetWidth) / 2;
+        hint.style.left = `${Math.max(minLeft, Math.min(centeredLeft, maxLeft))}px`;
+        hint.style.top = `${Math.max(8, sidebarRect.top - hint.offsetHeight - 8)}px`;
+        return;
+      }
+      hint.style.left = `${sidebarRect.right + 8}px`;
       hint.style.top = `${Math.max(8, Math.min(rect.top + (rect.height - hint.offsetHeight) / 2, window.innerHeight - hint.offsetHeight - 8))}px`;
     };
     item.addEventListener('mouseenter', showHint, { signal });
     item.addEventListener('focusin', showHint, { signal });
+    item.addEventListener('click', showHint, { signal });
     item.addEventListener('mouseleave', hideHints, { signal });
     item.addEventListener('focusout', hideHints, { signal });
   });
+  document.addEventListener('pointerdown', (event) => {
+    if (event.target instanceof Element && !event.target.closest('.sidebar__unavailable')) {
+      hideHints();
+    }
+  }, { signal });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       hideHints();

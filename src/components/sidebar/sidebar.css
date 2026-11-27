@@ -196,3 +196,68 @@
 .sidebar__icon-subscribes {
   --sidebar-icon: url('/assets/sidebar/subscribes.svg');
 }
+
+@media (max-width: 720px) {
+  .app-layout-wrapper_mobile-nav .sidebar {
+    flex-direction: row;
+    gap: 0;
+    height: var(--mobile-nav-height);
+    padding: 0 max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px, env(safe-area-inset-left));
+    border-right: 0;
+    border-top: 1px solid var(--color-sidebar-border);
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__top,
+  .app-layout-wrapper_mobile-nav .sidebar__items,
+  .app-layout-wrapper_mobile-nav .sidebar__bottom {
+    display: contents;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__logo-link,
+  .app-layout-wrapper_mobile-nav .sidebar__avatar {
+    display: none;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__profile-icon {
+    display: block;
+    width: 24px;
+    height: 24px;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__icon-feed {
+    width: 24px;
+    height: 24px;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__item {
+    flex-direction: column;
+    width: auto;
+    min-width: 44px;
+    height: 56px;
+    gap: 6px;
+    font: inherit;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__label {
+    display: block;
+    font-size: 12px;
+    line-height: 14px;
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__item[aria-current='page'] {
+    background: transparent;
+    color: var(--color-text);
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__item[aria-current='page'] .sidebar__label {
+    color: var(--color-primary);
+  }
+
+  .app-layout-wrapper_mobile-nav .sidebar__profile-menu {
+    left: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(var(--mobile-nav-height) + 8px);
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - var(--mobile-nav-height) - 16px);
+  }
+}

@@ -204,15 +204,6 @@
 }
 
 @media (max-width: 720px) {
-  .app-layout-wrapper:has(.author-search) {
-    --content-offset: 0px;
-    display: block;
-  }
-
-  .app-layout-wrapper:has(.author-search) .app-layout__sidebar {
-    display: none;
-  }
-
   .author-search {
     padding: 24px 16px;
   }
