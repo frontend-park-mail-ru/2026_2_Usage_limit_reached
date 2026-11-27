@@ -22,7 +22,13 @@
         </div>
       </div>
       {{#if isAuthor}}
-        <button class="button button_view_primary button_borderless profile__button" type="button" data-donate hidden>Пожертвовать</button>
+        <div class="profile__public-actions">
+          {{#if subscribeHref}}
+            <a class="button button_view_primary profile__button" data-subscribe data-link
+              {{#if offline}}role="link" aria-disabled="true"{{else}}href="{{subscribeHref}}"{{/if}}>Подписаться</a>
+          {{/if}}
+          <button class="button {{#if subscribeHref}}button_view_secondary{{else}}button_view_primary button_borderless{{/if}} profile__button" type="button" data-donate hidden>Пожертвовать</button>
+        </div>
       {{/if}}
     </div>
     {{#if isAuthor}}

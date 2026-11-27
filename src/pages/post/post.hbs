@@ -32,9 +32,15 @@
       {{/if}}
     </header>
     <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
-    {{#if lockedCoverUrl}}
-    <img class="post-page__cover" src="{{lockedCoverUrl}}" alt="">
-    <p class="post-page__unavailable-text post-page__access-note">У вас нет доступа к этой публикации</p>
+    {{#if locked}}
+    {{#if lockedCoverUrl}}<img class="post-page__cover" src="{{lockedCoverUrl}}" alt="">{{/if}}
+    <div class="post-page__access-note">
+      <p class="post-page__unavailable-text">{{accessNote.message}}</p>
+      {{#if accessNote.detail}}<p class="post-page__unavailable-text">{{accessNote.detail}}</p>{{/if}}
+      {{#if accessAction}}
+        <a class="button button_view_primary post-page__access-action" href="{{accessHref}}" data-link>{{accessAction}}</a>
+      {{/if}}
+    </div>
     {{else}}
     <div class="rich-text post-page__body" data-post-body></div>
     <footer class="post-page__footer">
@@ -51,7 +57,7 @@
     {{/if}}
   </article>
 
-  {{#unless lockedCoverUrl}}
+  {{#unless locked}}
   {{#if isOwner}}
     {{> confirmDialog id="post-page-delete" title="Удалить?" text="Пост исчезнет из профиля. Восстановить его не получится"
         errorTitle="Не удалось удалить пост" cancelLabel="Отмена" confirmLabel="Удалить"

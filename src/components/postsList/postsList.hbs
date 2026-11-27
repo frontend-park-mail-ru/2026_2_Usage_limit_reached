@@ -1,4 +1,10 @@
-{{#if message}}
+{{#if feedStatus}}
+  <div class="feed__state{{#if isError}} feed__state_error{{/if}}" role="status">
+    <p>{{feedStatus}}</p>
+    {{#if feedStatusDetail}}<p>{{feedStatusDetail}}</p>{{/if}}
+  </div>
+  {{#if isError}}<button class="button button_view_secondary feed__retry" type="button" data-feed-retry>Повторить</button>{{/if}}
+{{else if message}}
   <p class="{{#if isError}}posts-list__error{{else}}posts-list__loading{{/if}}" role="status"{{#unless isError}} data-loading-delay="{{message}}"{{/unless}}>{{message}}</p>
 {{else if isEmpty}}
   {{#if feed}}
@@ -31,5 +37,6 @@
   </div>
   <div class="posts-list__more" data-posts-more{{#unless hasMore}} hidden{{/unless}}>
     <p class="posts-list__more-text" role="status" data-posts-more-text></p>
+    {{#if feed}}<button class="button button_view_secondary feed__retry" type="button" data-feed-retry hidden>Повторить</button>{{/if}}
   </div>
 {{/if}}
