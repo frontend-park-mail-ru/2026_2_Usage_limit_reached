@@ -59,6 +59,10 @@ const PRIVATE_ROUTES: readonly RoutePattern[] = [
   ROUTES.settingsTierNew, ROUTES.settingsTierEdit,
 ];
 
+const MOBILE_PLAIN_ROUTES: readonly RoutePattern[] = [
+  ROUTES.postNew, ROUTES.postEdit, ROUTES.settingsTiers, ROUTES.settingsTierNew, ROUTES.settingsTierEdit,
+];
+
 let currentLayout: Layout | undefined;
 let disposePage: (() => void) | undefined;
 let setRefreshNotice: SetRefreshNotice | undefined;
@@ -105,18 +109,29 @@ function redirectByAuth(): boolean {
 }
 
 /**
- * Обновляет сайдбар при смене layout.
+ * Обновляет раскладку и сайдбар.
  * @param layout
+ * @param pattern
  * @param destroyBeforeUpdate
  * @param initBeforeUpdate
  */
-function updateLayout(layout: Layout, destroyBeforeUpdate: () => void, initBeforeUpdate: () => void): void {
+function updateLayout(
+  layout: Layout,
+  pattern: RoutePattern | undefined,
+  destroyBeforeUpdate: () => void,
+  initBeforeUpdate: () => void,
+): void {
+  const layoutRoot = requireElement(document, '#layout');
+  const hasSidebar = layout === 'sidebar';
+  const mobilePlain = hasSidebar && pattern !== undefined && MOBILE_PLAIN_ROUTES.includes(pattern);
+  layoutRoot.classList.toggle('app-layout-wrapper_mobile-nav', hasSidebar && !mobilePlain);
+  layoutRoot.classList.toggle('app-layout-wrapper_mobile-plain', mobilePlain);
+
   if (currentLayout === layout) {
     return;
   }
   destroyBeforeUpdate();
   const sidebar = requireElement<HTMLElement>(document, '#sidebar');
-  const hasSidebar = layout === 'sidebar';
   if (hasSidebar) {
     sidebar.innerHTML = renderSidebar();
     initBeforeUpdate();
@@ -124,7 +139,7 @@ function updateLayout(layout: Layout, destroyBeforeUpdate: () => void, initBefor
     sidebar.innerHTML = '';
   }
   sidebar.hidden = !hasSidebar;
-  requireElement(document, '#layout').classList.toggle('app-layout-wrapper', hasSidebar);
+  layoutRoot.classList.toggle('app-layout-wrapper', hasSidebar);
   currentLayout = layout;
 }
 
@@ -146,7 +161,7 @@ function renderCurrentRoute(): void {
   const version = ++pageVersion;
   setRefreshNotice?.(null);
   closeSidebarProfileMenu();
-  updateLayout(route.layout || 'plain', destroySidebar, () => initSidebar(navigate));
+  updateLayout(route.layout || 'plain', match?.pattern, destroySidebar, () => initSidebar(navigate));
   updateSidebarCurrentPage(path);
   document.title = route.title;
   root.innerHTML = route.render();

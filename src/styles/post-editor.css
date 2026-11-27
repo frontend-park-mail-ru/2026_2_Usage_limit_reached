@@ -1,6 +1,13 @@
 .post-editor {
-  padding: 0 64px 64px;
+  --post-editor-gutter: 64px;
+
+  padding: 0 var(--post-editor-gutter) 64px;
   box-sizing: border-box;
+}
+
+.post-editor_form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(auto, 1fr);
 }
 
 .post-editor__loading,
@@ -16,12 +23,13 @@
 
 .post-editor__bar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-area: 1 / 1 / 2 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
   gap: 16px;
   min-height: 80px;
-  margin: 0 -64px 40px;
-  padding: 0 32px 0 64px;
+  margin: 0 calc(-1 * var(--post-editor-gutter));
+  padding: 0 32px 0 var(--post-editor-gutter);
   border-bottom: 1px solid var(--color-input-border);
   background: var(--color-white);
   box-sizing: border-box;
@@ -38,6 +46,20 @@
   text-decoration: underline;
 }
 
+.post-editor__back-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.post-editor__back-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .post-editor__back-page {
   display: inline-block;
   margin: 32px 0 40px;
@@ -52,8 +74,11 @@
 
 .post-editor__actions {
   display: flex;
+  grid-area: 1 / 3;
+  align-self: center;
   justify-self: end;
   gap: 12px;
+  margin-right: -32px;
 }
 
 .post-editor__button {
@@ -78,16 +103,27 @@
 
 .post-editor__form {
   display: grid;
+  grid-area: 2 / 1 / 3 / -1;
   grid-template-columns: minmax(0, 1fr) 280px;
   align-items: start;
   gap: 24px;
+  width: 100%;
   max-width: 1232px;
-  margin: 0 auto;
+  margin: 40px auto 0;
+}
+
+.post-editor__alert {
+  grid-column: 1 / -1;
 }
 
 .post-editor__form .post-editor__card {
   max-width: none;
   margin: 0;
+}
+
+.post-editor__refresh {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 
 .post-editor__refresh[hidden] {
@@ -264,6 +300,10 @@
   text-overflow: ellipsis;
 }
 
+.post-access__option-detail {
+  display: none;
+}
+
 .post-cover__heading {
   margin: 0;
   font-size: 16px;
@@ -326,6 +366,9 @@
 
 .post-editor__title {
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  resize: none;
   padding: 16px 0 0;
   border: 0;
   outline: none;
@@ -430,6 +473,7 @@
 .post-editor__attachment-preview {
   grid-column: 1 / -1;
   width: 100%;
+  min-width: 0;
 }
 
 img.post-editor__attachment-preview,
@@ -508,28 +552,188 @@ audio.post-editor__attachment-preview {
   font-weight: 500;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .post-editor {
-    padding: 0 16px 32px;
+    --post-editor-gutter: 16px;
+
+    padding-bottom: 32px;
+  }
+
+  .post-editor_form {
+    display: flex;
+    min-height: calc(100dvh - env(safe-area-inset-top));
+    flex-direction: column;
+    padding-bottom: 0;
   }
 
   .post-editor__bar {
-    grid-template-columns: 1fr;
-    margin: 0 -16px 24px;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    gap: 8px;
+    min-height: 52px;
+    margin-bottom: 16px;
+    padding-inline: var(--post-editor-gutter);
   }
 
-  .post-editor__heading {
-    text-align: left;
-  }
-
-  .post-editor__actions {
-    flex-wrap: wrap;
-    justify-self: stretch;
+  .post-editor__back {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
   }
 
   .post-editor__form {
     grid-template-columns: minmax(0, 1fr);
     max-width: 816px;
+    margin-block: 0 16px;
+  }
+
+  .post-editor__actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    align-self: stretch;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: auto calc(-1 * var(--post-editor-gutter)) 0;
+    padding: 12px var(--post-editor-gutter) max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-input-border);
+    background: var(--color-white);
+  }
+
+  .post-editor__button {
+    min-width: 0;
+    min-height: 44px;
+    height: auto;
+    padding: 8px 12px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .post-editor__next:not([hidden]) {
+    display: flex;
+  }
+
+  .post-access__heading {
+    display: none;
+  }
+
+  .post-access .form-field__label {
+    font-weight: 500;
+  }
+
+  .post-access .select__list {
+    position: static;
+    max-height: min(320px, 50dvh);
+    margin-top: 12px;
+    padding: 8px;
+    box-shadow: none;
+  }
+
+  .post-access .select__option {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 76px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+  }
+
+  .post-access__option-name {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .post-access__option-detail {
+    display: block;
+    color: rgba(61, 64, 91, 0.8);
+    font-weight: 400;
+  }
+
+  .post-access .select__option[aria-selected='true'] {
+    background-color: var(--color-toggle-hover-background);
+  }
+
+  .post-access .select__option[aria-selected='true']::before {
+    display: none;
+  }
+
+  .post-access .button {
+    min-height: 44px;
+    height: auto;
+    padding: 8px 12px;
+    line-height: 1.25;
+  }
+
+  .post-access__stage summary,
+  .post-access__stage-actions .post-cover__remove {
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .post-access__stage-fields .form-field__input {
+    font-size: 16px;
+  }
+
+  .post-editor_form[data-editor-step='settings'] .post-cover {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .post-editor_form[data-editor-step='settings'] .post-cover__preview {
+    aspect-ratio: 16 / 7;
+    object-fit: cover;
+  }
+
+  .post-editor_form[data-editor-step='settings'] .post-cover__remove {
+    min-height: 44px;
+  }
+
+  .post-editor_form[data-editor-step='settings'] .post-editor__actions > .post-editor__button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .post-editor__card,
+  .post-cover {
+    gap: 16px;
+    padding: 16px 12px;
+  }
+
+  .post-editor__title {
+    padding-top: 0;
+    line-height: 38px;
+  }
+
+  .post-editor__status {
+    padding-top: 16px;
+  }
+
+  .post-editor__button:first-child {
+    flex: 1;
+  }
+}
+
+@media (max-width: 400px) {
+  .post-access__stage-dates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1024px), (pointer: coarse) {
+  .post-editor__attachment {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 8px;
+    margin-block: 16px;
+    padding: 12px;
+  }
+
+  .post-editor__attachment-close {
+    height: 44px;
+  }
+
+  .post-editor__attachment-menu .action-menu__item,
+  .post-editor__attachment-retry {
+    min-height: 44px;
   }
 }
