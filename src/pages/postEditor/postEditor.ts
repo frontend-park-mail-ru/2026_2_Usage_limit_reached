@@ -122,6 +122,44 @@ function getErrorText(err: ApiError): string {
   return texts[err.status] ?? NETWORK_ERROR;
 }
 
+function bindTitleInput(title: HTMLTextAreaElement, saveButton: HTMLButtonElement, signal: AbortSignal): void {
+  title.style.boxSizing = 'border-box';
+
+  const resize = () => {
+    title.style.height = 'auto';
+    title.style.height = `${title.scrollHeight}px`;
+  };
+
+  const update = () => {
+    if (title.value.includes('\n')) {
+      const { selectionStart, selectionEnd, selectionDirection } = title;
+      title.value = title.value.replaceAll('\n', ' ');
+      title.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
+    }
+    resize();
+  };
+
+  title.addEventListener('input', update, { signal });
+  title.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.isComposing) {
+      event.preventDefault();
+      if (!event.repeat) {
+        saveButton.click();
+      }
+    }
+  }, { signal });
+  title.addEventListener('beforeinput', (event) => {
+    if (event instanceof InputEvent && event.cancelable && !event.isComposing
+      && (event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph')) {
+      event.preventDefault();
+      saveButton.click();
+    }
+  }, { signal });
+
+  window.addEventListener('resize', resize, { signal });
+  update();
+}
+
 /**
  * Подключает форму, кнопки сохранения и окно ухода.
  * @param root
@@ -134,12 +172,14 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   const binding = new AbortController();
   const signal = AbortSignal.any([pageSignal, binding.signal]);
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
-  const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
+  const titleInput = requireElement<HTMLTextAreaElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
   const alert = requireElement<HTMLElement>(form, '[data-alert]');
   const refreshPost = requireElement<HTMLButtonElement>(form, '[data-refresh-post]');
   const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
+  const saveButton = requireElement<HTMLButtonElement>(root, '[data-intent="save"]');
+  bindTitleInput(titleInput, saveButton, signal);
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
   const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
