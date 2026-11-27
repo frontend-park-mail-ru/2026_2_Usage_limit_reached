@@ -148,6 +148,59 @@
 
 @media (max-width: 720px) {
   .feed {
-    padding: 24px 16px;
+    padding: 16px;
+  }
+
+  .feed__toolbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .feed__sort {
+    min-width: 0;
+    justify-self: end;
+  }
+
+  .feed .posts-list__grid {
+    gap: 16px;
+  }
+
+  .feed .post-card:not(:has(.post-card__cover)) {
+    min-height: 0;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .feed .post-card__excerpt {
+    -webkit-line-clamp: 6;
+  }
+
+  .feed .post-card__title {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .feed .post-card__footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 720px), (pointer: coarse) {
+  .feed__sort .sort-menu__button {
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 44px;
+    padding-block: 8px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .feed .post-card__footer > .post-card__like {
+    min-width: 44px;
+    height: 44px;
   }
 }
