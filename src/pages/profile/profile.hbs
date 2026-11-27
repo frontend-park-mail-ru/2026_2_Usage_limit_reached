@@ -18,8 +18,10 @@
           {{#if hasAuthor}}<span class="profile__badge">Автор</span>{{/if}}
         </div>
         <p class="profile__username">{{username}}</p>
-        {{#if hasAuthor}}
-{{> profileBio}}
+        {{#if bio}}
+          <div class="profile__description">
+            {{> profileBio}}
+          </div>
         {{/if}}
       </div>
     </div>
@@ -56,7 +58,7 @@
       {{/if}}
     {{else}}
       <div class="profile__toolbar">
-        {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs}}
+        {{> tabs id="profile-tabs" panelId="profile-panel" label="Публикации" items=tabs className="profile__tabs"}}
         <div class="profile__controls">
           <a class="button button_view_accent button_borderless profile__button profile__button-add" href="/posts/new" data-link data-create-post>
             <span class="profile__button-icon" aria-hidden="true"><img src="/assets/profile/plus.svg" alt="" /></span>
