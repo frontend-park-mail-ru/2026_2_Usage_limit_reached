@@ -26,6 +26,6 @@ export const DRAFT_ERROR_TITLE = 'Не удалось сохранить чер�
 export const CHANGES_ERROR_TITLE = 'Не удалось сохранить изменения';
 
 export const NETWORK_ERROR = 'Изменения остались в редакторе. Проверьте интернет и попробуйте ещё раз';
-export const CONFLICT_ERROR = 'Пост изменили в другой вкладке. Обновите страницу, чтобы увидеть последнюю версию';
+export const CONFLICT_ERROR = 'Пост изменился. Обновите данные, чтобы продолжить. Несохранённые изменения будут потеряны';
 export const AUTHOR_ONLY_ERROR = 'Публиковать посты могут только авторы';
 export const NOT_FOUND_ERROR = 'Публикация не найдена. Возможно, её удалили';
