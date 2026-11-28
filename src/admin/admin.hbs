@@ -1,0 +1,21 @@
+{{#if authorized}}
+  <div class="admin__sections">
+    <section class="admin__panel" id="configs">
+      <h2>Конфигурации</h2>
+    </section>
+    <section class="admin__panel" id="flags">
+      <h2>Feature flags</h2>
+    </section>
+  </div>
+{{else}}
+  <section class="admin__panel admin__access">
+    <h2>{{title}}</h2>
+    {{#if message}}<p>{{message}}</p>{{/if}}
+    {{#if loginUrl}}
+      <a class="button button_view_secondary" href="{{loginUrl}}">Войти</a>
+    {{/if}}
+    {{#if retry}}
+      <button class="button button_view_secondary" type="button" data-retry>Повторить</button>
+    {{/if}}
+  </section>
+{{/if}}

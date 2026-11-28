@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <% if (contentSecurityPolicy) { %>
+  <meta http-equiv="Content-Security-Policy" content="<%= contentSecurityPolicy %>" />
+  <% } %>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OnlineConf</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+</head>
+<body>
+  <main class="admin">
+    <header class="admin__header">
+      <h1>OnlineConf</h1>
+      <a href="/">В продукт</a>
+    </header>
+    <div id="admin-content" aria-live="polite"></div>
+  </main>
+</body>
+</html>

@@ -18,9 +18,10 @@ export const ROUTES = {
   postNew: '/posts/new',
   post: '/posts/:id',
   postEdit: '/posts/:id/edit',
+  admin: '/admin/',
 } as const;
 
-export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES];
+export type RoutePattern = Exclude<(typeof ROUTES)[keyof typeof ROUTES], typeof ROUTES.admin>;
 
 type FillParams<P extends string> = P extends `${infer Head}:${string}/${infer Tail}`
   ? `${Head}${string}/${FillParams<Tail>}`
@@ -37,7 +38,7 @@ export interface NavigateOptions {
 
 export type Navigate = (path: NavigationPath, options?: NavigateOptions) => void;
 
-const PATTERNS: readonly RoutePattern[] = Object.values(ROUTES);
+const PATTERNS: readonly RoutePattern[] = Object.values(ROUTES).filter((path) => path !== ROUTES.admin);
 
 /**
  * Сравнивает адрес с шаблоном маршрута.

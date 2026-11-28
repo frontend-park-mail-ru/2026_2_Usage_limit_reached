@@ -18,6 +18,7 @@ function resolvePartial(partial, callback) {
 export default (_env, argv) => ({
   entry: {
     main: path.join(SRC_DIR, 'main.ts'),
+    'admin/app': path.join(SRC_DIR, 'admin', 'main.ts'),
     sw: path.join(SRC_DIR, 'worker', 'service-worker.ts'),
   },
   output: {
@@ -67,12 +68,22 @@ export default (_env, argv) => ({
         contentSecurityPolicy: argv.mode === 'production' ? CONTENT_SECURITY_POLICY : '',
       },
     }),
+    new HtmlWebpackPlugin({
+      filename: 'admin/index.html',
+      template: path.join(SRC_DIR, 'admin', 'index.html'),
+      chunks: ['admin/app'],
+      templateParameters: {
+        contentSecurityPolicy: argv.mode === 'production' ? CONTENT_SECURITY_POLICY : '',
+      },
+    }),
     new MiniCssExtractPlugin({ filename: '[name].[contenthash].css' }),
     new CopyWebpackPlugin({ patterns: [{ from: path.join(SRC_DIR, 'assets'), to: 'assets' }] }),
     new ServiceWorkerAssetsPlugin(),
   ],
   devServer: {
     port: 3000,
-    historyApiFallback: true,
+    historyApiFallback: {
+      rewrites: [{ from: /^\/admin\/?$/, to: '/admin/index.html' }],
+    },
   },
 });

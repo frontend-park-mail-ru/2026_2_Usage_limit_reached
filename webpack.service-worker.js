@@ -11,7 +11,8 @@ export class ServiceWorkerAssetsPlugin {
       }, () => {
         const worker = compilation.getAsset('sw.js');
         const assets = compilation.getAssets()
-          .filter(({ name }) => name !== 'sw.js' && /\.(html|js|css|svg|png|jpe?g|webp|gif|ico|woff2?)$/.test(name))
+          .filter(({ name }) => name !== 'sw.js' && !name.startsWith('admin/')
+            && /\.(html|js|css|svg|png|jpe?g|webp|gif|ico|woff2?)$/.test(name))
           .sort((left, right) => left.name.localeCompare(right.name))
           .map(({ name, source }) => ({
             url: '/' + name,
