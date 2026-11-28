@@ -1,5 +1,7 @@
 import feedTemplate from './feed.hbs';
-import { getFeed } from '@/modules/api/posts.ts';
+import { getFeed, getFeedSettings } from '@/modules/api/posts.ts';
+import { checkSession, getSessionVersion } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
 import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
 import type { Navigate } from '@/app/paths.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
@@ -107,6 +109,7 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const topicValue = requireElement(panel, '[data-topic-value]');
   const attachmentValue = requireElement(panel, '[data-attachment-value]');
   const accessible = requireElement<HTMLInputElement>(panel, '[name="accessible_only"]');
+  const accessFilter = requireElement<HTMLElement>(panel, '.feed__access-filter');
   let appliedAttachment: FeedQuery['attachment_type'];
   let appliedAccessible = false;
   const syncFilterValues = () => {
@@ -124,6 +127,45 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     }
     syncFilterValues();
   };
+  let settingsRequest: AbortController | undefined;
+  let settingsSession = '';
+  const syncSettings = () => {
+    const { status, user } = authStore.getState();
+    const session = JSON.stringify([status, user?.id, status === 'guest' ? null : getSessionVersion()]);
+    if (settingsSession === session) {
+      return;
+    }
+    settingsSession = session;
+    settingsRequest?.abort();
+    const controller = new AbortController();
+    settingsRequest = controller;
+    section.hidden = true;
+    accessFilter.hidden = true;
+    appliedAttachment = undefined;
+    appliedAccessible = false;
+    filterButton.removeAttribute('data-applied');
+    if (panel.matches(':popover-open')) {
+      panel.hidePopover();
+    }
+    restoreFilters();
+    const load = async () => {
+      if (status === 'unknown') {
+        await checkSession().catch(() => {});
+      }
+      if (controller.signal.aborted) {
+        return;
+      }
+      const settings = await getFeedSettings(controller.signal).catch(() => null);
+      if (controller.signal.aborted) {
+        return;
+      }
+      section.hidden = settings?.advanced_filters_enabled !== true;
+      accessFilter.hidden = section.hidden || settings?.accessible_only_supported !== true;
+    };
+    void load();
+  };
+  const unsubscribeSettings = authStore.subscribe(syncSettings);
+  syncSettings();
   filterButton.addEventListener('click', () => {
     if (mobile.matches) {
       restoreFilters();
@@ -151,8 +193,8 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   }, { signal });
   panel.addEventListener('submit', (event) => {
     event.preventDefault();
-    appliedAttachment = (attachment.value || undefined) as FeedQuery['attachment_type'];
-    appliedAccessible = accessible.checked;
+    appliedAttachment = section.hidden ? undefined : (attachment.value || undefined) as FeedQuery['attachment_type'];
+    appliedAccessible = !accessFilter.hidden && accessible.checked;
     if (sheet.open) {
       appliedTag = tag.value;
       syncTopics();
@@ -166,6 +208,8 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     }
   }, { signal });
   return () => {
+    settingsRequest?.abort();
+    unsubscribeSettings();
     events.abort();
     unbindAvatarFallback();
     posts.destroy();

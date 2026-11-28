@@ -127,6 +127,23 @@
   background: rgb(61 64 91 / 8%);
 }
 
+.feed__attachment-section[hidden],
+.feed__access-filter[hidden] {
+  display: none;
+}
+
+@media (min-width: 721px) {
+  .feed__tools:has(.feed__attachment-section[hidden]) {
+    width: 184px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feed__tools:has(.feed__attachment-section[hidden])::before,
+  .feed__tools:has(.feed__attachment-section[hidden]) > .feed__filters-button {
+    display: none;
+  }
+}
+
 .feed__filters {
   position-area: bottom span-left;
   justify-self: end;

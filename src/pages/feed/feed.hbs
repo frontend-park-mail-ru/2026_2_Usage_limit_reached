@@ -23,7 +23,7 @@
             {{/each}}
           </div>
         </details>
-        <details class="feed__attachment-section" open>
+        <details class="feed__attachment-section" open hidden>
           <summary>Вложения <span data-attachment-value></span></summary>
           <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">
             <span id="feed-attachments">Вложения</span>
@@ -36,7 +36,7 @@
             {{/each}}
           </div>
         </details>
-        <label class="feed__access-filter">
+        <label class="feed__access-filter" hidden>
           Доступно мне
           <input type="checkbox" name="accessible_only" role="switch">
         </label>

@@ -49,6 +49,10 @@ export function getFeed(query: FeedQuery) {
   return request<PostsPage>(`/feed?${params}`);
 }
 
+/** Получает доступность дополнительных фильтров текущей сессии. */
+export const getFeedSettings = (signal: AbortSignal) =>
+  request<{ advanced_filters_enabled?: boolean; accessible_only_supported?: boolean }>('/feed/settings', { signal });
+
 /** Получает опубликованные посты пользователя для публичного профиля. */
 export const getPublicPosts = (username: string, query: PostsQuery) =>
   request<PostsPage>(`/users/${encodeURIComponent(username)}/posts?${buildPostsQuery(query)}`);

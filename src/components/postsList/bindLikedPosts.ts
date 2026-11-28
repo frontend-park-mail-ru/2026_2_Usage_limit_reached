@@ -89,12 +89,20 @@ export function bindLikedPosts(
     });
   }, feed, offlineEnabled, readOnly, setRefreshNotice, onlineOnly);
   let previous = authStore.getState();
+  let previousVersion = getSessionVersion();
   const unsubscribe = authStore.subscribe(() => {
     const current = authStore.getState();
-    const changed = current.status === 'unknown' || (previous.status !== 'unknown'
-      && (current.status !== previous.status || current.user?.id !== previous.user?.id));
+    const version = getSessionVersion();
+    const changed = current.status === 'unknown'
+      || ((feed || previous.status !== 'unknown')
+        && (current.status !== previous.status || current.user?.id !== previous.user?.id))
+      || (feed && current.status === 'authenticated' && version !== previousVersion);
     previous = current;
+    previousVersion = version;
     if (changed) {
+      if (feed) {
+        filters = { ...filters, attachment_type: undefined, accessible_only: undefined };
+      }
       posts.reload();
     }
   });
