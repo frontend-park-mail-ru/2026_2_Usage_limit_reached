@@ -93,11 +93,16 @@
   text-decoration: none;
 }
 
-button.sidebar__item:not(:disabled):not(.sidebar__item-profile):hover {
+.sidebar__item-link {
+  cursor: pointer;
+}
+
+.sidebar__item-link:hover {
   background: var(--color-sidebar-hover);
 }
 
-button.sidebar__item:not(:disabled):not(.sidebar__item-profile):active {
+.sidebar__item-link:active,
+.sidebar__item-link[aria-current='page'] {
   background: var(--color-sidebar-pressed);
   color: var(--color-primary);
 }
@@ -171,6 +176,13 @@ button.sidebar__item:not(:disabled):not(.sidebar__item-profile):active {
   height: 24px;
   background: currentColor;
   mask: var(--sidebar-icon) center / contain no-repeat;
+}
+
+.sidebar__icon-feed {
+  --sidebar-icon: url('/assets/sidebar/feed.svg');
+
+  width: 18px;
+  height: 18px;
 }
 
 .sidebar__icon-search {
