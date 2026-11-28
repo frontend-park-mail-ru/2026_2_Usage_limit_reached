@@ -26,8 +26,8 @@ import { bindLinks } from '@/utils/helpers/bindLinks.ts';
 import { checkSession } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
-import { ROUTES, matchRoute } from './paths.ts';
-import type { NavigateOptions, NavigationPath, RoutePath, RoutePattern } from './paths.ts';
+import { ROUTES, matchRoute, subscriptionRoute } from './paths.ts';
+import type { NavigateOptions, NavigationPath, RoutePattern } from './paths.ts';
 import type { Layout, LeaveGuard, Route } from './router.types.ts';
 
 const feedRoute: Route = { title: 'Лента', render: renderFeed, init: initFeed, layout: 'sidebar' };
@@ -75,10 +75,16 @@ export function setLeaveGuard(guard: LeaveGuard): void {
 }
 
 /** Выбирает адрес перенаправления по состоянию сессии. */
-function getAuthRedirect(path: string): RoutePath | undefined {
+function getAuthRedirect(path: string, search: URLSearchParams): NavigationPath | undefined {
   const { status } = authStore.getState();
   const isAuthPage = path === ROUTES.login || path === ROUTES.register;
   if (status === 'authenticated' && isAuthPage) {
+    const author = path === ROUTES.login && search.get('subscribe_to');
+    if (author && author !== '.' && author !== '..') {
+      const target = subscriptionRoute(author);
+      const postId = search.get('post_id');
+      return postId ? `${target}?${new URLSearchParams({ post_id: postId })}` : target;
+    }
     return ROUTES.profile;
   }
   const pattern = matchRoute(path)?.pattern;
@@ -90,7 +96,7 @@ function getAuthRedirect(path: string): RoutePath | undefined {
 
 /** Заменяет текущий адрес, если состояние сессии требует другую страницу. */
 function redirectByAuth(): boolean {
-  const target = getAuthRedirect(window.location.pathname);
+  const target = getAuthRedirect(window.location.pathname, new URLSearchParams(window.location.search));
   if (!target) {
     return false;
   }
@@ -166,7 +172,7 @@ function renderCurrentRoute(): void {
  */
 export function navigate(path: NavigationPath, { replace = false, force = false }: NavigateOptions = {}): void {
   const url = new URL(path, window.location.href);
-  const redirect = getAuthRedirect(url.pathname);
+  const redirect = getAuthRedirect(url.pathname, url.searchParams);
   const nextPath = redirect ?? url.pathname + url.search;
   if (nextPath === window.location.pathname + window.location.search) {
     return;
@@ -214,6 +220,7 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
   let { status: lastStatus, user: lastUser } = authStore.getState();
   const unsubscribeAuth = authStore.subscribe(() => {
     const { status, user } = authStore.getState();
+    const viewerChanged = status !== lastStatus || user?.id !== lastUser?.id;
     const isLoggedOut = lastStatus === 'authenticated' && status === 'guest';
     const changedAccount = lastStatus === 'authenticated' && status === 'authenticated' && lastUser?.id !== user?.id;
     lastStatus = status;
@@ -221,7 +228,9 @@ export function initRouter(updateRefreshNotice: SetRefreshNotice): () => void {
     if (!active) {
       return;
     }
-    if (isLoggedOut) {
+    if (viewerChanged && matchRoute(window.location.pathname)?.pattern === ROUTES.subscription) {
+      renderCurrentRoute();
+    } else if (isLoggedOut) {
       navigate(ROUTES.login, { replace: true, force: true });
     } else if ((status === 'unknown' && [ROUTES.profile, ROUTES.settings].some((path) => path === window.location.pathname))
       || ((status === 'unknown' || changedAccount)
