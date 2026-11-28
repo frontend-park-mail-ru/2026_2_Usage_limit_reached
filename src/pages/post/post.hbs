@@ -18,7 +18,7 @@
 {{else}}
 <section class="post-page" aria-labelledby="post-page-title">
   <a class="post-page__back" href="/profile" data-link data-back>← Профиль</a>
-  <article class="post-page__card">
+  <article class="post-page__card{{#if lockedCoverUrl}} post-page__card-with-cover{{/if}}">
     <header class="post-page__header">
       <img class="post-page__avatar" src="{{avatarUrl}}" alt="" data-avatar />
       <div class="post-page__meta">
@@ -32,6 +32,16 @@
       {{/if}}
     </header>
     <h1 class="post-page__title" id="post-page-title">{{title}}</h1>
+    {{#if locked}}
+    {{#if lockedCoverUrl}}<img class="post-page__cover" src="{{lockedCoverUrl}}" alt="">{{/if}}
+    <div class="post-page__access-note">
+      <p class="post-page__unavailable-text">{{accessNote.message}}</p>
+      {{#if accessNote.detail}}<p class="post-page__unavailable-text">{{accessNote.detail}}</p>{{/if}}
+      {{#if accessAction}}
+        <a class="button button_view_primary post-page__access-action" href="{{accessHref}}" data-link>{{accessAction}}</a>
+      {{/if}}
+    </div>
+    {{else}}
     <div class="rich-text post-page__body" data-post-body></div>
     <footer class="post-page__footer">
       {{#if offline}}
@@ -44,8 +54,10 @@
       {{/unless}}
       {{/if}}
     </footer>
+    {{/if}}
   </article>
 
+  {{#unless locked}}
   {{#if isOwner}}
     {{> confirmDialog id="post-page-delete" title="Удалить?" text="Пост исчезнет из профиля. Восстановить его не получится"
         errorTitle="Не удалось удалить пост" cancelLabel="Отмена" confirmLabel="Удалить"
@@ -53,5 +65,6 @@
   {{else}}
     {{> donateDialog}}
   {{/if}}
+  {{/unless}}
 </section>
 {{/if}}

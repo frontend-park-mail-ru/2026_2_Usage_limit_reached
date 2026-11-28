@@ -1,20 +1,143 @@
 .feed {
+  box-sizing: border-box;
+  max-width: 1360px;
+  margin-inline: auto;
   padding: 64px;
 }
 
 .feed__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 28px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .feed__title {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 32px;
   font-weight: 500;
+  line-height: 44px;
+}
+
+.feed__search {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: var(--color-white);
+}
+
+.feed__search:focus-within {
+  outline: 2px solid var(--color-text);
+}
+
+.feed__search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.feed__search input::placeholder {
+  color: rgb(61 64 91 / 80%);
+}
+
+.feed__search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.feed__search button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.feed__search img {
+  display: block;
+}
+
+.feed__sort .sort-menu__button {
+  min-width: 184px;
+  height: 44px;
+  padding-left: 44px;
+  border: 0;
+  background-position: left 20px center;
+  line-height: 44px;
+}
+
+.feed__topics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-bottom: 24px;
+}
+
+.feed__topics .button {
+  width: auto;
+  padding-inline: 14px;
+  border-radius: 18px;
+  background: var(--color-white);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.feed__topics [aria-pressed='true'] {
+  background: var(--color-text);
+  color: var(--color-white);
+}
+
+.feed__state {
+  display: grid;
+  gap: 12px;
+  padding: 32px;
+  border-radius: 16px;
+  background: var(--color-white);
+  line-height: 19px;
+}
+
+.feed__state_error {
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid rgb(179 38 30 / 25%);
+  border-radius: 12px;
+  background: rgb(179 38 30 / 6%);
+}
+
+.feed__state p {
+  margin: 0;
+}
+
+.feed__state p:first-child {
+  font-weight: 500;
+}
+
+.feed__retry {
+  width: 120px;
+  max-width: 100%;
+}
+
+.feed__state + .feed__retry {
+  margin-top: 24px;
+}
+
+.feed__retry[hidden] {
+  display: none;
 }
 
 @media (max-width: 1280px) {

@@ -1,19 +1,12 @@
 import type { PostAttachment } from '@/modules/api/attachments.ts';
-
-const SIZE_UNITS = ['Б', 'КБ', 'МБ', 'ГБ'];
-const sizeFormat = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
+import { formatAttachmentSize, getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 
 /** Показывает данные файла и предпросмотр по адресу из ответа загрузки. */
 export function showAttachmentPreview(message: HTMLElement, attachment: PostAttachment): void {
-  let size = attachment.size_bytes;
-  let unit = 0;
-  while (size >= 1024 && unit < SIZE_UNITS.length - 1) {
-    size /= 1024;
-    unit += 1;
-  }
   const extension = attachment.name.split('.').pop()?.toUpperCase();
-  message.textContent = `${extension} · ${sizeFormat.format(size)} ${SIZE_UNITS[unit]}`;
-  if (!attachment.url.startsWith('/api/attachments/')) {
+  message.textContent = `${extension} · ${formatAttachmentSize(attachment.size_bytes)}`;
+  const url = getAttachmentUrl(attachment.url);
+  if (!url) {
     return;
   }
 
@@ -30,6 +23,6 @@ export function showAttachmentPreview(message: HTMLElement, attachment: PostAtta
     return;
   }
   media.className = 'post-editor__attachment-preview';
-  media.src = attachment.url;
+  media.src = url;
   message.before(media);
 }
