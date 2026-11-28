@@ -4,6 +4,7 @@ import { formatDraftDate, formatPostDate } from '@/utils/helpers/posts.ts';
 import { htmlToText } from '@/modules/sanitize/sanitize.ts';
 import { DRAFT_MENU_ITEMS } from './postCard.constants.ts';
 import { getPostListPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
+import { getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 
 /**
  * Данные карточки поста или черновика.
@@ -17,7 +18,9 @@ export function buildPostCard(item: PostPreview, isDraft = false) {
     href: withPostReturnPath(isDraft ? postEditRoute(item.id) : postRoute(item.id),
       getPostListPath(window.location.pathname + window.location.search)),
     preview: item.locked ? '' : htmlToText(item.body_preview),
+    coverUrl: item.cover_url ? getAttachmentUrl(item.cover_url) : null,
     title: item.title,
+    locked: item.locked,
     isDraft,
     likesCount: item.likes_count,
     liked: item.liked_by_user,

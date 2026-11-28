@@ -2,6 +2,8 @@ import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postTemplate from './post.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
+import { getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import {
   checkSession,
@@ -12,12 +14,15 @@ import {
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { loadOfflinePost } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery, watchOfflineExpiry } from '@/modules/offline/offline.recovery.ts';
+import { getOfflineDeadline } from '@/modules/offline/offline.deadline.ts';
+import { expireOfflinePublications } from '@/modules/offline/offline.storage.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
+import { bindPostAttachments } from './postAttachments.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { bindAvatarFallback } from '@/modules/profile/avatarFallback.ts';
 import { ActionMenu } from '@/components/actionMenu/actionMenu.ts';
@@ -26,9 +31,10 @@ import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
+import { ROUTES, matchRoute, postEditRoute, publicProfileRoute, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   DELETED_MESSAGE,
   DELETE_ERROR,
@@ -62,6 +68,30 @@ function buildViewModel(post: Post, isOwner: boolean) {
     isOwner,
     menuItems: POST_MENU_ITEMS,
   };
+}
+
+/** Готовит причину ограничения и условия доступа к закрытому посту. */
+function buildAccessNote(restriction: Post['access_restriction']) {
+  switch (restriction?.reason) {
+    case 'subscription_required':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: restriction.lowest_available_price_minor === null ? undefined
+          : `От ${formatMoney(restriction.lowest_available_price_minor, restriction.currency)} за 30 дней`,
+      };
+    case 'upgrade_required':
+      return {
+        message: `Нужен уровень «${restriction.required_tier.name}»`,
+        detail: restriction.current_tier ? `Ваш уровень — «${restriction.current_tier.name}»` : undefined,
+      };
+    case 'no_eligible_tier':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: 'Среди доступных уровней сейчас нет подходящего',
+      };
+    default:
+      return { message: 'У вас нет доступа к этой публикации' };
+  }
 }
 
 /**
@@ -207,17 +237,32 @@ function bindLike(root: HTMLElement, post: Post, beforeAction: () => boolean): v
  * @param navigate
  * @param params
  */
-export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+export function initPost(root: HTMLElement, navigate: Navigate, params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
   let active = true;
   let request = 0;
   let disposeActions: (() => void) | undefined;
+  let disposeBody: (() => void) | undefined;
   let renderedSession: string | undefined;
   let offline = false;
   let needsRetry = false;
   let busy = false;
   let recoverAfterLoad = false;
   let donateDialog: DonateDialog | undefined;
+  let offlinePost: Post | undefined;
+  const expiry = watchOfflineExpiry(() => {
+    if (!offlinePost) {
+      return undefined;
+    }
+    const deadline = getOfflineDeadline(offlinePost.offline_cache_until);
+    if (deadline === undefined) {
+      offlinePost = undefined;
+      root.innerHTML = postTemplate({ message: LOAD_ERROR, isError: true });
+      bindBackLink(root);
+      void expireOfflinePublications(() => active);
+    }
+    return deadline;
+  });
   const sessionKey = () => {
     const { status, user } = authStore.getState();
     return status + (user?.id ?? '');
@@ -225,8 +270,12 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
   const load = async () => {
     const id = ++request;
+    offlinePost = undefined;
     busy = true;
+    setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
+    disposeBody?.();
+    disposeBody = undefined;
     disposeActions?.();
     disposeActions = undefined;
     donateDialog = undefined;
@@ -242,26 +291,25 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       }
       const version = getSessionVersion();
       let post: Post;
+      let hasOfflineAttachments: boolean;
       try {
         const result = await loadOfflinePost(params.id ?? '', () => getPost(params.id ?? ''),
           () => isCurrent() && version === getSessionVersion());
         post = result;
-        offline = result.savedAt !== undefined;
+        offline = result.savedAt !== undefined || !navigator.onLine;
+        hasOfflineAttachments = !!result.hasAttachments;
         needsRetry = offline;
       } catch (error) {
         if (!isCurrent()) {
           return;
         }
         const status = error instanceof ApiError ? error.status : undefined;
-        needsRetry = isBackendUnavailable(error);
+        needsRetry = !(error instanceof ApiError && [400, 401, 403, 404].includes(error.status));
         const restricted = status === 403;
         const unavailable = restricted || status === 400 || status === 404;
         root.innerHTML = unavailable
           ? postTemplate({ unavailable: true, restricted })
-          : postTemplate({ message: error instanceof ApiError && error.code === 'offline_copy_missing'
-            ? 'Не удалось загрузить публикацию. Сохранённой копии нет. Попробуйте ещё раз'
-            : LOAD_ERROR, isError: true });
-        root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
+          : postTemplate({ message: LOAD_ERROR, isError: true });
         bindBackLink(root);
         if (unavailable) {
           renderedSession = sessionKey();
@@ -301,17 +349,54 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       renderedSession = sessionKey();
       document.title = post.title;
       if (post.locked) {
-        root.innerHTML = postTemplate({ unavailable: true, restricted: true });
+        const lockedCoverUrl = !offline && post.cover_url ? getAttachmentUrl(post.cover_url) : null;
+        const reason = post.access_restriction?.reason;
+        const accessAction = !offline && post.status === 'published' ? (
+          reason === 'subscription_required' ? 'Подписаться'
+            : reason === 'upgrade_required' ? 'Повысить уровень' : undefined
+        ) : undefined;
+        root.innerHTML = postTemplate({
+          ...buildViewModel(post, false),
+          locked: true,
+          lockedCoverUrl,
+          accessNote: buildAccessNote(post.access_restriction),
+          accessAction,
+          accessHref: accessAction
+            ? `${subscriptionRoute(post.author.username)}?${new URLSearchParams({ post_id: post.id })}` : undefined,
+        });
+        const cover = root.querySelector<HTMLImageElement>('.post-page__cover');
+        root.querySelector('.post-page__access-action')?.addEventListener('click', (event) => {
+          if (offline || !navigator.onLine) {
+            event.preventDefault();
+          }
+        });
+        cover?.addEventListener('error', () => {
+          if (isCurrent() && cover.isConnected) {
+            cover.parentElement?.classList.remove('post-page__card-with-cover');
+            cover.remove();
+          }
+        }, { once: true });
         bindBackLink(root);
         return;
       }
       root.innerHTML = postTemplate({ ...buildViewModel(post, isOwner && !offline), offline });
-      requireElement(root, '[data-post-body]').innerHTML = sanitizeHtml(post.body);
+      const body = requireElement<HTMLElement>(root, '[data-post-body]');
+      body.innerHTML = sanitizeHtml(post.body, !offline);
       bindBackLink(root);
-      root.querySelector('[data-post-retry]')?.addEventListener('click', () => { void load(); });
       if (offline) {
+        if (hasOfflineAttachments || !body.textContent?.trim()) {
+          const message = document.createElement('p');
+          message.className = 'post-page__attachment_unavailable';
+          message.textContent = hasOfflineAttachments
+            ? 'Вложения доступны после подключения к интернету'
+            : 'Содержимое поста недоступно без интернета';
+          body.append(message);
+        }
+        offlinePost = post;
+        expiry.refresh();
         return;
       }
+      disposeBody = bindPostAttachments(body, post.attachments ?? []);
       bindLike(root, post, beforeAction);
       if (isOwner) {
         disposeActions = bindOwnerActions(root, post, navigate, beforeAction);
@@ -324,6 +409,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       stopLoading();
       if (id === request) {
         busy = false;
+        setRefreshNotice(needsRetry ? { pending: false } : null, () => { void load(); });
         if (recoverAfterLoad) {
           recoverAfterLoad = false;
           if (active && needsRetry) {
@@ -351,13 +437,18 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     offline = true;
     needsRetry = true;
     donateDialog?.setReadOnly(true);
-    const notice = root.querySelector<HTMLElement>('[data-post-offline]');
-    if (notice) {
-      notice.textContent = 'Доступен только просмотр';
-    }
     root.querySelectorAll<HTMLButtonElement>('.like-button, [data-donate], .post-page__menu button')
       .forEach((button) => { button.disabled = true; });
-    root.querySelectorAll<HTMLElement>('[data-post-offline], [data-post-retry]').forEach((element) => { element.hidden = false; });
+    const accessAction = root.querySelector('.post-page__access-action');
+    if (accessAction) {
+      accessAction.setAttribute('role', 'link');
+      accessAction.setAttribute('aria-disabled', 'true');
+      accessAction.removeAttribute('href');
+    }
+    setRefreshNotice({ pending: busy }, () => { void load(); });
+    if (!busy && disposeBody) {
+      void load();
+    }
   };
   window.addEventListener('offline', handleOffline);
   void load();
@@ -366,9 +457,12 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     active = false;
     cancelLoading(root);
     unbindRecovery();
+    expiry.destroy();
     window.removeEventListener('offline', handleOffline);
     unsubscribe();
     unbindAvatarFallback();
+    disposeBody?.();
     disposeActions?.();
+    setRefreshNotice(null);
   };
 }

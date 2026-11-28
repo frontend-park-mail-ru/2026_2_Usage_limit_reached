@@ -1,9 +1,18 @@
 <section class="feed" aria-labelledby="feed-title">
+  <h1 class="feed__title" id="feed-title">Лента</h1>
   <div class="feed__toolbar">
-    <h1 class="feed__title" id="feed-title">Лента</h1>
+    <form class="feed__search" role="search" data-feed-search>
+      <button type="submit" aria-label="Найти посты"><img src="/assets/feed/search.svg" width="20" height="20" alt=""></button>
+      <input type="search" name="q" aria-label="Поиск по постам" placeholder="Поиск по постам">
+      <button type="reset" aria-label="Очистить поиск" hidden>×</button>
+    </form>
     <div class="feed__sort" data-public-sort></div>
   </div>
-  <p class="feed__offline" data-offline-notice role="status" hidden></p>
+  <div class="feed__topics" role="group" aria-label="Темы постов">
+    <button class="button button_borderless" type="button" data-topic="" aria-pressed="true">Все темы</button>
+    {{#each topics}}
+      <button class="button button_borderless" type="button" data-topic="{{this}}" aria-pressed="false">{{this}}</button>
+    {{/each}}
+  </div>
   <div data-public-posts></div>
-  <button class="button button_view_secondary feed__retry" type="button" data-list-retry hidden>Повторить</button>
 </section>

@@ -23,13 +23,8 @@
   padding: 24px 0;
 }
 
-.posts-list__more[hidden],
-.posts-list__retry[hidden] {
+.posts-list__more[hidden] {
   display: none;
-}
-
-.posts-list__retry {
-  width: auto;
 }
 
 .posts-list__empty {

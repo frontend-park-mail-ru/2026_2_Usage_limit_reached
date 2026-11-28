@@ -6,17 +6,18 @@ import { showToast } from '@/components/toast/toast.ts';
 import { checkSession, getSessionContext, getSessionVersion } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { loadOfflinePublicProfile } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery } from '@/modules/offline/offline.recovery.ts';
 import { getPublicProfile } from '@/modules/api/profile.ts';
 import { getPublicPosts } from '@/modules/api/posts.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
-import { ROUTES } from '@/app/paths.ts';
+import { ROUTES, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { LOAD_ERROR, LOADING_MESSAGE } from './profile.constants.ts';
 import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
 /** Показывает состояние загрузки публичного профиля. */
 export function renderPublicProfile(): string {
@@ -29,12 +30,13 @@ export function renderPublicProfile(): string {
  * @param navigate
  * @param params
  */
-export function initPublicProfile(root: HTMLElement, navigate: Navigate, params: RouteParams): () => void {
+export function initPublicProfile(root: HTMLElement, navigate: Navigate, params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   let active = true;
   let request = 0;
   let busy = false;
   let offline = false;
   let needsRetry = false;
+  let recoverAfterLoad = false;
   let disposePosts: (() => void) | undefined;
   let dialog: DonateDialog | undefined;
   let disposeBio: (() => void) | undefined;
@@ -48,6 +50,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
     disposeBio?.();
     dialog?.destroy();
     disposePosts = undefined;
+    setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     disposeBio = undefined;
     dialog = undefined;
     cancelLoading(root);
@@ -66,20 +69,26 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       if (!isCurrent()) {
         return;
       }
-      offline = savedAt !== undefined;
+      offline = savedAt !== undefined || !navigator.onLine;
       needsRetry = offline;
       document.title = user.nickname;
       root.innerHTML = profileTemplate({
         name: user.nickname, username: `@${user.username}`, avatarUrl: user.avatar_url ?? AVATAR_PLACEHOLDER,
         bio: author?.bio, isAuthor: !!author,
+        subscribeHref: author && getSessionContext()?.userId !== user.id ? subscriptionRoute(user.username) : undefined,
         offline,
       });
-      root.querySelector('[data-profile-retry]')?.addEventListener('click', () => { void load(); });
       disposeBio = bindProfileBio(root);
       if (author) {
-        disposePosts = bindLikedPosts(root, (query) => getPublicPosts(params.username, query), navigate, false, params.username, offline);
+        disposePosts = bindLikedPosts(root, (query) => getPublicPosts(params.username, query), navigate, false, params.username, offline,
+          (state, retry) => { if (!needsRetry) { setRefreshNotice(state, retry); } }).destroy;
         const donate = requireElement<HTMLButtonElement>(root, '[data-donate]');
         donate.disabled = offline;
+        root.querySelector('[data-subscribe]')?.addEventListener('click', (event) => {
+          if (offline || !navigator.onLine) {
+            event.preventDefault();
+          }
+        });
         const donateDialog = new DonateDialog(requireElement(root, '.donate-dialog'), isCurrent);
         donateDialog.setReadOnly(offline);
         dialog = donateDialog;
@@ -116,26 +125,38 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       }
     } catch (error) {
       if (isCurrent()) {
-        needsRetry = isBackendUnavailable(error);
+        needsRetry = !(error instanceof ApiError && [401, 403, 404].includes(error.status));
         disposeBio?.();
         const missing = error instanceof ApiError && error.status === 404;
         root.innerHTML = profileTemplate({
-          message: missing ? 'Профиль не найден'
-            : error instanceof ApiError && error.code === 'offline_copy_missing'
-              ? 'Не удалось загрузить профиль. Сохранённой копии нет. Попробуйте ещё раз'
-              : LOAD_ERROR, isError: true, canRetry: !missing,
+          message: missing ? 'Профиль не найден' : 'Не удалось загрузить профиль', isError: true,
         });
-        root.querySelector('[data-profile-retry]')?.addEventListener('click', () => { void load(); });
       }
     } finally {
       stopLoading();
       if (id === request) {
         busy = false;
+        if (needsRetry) {
+          setRefreshNotice({ pending: false }, () => { void load(); });
+        } else if (!disposePosts) {
+          setRefreshNotice(null);
+        }
+        if (recoverAfterLoad) {
+          recoverAfterLoad = false;
+          if (active && needsRetry) {
+            void load();
+          }
+        }
       }
     }
   }
-  const unbindRecovery = bindOfflineRecovery(() => { void load(); },
-    () => active && needsRetry && !busy && !root.querySelector('dialog[open]'));
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (busy) {
+      recoverAfterLoad = true;
+    } else {
+      void load();
+    }
+  }, () => active && (needsRetry || busy) && !root.querySelector('dialog[open]'));
   const handleOffline = () => {
     offline = true;
     needsRetry = true;
@@ -144,15 +165,13 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
     if (donate) {
       donate.disabled = true;
     }
-    const notice = root.querySelector<HTMLElement>('[data-profile-offline]');
-    if (notice) {
-      notice.textContent = 'Доступен только просмотр';
-      notice.hidden = false;
+    const subscribe = root.querySelector('[data-subscribe]');
+    if (subscribe) {
+      subscribe.setAttribute('role', 'link');
+      subscribe.setAttribute('aria-disabled', 'true');
+      subscribe.removeAttribute('href');
     }
-    const retry = root.querySelector<HTMLElement>('[data-profile-retry]');
-    if (retry) {
-      retry.hidden = false;
-    }
+    setRefreshNotice({ pending: busy }, () => { void load(); });
   };
   window.addEventListener('offline', handleOffline);
   let previous = authStore.getState();
@@ -175,5 +194,6 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
     disposeBio?.();
     disposePosts?.();
     dialog?.destroy();
+    setRefreshNotice(null);
   };
 }
