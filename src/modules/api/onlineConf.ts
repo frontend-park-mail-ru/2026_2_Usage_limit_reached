@@ -6,6 +6,7 @@ import type {
   OnlineConfConfigKey,
   OnlineConfFlagInput,
   OnlineConfFlagUpdate,
+  OnlineConfHistoryPage,
   OnlineConfJsonValue,
   OnlineConfListItem,
   OnlineConfListQuery,
@@ -13,6 +14,8 @@ import type {
   OnlineConfScope,
   OnlineConfSection,
 } from './onlineConf.types.ts';
+
+type OnlineConfListEntry = OnlineConfListItem | { key: string; name?: string };
 
 /** @throws {ApiError} */
 export async function checkAdminAccess(signal: AbortSignal): Promise<void> {
@@ -32,12 +35,15 @@ export async function checkAdminAccess(signal: AbortSignal): Promise<void> {
 }
 
 /** @throws {ApiError} */
-export function getOnlineConfScopes(signal: AbortSignal): Promise<OnlineConfListResponse<OnlineConfScope>> {
-  return sendRequest('/onlineconf/admin/scopes', { signal, cache: 'no-store', redirect: 'error' });
+export async function getOnlineConfScopes(signal: AbortSignal): Promise<OnlineConfListResponse<OnlineConfScope>> {
+  const result = await sendRequest<OnlineConfListResponse<OnlineConfScope> | { name: string }[]>(
+    '/onlineconf/admin/scopes', { signal, cache: 'no-store', redirect: 'error' },
+  );
+  return Array.isArray(result) ? { items: result.map(({ name }) => ({ id: name, name })) } : result;
 }
 
 /** @throws {ApiError} */
-export function getOnlineConfList(
+export async function getOnlineConfList(
   section: OnlineConfSection,
   { scope, q }: OnlineConfListQuery,
   signal: AbortSignal,
@@ -47,7 +53,23 @@ export function getOnlineConfList(
   if (search) {
     params.set('q', search);
   }
-  return sendRequest(`/onlineconf/admin/${section}?${params}`, { signal, cache: 'no-store', redirect: 'error' });
+  const response = await sendRequest<OnlineConfListResponse<OnlineConfListEntry> | OnlineConfListEntry[]>(
+    `/onlineconf/admin/${section}?${params}`, { signal, cache: 'no-store', redirect: 'error' },
+  );
+  const page = Array.isArray(response) ? { items: response } : response;
+  return { ...page, items: page.items.map((item) => 'key' in item ? { ...item, name: item.key } : item) };
+}
+
+/** Читает страницу истории ресурса в порядке сервера. */
+export function getOnlineConfHistory(section: OnlineConfSection, scope: string, key: string, signal: AbortSignal, cursor?: string) {
+  if (!scope.trim() || !key.trim()) {
+    throw new ApiError(0, 'missing history resource');
+  }
+  const params = new URLSearchParams({ entity_type: section === 'configs' ? 'config' : 'flag', scope, key });
+  if (cursor) {
+    params.set('cursor', cursor);
+  }
+  return sendRequest<OnlineConfHistoryPage>(`/onlineconf/admin/history?${params}`, { signal, cache: 'no-store', redirect: 'error' });
 }
 
 function configItemPath({ scope, name }: OnlineConfConfigKey): string {

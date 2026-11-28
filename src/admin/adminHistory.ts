@@ -1,29 +1,38 @@
 import { requireElement } from '@/utils/helpers/dom.ts';
+import { ApiError } from '@/modules/api/apiError.ts';
+import { getOnlineConfHistory } from '@/modules/api/onlineConf.ts';
 import type { OnlineConfJsonValue, OnlineConfSection } from '@/modules/api/onlineConf.types.ts';
+import type { AdminScreen } from './admin.types.ts';
 import template from './adminHistory.hbs';
 import './adminHistory.css';
 
-export interface AdminHistoryResource {
+interface AdminHistoryResource {
   section: OnlineConfSection;
   scope: string;
   name: string;
-  id?: string;
 }
-
-export interface AdminHistoryEntry {
-  actor: string;
-  date: string;
-  changes: { field: string; before?: OnlineConfJsonValue; after?: OnlineConfJsonValue }[];
-}
-
-export type LoadAdminHistory = (resource: AdminHistoryResource, signal: AbortSignal) => Promise<AdminHistoryEntry[]>;
 
 const dateFormat = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
-const formatValue = (value: OnlineConfJsonValue | undefined) =>
-  value === undefined ? undefined : JSON.stringify(value, null, 2);
+function formatValue(value: OnlineConfJsonValue | undefined, encoded: boolean): string | undefined {
+  if (encoded && typeof value === 'string') {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return JSON.stringify(value);
+    }
+  }
+  return value === undefined ? undefined : JSON.stringify(value, null, 2);
+}
+
+function snapshot(value: OnlineConfJsonValue | undefined): Record<string, OnlineConfJsonValue> {
+  if (value === undefined) {
+    return {};
+  }
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? value : { value };
+}
 
 /** Подключает экран истории к контейнеру раздела. */
-export function initAdminHistory(root: HTMLElement, loadHistory?: LoadAdminHistory) {
+export function initAdminHistory(root: HTMLElement, onAccessLost: (screen: AdminScreen) => void) {
   let pending: AbortController | undefined;
 
   function close(): void {
@@ -41,39 +50,47 @@ export function initAdminHistory(root: HTMLElement, loadHistory?: LoadAdminHisto
     const status = requireElement<HTMLElement>(root, '[data-history-status]');
     const retry = requireElement<HTMLButtonElement>(root, '[data-history-retry]');
     const entriesRoot = requireElement<HTMLElement>(root, '[data-history-entries]');
+    const more = requireElement<HTMLButtonElement>(root, '[data-history-more]');
+    let cursor: string | undefined;
 
     async function load(): Promise<void> {
-      pending?.abort();
-      if (!loadHistory) {
-        status.textContent = 'История пока недоступна';
+      if (pending) {
         return;
       }
       const controller = new AbortController();
       pending = controller;
       retry.hidden = true;
-      entriesRoot.replaceChildren();
+      more.hidden = true;
       status.textContent = 'Загружаем историю…';
       try {
-        const entries = await loadHistory(resource, controller.signal);
+        const page = await getOnlineConfHistory(resource.section, resource.scope, resource.name, controller.signal, cursor);
         if (controller.signal.aborted) {
           return;
         }
-        status.textContent = entries.length ? '' : 'Изменений пока нет';
-        for (const { actor, date, changes } of entries) {
+        status.textContent = page.items.length || entriesRoot.childElementCount ? '' : 'Изменений пока нет';
+        for (const { actor_id, created_at, old_value, new_value, action } of page.items) {
           const entry = document.createElement('li');
           const author = document.createElement('strong');
           const time = document.createElement('time');
-          const parsedDate = new Date(date);
-          author.textContent = actor;
-          time.dateTime = date;
-          time.textContent = Number.isNaN(parsedDate.getTime()) ? date : dateFormat.format(parsedDate);
+          const parsedDate = new Date(created_at);
+          author.textContent = actor_id || 'Автор неизвестен';
+          time.dateTime = created_at;
+          time.textContent = Number.isNaN(parsedDate.getTime()) ? created_at : dateFormat.format(parsedDate);
           entry.append(author, time);
           const fields = document.createElement('dl');
-          for (const { field, before, after } of changes) {
+          const before = snapshot(old_value);
+          const after = snapshot(new_value);
+          for (const field of new Set([...Object.keys(before), ...Object.keys(after)])) {
+            const encoded = resource.section === 'configs' && field === 'value';
+            const oldText = formatValue(Object.hasOwn(before, field) ? before[field] : undefined, encoded);
+            const newText = formatValue(Object.hasOwn(after, field) ? after[field] : undefined, encoded);
+            if (oldText === newText) {
+              continue;
+            }
             const heading = document.createElement('dt');
             heading.textContent = field;
             fields.append(heading);
-            for (const [label, value] of [['До', formatValue(before)], ['После', formatValue(after)]]) {
+            for (const [label, value] of [['До', oldText], [action === 'create' ? 'Значение' : 'После', newText]]) {
               if (value === undefined) {
                 continue;
               }
@@ -87,10 +104,21 @@ export function initAdminHistory(root: HTMLElement, loadHistory?: LoadAdminHisto
           entry.append(fields);
           entriesRoot.append(entry);
         }
-      } catch {
-        if (!controller.signal.aborted) {
-          status.textContent = 'Не удалось загрузить историю';
-          retry.hidden = false;
+        cursor = page.cursor;
+        more.hidden = !cursor;
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        if (error instanceof ApiError && (error.isUnauthorized || error.status === 403)) {
+          onAccessLost(error.isUnauthorized ? 'guest' : 'forbidden');
+          return;
+        }
+        status.textContent = 'Не удалось загрузить историю';
+        retry.hidden = false;
+      } finally {
+        if (pending === controller) {
+          pending = undefined;
         }
       }
     }
@@ -103,6 +131,7 @@ export function initAdminHistory(root: HTMLElement, loadHistory?: LoadAdminHisto
       back.focus();
       void load();
     };
+    more.onclick = retry.onclick;
     back.focus();
     void load();
   }

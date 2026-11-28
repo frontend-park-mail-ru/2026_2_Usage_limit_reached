@@ -10,14 +10,12 @@ import listTemplate from './adminList.hbs';
 import { initAdminConfigForm } from './adminConfigForm.ts';
 import { renderFlagList } from './adminFlags.ts';
 import { initAdminHistory } from './adminHistory.ts';
-import type { LoadAdminHistory } from './adminHistory.ts';
 
 /**
  * @param root
  * @param onAccessLost
- * @param loadHistory
  */
-export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminScreen) => void, loadHistory?: LoadAdminHistory): () => void {
+export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminScreen) => void): () => void {
   const tabList = requireElement<HTMLElement>(root, '.admin__tabs');
   const panel = requireElement<HTMLElement>(root, '#onlineconf-panel');
   const scope = requireElement<HTMLSelectElement>(root, '#admin-scope');
@@ -30,7 +28,7 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
   let section: OnlineConfSection = ADMIN_LIST_TABS[0].value;
   let pending: AbortController | undefined;
   const configForm = initAdminConfigForm(configFormRoot, scope, () => void load(), onAccessLost);
-  const history = initAdminHistory(requireElement(panel, '#admin-history'), loadHistory);
+  const history = initAdminHistory(requireElement(panel, '#admin-history'), onAccessLost);
 
   async function load(): Promise<void> {
     history.close();
@@ -113,7 +111,7 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
     if (historyButton) {
       configForm.close();
       history.open({
-        section, scope: scope.value, name: historyButton.dataset.historyName ?? '', id: historyButton.dataset.historyId || undefined,
+        section, scope: scope.value, name: historyButton.dataset.historyName ?? '',
       }, historyButton);
       return;
     }

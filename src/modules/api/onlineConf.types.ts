@@ -51,3 +51,14 @@ export interface OnlineConfConfigKey {
 export interface OnlineConfConfig extends OnlineConfConfigKey {
   value: OnlineConfJsonValue;
 }
+
+export interface OnlineConfHistoryPage {
+  items: {
+    actor_id?: string;
+    action: string;
+    created_at: string;
+    old_value?: OnlineConfJsonValue;
+    new_value?: OnlineConfJsonValue;
+  }[];
+  cursor?: string;
+}
