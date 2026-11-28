@@ -14,16 +14,19 @@
       </button>
       <div class="feed__sort" data-public-sort></div>
       <form class="feed__filters" id="feed-filters" popover aria-label="Фильтры">
-        <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">
-          <span id="feed-attachments">Вложения</span>
-          <small id="feed-attachments-hint">Обложки постов не учитываются</small>
-          {{#each attachments}}
-            <label>
-              <input type="radio" name="attachment_type" value="{{value}}"{{#if selected}} checked{{/if}}>
-              {{label}}<span aria-hidden="true">✓</span>
-            </label>
-          {{/each}}
-        </div>
+        <details class="feed__attachment-section" open>
+          <summary>Вложения <span data-attachment-value></span></summary>
+          <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">
+            <span id="feed-attachments">Вложения</span>
+            <small id="feed-attachments-hint">Обложки постов не учитываются</small>
+            {{#each attachments}}
+              <label>
+                <input type="radio" name="attachment_type" value="{{value}}"{{#if selected}} checked{{/if}}>
+                {{label}}<span aria-hidden="true">✓</span>
+              </label>
+            {{/each}}
+          </div>
+        </details>
         <label class="feed__access-filter">
           Доступно мне
           <input type="checkbox" name="accessible_only" role="switch">
@@ -35,6 +38,12 @@
       </form>
     </div>
   </div>
+  <dialog class="feed__filter-sheet" id="feed-filter-sheet" aria-labelledby="feed-filter-title">
+    <header>
+      <h2 id="feed-filter-title">Фильтры</h2>
+      <button class="feed__filter-close" type="button" aria-label="Закрыть фильтры" autofocus></button>
+    </header>
+  </dialog>
   <div class="feed__topics" role="group" aria-label="Темы постов">
     <button class="button button_borderless" type="button" data-topic="" aria-pressed="true">Все темы</button>
     {{#each topics}}

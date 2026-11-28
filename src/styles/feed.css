@@ -145,6 +145,131 @@
   color: var(--color-text);
 }
 
+.feed__attachment-section > summary {
+  display: none;
+}
+
+.feed__filter-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--color-white);
+  color: var(--color-text);
+}
+
+html:has(.feed__filter-sheet[open]) {
+  overflow: hidden;
+}
+
+.feed__filter-sheet::backdrop {
+  background: rgb(32 35 54 / 30%);
+}
+
+.feed__filter-sheet header,
+.feed__filter-sheet summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.feed__filter-sheet h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.feed__filter-close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent url('/assets/modal/close.svg') center / 24px no-repeat;
+  cursor: pointer;
+}
+
+.feed__filter-sheet .feed__filters {
+  position: static;
+  position-area: none;
+  justify-self: stretch;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  margin: 10px 0 0;
+  padding: 0;
+  overflow: visible;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.feed__filter-sheet summary {
+  cursor: pointer;
+}
+
+.feed__filter-sheet summary span {
+  color: rgb(61 64 91 / 80%);
+  font-size: 14px;
+}
+
+.feed__filter-sheet summary span::after {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  background: url('/assets/profile/chevron.svg') center no-repeat;
+  vertical-align: middle;
+}
+
+.feed__filter-sheet details[open] summary span::after {
+  transform: rotate(180deg);
+}
+
+.feed__filter-sheet .feed__attachment-options > span {
+  display: none;
+}
+
+.feed__filter-sheet .feed__attachment-options {
+  padding-bottom: 8px;
+}
+
+.feed__filter-sheet .feed__attachment-options small {
+  margin: 0 0 4px;
+}
+
+.feed__filter-sheet .feed__attachment-options label + label {
+  margin-top: 0;
+}
+
+.feed__filter-sheet .feed__attachment-options label,
+.feed__filter-sheet .feed__filter-actions .button {
+  height: 44px;
+}
+
+.feed__filter-sheet .feed__access-filter {
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  font-weight: 400;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.feed__filter-sheet .feed__filter-actions {
+  margin-top: 10px;
+  padding: 0;
+}
+
 .feed__attachment-options > span {
   display: block;
   font-weight: 500;
@@ -188,6 +313,10 @@
 .feed__attachment-options label:hover,
 .feed__attachment-options label:has(:checked) {
   background: rgb(61 64 91 / 4%);
+}
+
+.feed__filter-sheet .feed__attachment-options label:has(:checked) {
+  background: rgb(61 64 91 / 8%);
 }
 
 .feed__attachment-options label:not(:has(:checked)) span {

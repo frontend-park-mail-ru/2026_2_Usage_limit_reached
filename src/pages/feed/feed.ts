@@ -40,14 +40,32 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const mobile = window.matchMedia('(max-width: 720px)');
   const title = requireElement(root, '#feed-title');
   const sort = requireElement(root, '[data-public-sort]');
-  const filterPanel = requireElement(root, '#feed-filters');
+  const panel = requireElement<HTMLFormElement>(root, '#feed-filters');
+  const filterButton = requireElement<HTMLButtonElement>(root, '[popovertarget="feed-filters"]');
+  const tools = requireElement(root, '.feed__tools');
+  const sheet = requireElement<HTMLDialogElement>(root, '#feed-filter-sheet');
+  const section = requireElement<HTMLDetailsElement>(panel, '.feed__attachment-section');
   const syncToolbar = () => {
     input.placeholder = mobile.matches ? 'Поиск' : 'Поиск по постам';
     const focused = document.activeElement;
     if (mobile.matches) {
       title.after(sort);
+      if (panel.matches(':popover-open')) {
+        panel.hidePopover();
+      }
+      panel.removeAttribute('popover');
+      filterButton.removeAttribute('popovertarget');
+      filterButton.setAttribute('aria-haspopup', 'dialog');
+      filterButton.setAttribute('aria-controls', sheet.id);
+      sheet.append(panel);
     } else {
-      filterPanel.before(sort);
+      sheet.close();
+      tools.append(sort, panel);
+      panel.setAttribute('popover', '');
+      filterButton.setAttribute('popovertarget', panel.id);
+      filterButton.removeAttribute('aria-haspopup');
+      filterButton.removeAttribute('aria-controls');
+      section.open = true;
     }
     if (focused instanceof HTMLElement && sort.contains(focused)) {
       focused.focus({ preventScroll: true });
@@ -77,19 +95,43 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     topics.forEach((button) => button.setAttribute('aria-pressed', String(button === topic)));
     posts.updateFilters({ tag: topic.dataset.topic || undefined });
   }, { signal }));
-  const filterButton = requireElement<HTMLButtonElement>(root, '[popovertarget="feed-filters"]');
-  const panel = requireElement<HTMLFormElement>(root, '#feed-filters');
   const attachment = panel.elements.namedItem('attachment_type') as RadioNodeList;
+  const attachmentValue = requireElement(panel, '[data-attachment-value]');
   const accessible = requireElement<HTMLInputElement>(panel, '[name="accessible_only"]');
   let appliedAttachment: FeedQuery['attachment_type'];
   let appliedAccessible = false;
+  const syncAttachmentValue = () => {
+    attachmentValue.textContent = ATTACHMENT_FILTERS.find(({ value }) => value === attachment.value)?.label ?? '';
+  };
+  const restoreFilters = () => {
+    panel.reset();
+    accessible.checked = appliedAccessible;
+    if (appliedAttachment) {
+      attachment.value = appliedAttachment;
+    }
+    syncAttachmentValue();
+  };
+  filterButton.addEventListener('click', () => {
+    if (mobile.matches) {
+      restoreFilters();
+      section.open = false;
+      sheet.showModal();
+      sheet.scrollTop = 0;
+    }
+  }, { signal });
+  requireElement(sheet, '.feed__filter-close').addEventListener('click', () => sheet.close(), { signal });
+  sheet.addEventListener('close', () => {
+    if (!sheet.open) {
+      filterButton.focus({ preventScroll: true });
+    }
+  }, { signal });
+  panel.addEventListener('change', syncAttachmentValue, { signal });
+  panel.addEventListener('reset', () => {
+    attachmentValue.textContent = ATTACHMENT_FILTERS[0].label;
+  }, { signal });
   panel.addEventListener('beforetoggle', (event) => {
     if (event.newState === 'open') {
-      panel.reset();
-      accessible.checked = appliedAccessible;
-      if (appliedAttachment) {
-        attachment.value = appliedAttachment;
-      }
+      restoreFilters();
     }
   }, { signal });
   panel.addEventListener('submit', (event) => {
@@ -98,7 +140,11 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     appliedAccessible = accessible.checked;
     filterButton.toggleAttribute('data-applied', Boolean(appliedAttachment) || appliedAccessible);
     posts.updateFilters({ attachment_type: appliedAttachment, accessible_only: appliedAccessible });
-    panel.hidePopover();
+    if (sheet.open) {
+      sheet.close();
+    } else {
+      panel.hidePopover();
+    }
   }, { signal });
   return () => {
     events.abort();
