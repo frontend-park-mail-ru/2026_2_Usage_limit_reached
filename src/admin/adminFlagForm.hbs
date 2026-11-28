@@ -14,6 +14,18 @@
       <input name="rollout_percent" value="{{rollout_percent}}" inputmode="numeric" aria-describedby="admin-flag-rollout-error" required>
     </label>
   </div>
+  <div class="admin__filters">
+    {{#each overrides}}
+      <fieldset class="admin__flag-override" data-override="{{key}}">
+        <legend>{{label}}</legend>
+        <label for="flag-{{key}}">ID пользователя</label>
+        <input id="flag-{{key}}" type="text" aria-describedby="flag-{{key}}-error">
+        <p class="admin__flag-error" id="flag-{{key}}-error" aria-live="polite" hidden></p>
+        <button class="button button_view_secondary" type="button" data-add-user>Добавить</button>
+        <ul class="admin__list"></ul>
+      </fieldset>
+    {{/each}}
+  </div>
   <p class="admin__flag-error" id="admin-flag-rollout-error" aria-live="polite" hidden></p>
   <p class="admin__flag-error" role="alert" data-flag-save-error hidden></p>
   <div class="admin__flag-actions">

@@ -3,11 +3,13 @@ import { ApiError } from '@/modules/api/apiError.ts';
 import { createOnlineConfFlag, updateOnlineConfFlagRollout } from '@/modules/api/onlineConf.ts';
 import type { OnlineConfListItem } from '@/modules/api/onlineConf.types.ts';
 import type { AdminScreen } from './admin.types.ts';
+import { bindFlagOverrides, FLAG_OVERRIDES } from './adminFlagOverrides.ts';
+import type { FlagOverrides } from './adminFlagOverrides.ts';
 import listTemplate from './adminFlags.hbs';
 import formTemplate from './adminFlagForm.hbs';
 import './adminFlags.css';
 
-interface FlagListItem extends OnlineConfListItem {
+interface FlagListItem extends OnlineConfListItem, FlagOverrides {
   id: string;
   rollout_percent: number;
 }
@@ -33,8 +35,9 @@ export function renderFlagList(
 
   function open(trigger: HTMLButtonElement, flag?: FlagListItem): void {
     list.hidden = true;
-    editor.innerHTML = formTemplate({ ...flag, editing: Boolean(flag) });
+    editor.innerHTML = formTemplate({ ...flag, editing: Boolean(flag), overrides: FLAG_OVERRIDES });
     const form = requireElement<HTMLFormElement>(editor, 'form');
+    const overrides = bindFlagOverrides(form, flag);
     const name = requireElement<HTMLInputElement>(form, '[name="name"]');
     const scopes = requireElement<HTMLSelectElement>(form, '[name="scope"]');
     const rollout = requireElement<HTMLInputElement>(form, '[name="rollout_percent"]');
@@ -69,8 +72,16 @@ export function renderFlagList(
         return;
       }
       validateRollout();
+      if (!overrides.validate()) {
+        return;
+      }
       name.setCustomValidity(name.value.trim() ? '' : 'Укажите имя флага');
       if (!form.reportValidity()) {
+        return;
+      }
+      if (overrides.changed()) {
+        saveError.textContent = 'Сохранение списков пока недоступно';
+        saveError.hidden = false;
         return;
       }
       const percent = Number(rollout.value);
@@ -83,6 +94,7 @@ export function renderFlagList(
         submit.disabled = cancel.disabled = rollout.disabled = saving;
         name.disabled = saving;
         scopes.disabled = saving || Boolean(flag);
+        overrides.setSaving(saving);
         submit.textContent = saving ? 'Сохраняем…' : label;
       };
       saveError.hidden = true;
