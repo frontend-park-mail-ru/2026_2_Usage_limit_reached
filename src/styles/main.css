@@ -32,42 +32,7 @@
 @import url('../components/postCard/postCard.css');
 @import url('../components/likeButton/likeButton.css');
 @import url('../components/donationCard/donationCard.css');
-
-@font-face {
-  font-family: 'Inter';
-  src: url('../assets/fonts/inter-variable.woff2') format('woff2');
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-}
-
-:root {
-  --color-primary: #e07a5f;
-  --color-background: #f4f1de;
-  --color-text: #3d405b;
-  --color-grey-9: #999999;
-  --color-grey-c: #cccccc;
-  --color-white: #ffffff;
-  --color-error: #b3261e;
-  --color-secondary: #81b29a;
-  --color-primary-hover: #c96a50;
-  --color-primary-pressed: #b35a45;
-  --color-secondary-button-hover: rgba(224, 122, 95, 0.06);
-  --color-secondary-button-pressed: rgba(224, 122, 95, 0.12);
-  --color-input-border: #e7e8eb;
-  --color-input-border-hover: #d1d1d8;
-  --color-input-placeholder: #9d9fac;
-  --color-toggle-hover-background: #f4f4f5;
-  --color-toggle-pressed-background: #fbefeb;
-}
-
-body {
-  margin: 0;
-  background: var(--color-background);
-  color: var(--color-text);
-  font-family: 'Inter', sans-serif;
-  font-optical-sizing: none;
-}
+@import url('./base.css');
 
 [data-loading-delay]:not([data-loading-visible]) {
   visibility: hidden;
