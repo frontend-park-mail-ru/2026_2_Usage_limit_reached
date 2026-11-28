@@ -2,7 +2,7 @@ import { ApiError } from '@/modules/api/request.ts';
 import type { Post, PostPreview, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
 import { sanitizeHtml } from '@/modules/sanitize/sanitize.ts';
 import type { PublicProfile } from '@/modules/api/profile.types.ts';
-import type { DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
+import type { Donation, DonationsDirection, DonationsPage } from '@/modules/api/donations.types.ts';
 import { accessOfflineCopy, captureOfflineToken, cleanOfflinePublications, hasOfflineStorageError, staleOfflinePublications } from './offline.storage.ts';
 import { isBackendUnavailable } from './offline.recovery.ts';
 import { clearUnavailablePreviews, copyOfflinePreview, getOfflineDeadline, revokedPreviewIds } from './offline.deadline.ts';
@@ -66,18 +66,30 @@ export function loadOfflinePost(id: string, load: () => Promise<Post>, isCurrent
     } : null, isCurrent, { canRead: canCache });
 }
 
+type LegacyDonation = Omit<Donation, 'created_at'> & { created_or_paid_at: string };
+type StoredDonationsPage = Omit<DonationsPage, 'items'> & { items: (Donation | LegacyDonation)[] };
+
+function normalizeDonation(item: Donation | LegacyDonation): Donation {
+  if ('created_at' in item) {
+    return item;
+  }
+  const { created_or_paid_at, ...donation } = item;
+  return { ...donation, created_at: created_or_paid_at };
+}
+
 /** Сохраняет историю владельца, исключая скрытые данные анонимного отправителя. */
-export function loadOfflineDonations(ownerId: string, direction: DonationsDirection, cursor: string | null,
+export async function loadOfflineDonations(ownerId: string, direction: DonationsDirection, cursor: string | null,
   load: () => Promise<DonationsPage>, isCurrent: () => boolean) {
-  return loadOfflinePage(['donations', ownerId, direction, cursor ?? ''], load, (page) => ({
+  const page = await loadOfflinePage<StoredDonationsPage>(['donations', ownerId, direction, cursor ?? ''], load, (page) => ({
     next_cursor: page.next_cursor,
-    items: page.items.map((item) => ({
+    items: page.items.map(normalizeDonation).map((item) => ({
       id: item.id, message: item.message, amount_minor: item.amount_minor, currency: item.currency,
-      status: item.status, created_or_paid_at: item.created_or_paid_at, is_anonymous: item.is_anonymous,
+      status: item.status, created_at: item.created_at, is_anonymous: item.is_anonymous,
       user: item.is_anonymous || !item.user ? null
         : { username: item.user.username, nickname: item.user.nickname, avatar_url: null },
     })),
   }), isCurrent, { ownerId });
+  return { ...page, items: page.items.map(normalizeDonation) };
 }
 
 /** Загружает данные из сети, при недоступности читает копию той же ревизии. */

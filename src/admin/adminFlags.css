@@ -1,0 +1,68 @@
+.admin__flag-create {
+  margin-bottom: 16px;
+}
+
+.admin__flag-list li > span {
+  display: inline-block;
+  margin: 0 12px 8px 0;
+}
+
+.admin__flag-form h2 {
+  margin-bottom: 16px;
+}
+
+.admin__panel:has(.admin__flag-form) > .admin__filters {
+  display: none;
+}
+
+.admin__flag-form .button,
+.admin__flag-list .button,
+.admin__flag-create {
+  width: auto;
+  min-height: 44px;
+}
+
+.admin__flag-error {
+  color: var(--color-error);
+}
+
+.admin__flag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin__flag-override {
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 12px;
+}
+
+.admin__flag-override > input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-block: 8px;
+}
+
+.admin__flag-override ul:not(:empty) {
+  margin-top: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.admin__flag-override .admin__flag-error {
+  margin: 0 0 8px;
+}
+
+.admin__flag-override li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin__flag-override li > span {
+  min-width: 0;
+}

@@ -4,6 +4,8 @@ import { request } from './request.ts';
 import type {
   OnlineConfConfig,
   OnlineConfConfigKey,
+  OnlineConfFlagInput,
+  OnlineConfFlagUpdate,
   OnlineConfJsonValue,
   OnlineConfListItem,
   OnlineConfListQuery,
@@ -70,3 +72,13 @@ export function updateOnlineConfConfig(
 ): Promise<OnlineConfConfig> {
   return request(configItemPath(key), { method: 'PATCH', data: { value }, signal });
 }
+
+/** Создаёт флаг в выбранном скоупе. */
+export const createOnlineConfFlag = (data: OnlineConfFlagInput, signal: AbortSignal) =>
+  request<void>('/onlineconf/admin/flags', { method: 'POST', data, signal, responseType: 'empty' });
+
+/** Обновляет изменённые поля флага. */
+export const updateOnlineConfFlag = (id: string, data: OnlineConfFlagUpdate, signal: AbortSignal) =>
+  request<void>(`/onlineconf/admin/flags/${encodeURIComponent(id)}`, {
+    method: 'PATCH', data, signal, responseType: 'empty',
+  });

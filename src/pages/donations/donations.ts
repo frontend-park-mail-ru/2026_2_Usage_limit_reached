@@ -34,8 +34,8 @@ function buildCard(donation: Donation) {
   return {
     id: donation.id,
     name: donation.is_anonymous || !donation.user ? ANONYMOUS_DONOR : donation.user.nickname,
-    paidAt: donation.created_or_paid_at,
-    dateLabel: formatPostDate(donation.created_or_paid_at),
+    createdAt: donation.created_at,
+    dateLabel: formatPostDate(donation.created_at),
     amountLabel: formatMoney(donation.amount_minor, donation.currency),
     message: donation.message ?? '',
   };
@@ -86,7 +86,7 @@ function bindMessageDialog(root: HTMLElement, list: HTMLElement, donations: Map<
     const card = buildCard(donation);
     requireElement(dialog, '[data-message-name]').textContent = card.name;
     const date = requireElement<HTMLTimeElement>(dialog, '[data-message-date]');
-    date.dateTime = card.paidAt;
+    date.dateTime = card.createdAt;
     date.textContent = card.dateLabel;
     requireElement(dialog, '[data-message-amount]').textContent = card.amountLabel;
     requireElement(dialog, '[data-message-text]').textContent = card.message;
