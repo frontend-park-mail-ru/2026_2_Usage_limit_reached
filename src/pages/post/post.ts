@@ -14,7 +14,9 @@ import {
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { loadOfflinePost } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery, watchOfflineExpiry } from '@/modules/offline/offline.recovery.ts';
+import { getOfflineDeadline } from '@/modules/offline/offline.deadline.ts';
+import { expireOfflinePublications } from '@/modules/offline/offline.storage.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
@@ -247,6 +249,20 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   let busy = false;
   let recoverAfterLoad = false;
   let donateDialog: DonateDialog | undefined;
+  let offlinePost: Post | undefined;
+  const expiry = watchOfflineExpiry(() => {
+    if (!offlinePost) {
+      return undefined;
+    }
+    const deadline = getOfflineDeadline(offlinePost.offline_cache_until);
+    if (deadline === undefined) {
+      offlinePost = undefined;
+      root.innerHTML = postTemplate({ message: LOAD_ERROR, isError: true });
+      bindBackLink(root);
+      void expireOfflinePublications(() => active);
+    }
+    return deadline;
+  });
   const sessionKey = () => {
     const { status, user } = authStore.getState();
     return status + (user?.id ?? '');
@@ -254,6 +270,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
   const load = async () => {
     const id = ++request;
+    offlinePost = undefined;
     busy = true;
     setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
@@ -375,6 +392,8 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
             : 'Содержимое поста недоступно без интернета';
           body.append(message);
         }
+        offlinePost = post;
+        expiry.refresh();
         return;
       }
       disposeBody = bindPostAttachments(body, post.attachments ?? []);
@@ -427,6 +446,9 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       accessAction.removeAttribute('href');
     }
     setRefreshNotice({ pending: busy }, () => { void load(); });
+    if (!busy && disposeBody) {
+      void load();
+    }
   };
   window.addEventListener('offline', handleOffline);
   void load();
@@ -435,6 +457,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     active = false;
     cancelLoading(root);
     unbindRecovery();
+    expiry.destroy();
     window.removeEventListener('offline', handleOffline);
     unsubscribe();
     unbindAvatarFallback();
