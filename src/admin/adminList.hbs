@@ -1,7 +1,17 @@
 {{#if items}}
   <ul class="admin__list">
     {{#each items}}
-      <li>{{name}}</li>
+      <li{{#if ../editable}} class="admin__config-row"{{/if}}>
+        <span>{{name}}</span>
+        {{#if ../editable}}
+          <button
+            class="button button_view_secondary"
+            type="button"
+            data-edit-config="{{name}}"
+            aria-label="Редактировать конфиг {{name}}"
+          >Редактировать</button>
+        {{/if}}
+      </li>
     {{/each}}
   </ul>
 {{else}}
