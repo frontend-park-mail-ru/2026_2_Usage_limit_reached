@@ -12,6 +12,9 @@ import type { FormValues } from '@/modules/validation/validation.types.ts';
 import { RichEditor } from '@/components/richEditor/richEditor.ts';
 import { LinkDialog } from '@/components/linkDialog/linkDialog.ts';
 import { bindAttachments } from './postAttachments.ts';
+import { bindPostCover } from './postCover.ts';
+import { bindPostAccess } from './postAccess.ts';
+import { bindPublicationEnd } from './publicationEnd.ts';
 import { Modal } from '@/components/modal/modal.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import { showToast } from '@/components/toast/toast.ts';
@@ -125,17 +128,51 @@ function getErrorText(err: ApiError): string {
  * @param loaded
  * @param navigate
  * @param context
- * @param signal
+ * @param pageSignal
  */
-function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, signal: AbortSignal): void {
+function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, context: SessionContext, pageSignal: AbortSignal): void {
+  const binding = new AbortController();
+  const signal = AbortSignal.any([pageSignal, binding.signal]);
   const form = requireElement<HTMLFormElement>(root, '#post-editor-form');
   const titleInput = requireElement<HTMLInputElement>(form, '[name="title"]');
   const statusLine = requireElement<HTMLElement>(form, '[data-editor-status]');
   const alert = requireElement<HTMLElement>(form, '[data-alert]');
+  const refreshPost = requireElement<HTMLButtonElement>(form, '[data-refresh-post]');
+  const attachmentsAlert = requireElement<HTMLElement>(form, '.post-editor__attachments-alert');
   const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-intent]')];
   const linkDialog = new LinkDialog(requireElement<HTMLDialogElement>(root, '.link-dialog'));
   const editor = new RichEditor(requireElement<HTMLElement>(form, '.rich-editor'), linkDialog);
-  bindAttachments(form, editor, context, signal);
+  const cover = bindPostCover(form, loaded?.cover_url ?? null, context, signal, () => updateStatus());
+  const access = bindPostAccess(form, loaded, context, signal);
+  const publicationEnd = bindPublicationEnd(form, loaded?.publication_ends_at ?? null, signal);
+  const showAttachmentErrors = (): boolean => {
+    const unfinished = getUnfinished();
+    setAlert(attachmentsAlert, unfinished.length
+      ? `Дождитесь загрузки или уберите файлы с ошибкой. ${unfinished.join(', ')}` : null);
+    return unfinished.length > 0;
+  };
+  const refreshAttachmentErrors = () => {
+    if (!attachmentsAlert.hidden) {
+      showAttachmentErrors();
+    }
+  };
+  const { getUnfinished, restoreCard } = bindAttachments(form, editor, context, signal, loaded?.attachments ?? [], () => {
+    refreshAttachmentErrors();
+    updateStatus();
+  });
+  form.addEventListener('input', refreshAttachmentErrors, { signal });
+  form.addEventListener('submit', (event) => {
+    const hasAttachmentErrors = showAttachmentErrors();
+    if (hasAttachmentErrors || cover.isUploading()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (hasAttachmentErrors) {
+        attachmentsAlert.scrollIntoView({ block: 'nearest' });
+      } else {
+        cover.reveal();
+      }
+    }
+  }, { capture: true, signal });
   signal.addEventListener('abort', () => editor.destroy(), { once: true });
   const mode = getMode(loaded);
   const returnTo = loaded ? getPostReturnPath(ROUTES.profile) : ROUTES.profile;
@@ -144,14 +181,16 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
   let leave: (() => void) | null = null;
   let isSaving = false;
 
-  editor.setValue(loaded?.body ?? '');
+  editor.setValue(loaded?.body ?? '', restoreCard);
   let saved: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
 
   const leaveModal = new Modal(requireElement<HTMLDialogElement>(root, '.post-editor__leave'), () => {
     leave = null;
   });
 
-  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body;
+  const isDirty = () => titleInput.value !== saved.title || editor.getHtml() !== saved.body
+    || getUnfinished().length > 0 || cover.hasChanges() || access.getChange() !== undefined
+    || access.hasScheduleChanges() || publicationEnd.hasChanges();
 
   const updateStatus = () => {
     statusLine.textContent = isDirty() ? DIRTY_STATUS : CLEAN_STATUS[mode];
@@ -159,23 +198,43 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
 
   const setBusy = (busy: boolean) => {
     isSaving = busy;
+    form.inert = busy;
     for (const button of buttons) {
-      button.disabled = busy || !isSessionCurrent(context);
+      button.disabled = busy || !refreshPost.hidden || !isSessionCurrent(context);
     }
   };
 
   const submit = async (values: FormValues) => {
-    if (isSaving || !isSessionCurrent(context)) {
+    if (!refreshPost.hidden) {
+      alert.scrollIntoView({ block: 'nearest' });
       return;
     }
-    const body = editor.getHtml();
+    if (isSaving || !isSessionCurrent(context) || !publicationEnd.validate()
+      || access.needsSelection() || access.finishStageBeforeSaving()) {
+      return;
+    }
+    const end = publicationEnd.getChange();
+    const effectiveEnd = end === undefined ? publicationEnd.getSavedEnd() : end;
+    if (access.needsScheduleFix(effectiveEnd)) {
+      return;
+    }
+    const snapshot: EditorSnapshot = { title: titleInput.value, body: editor.getHtml() };
     const status = getTargetStatus(mode, intent);
     const action = intent;
     const afterSave = leave;
     leave = null;
     setBusy(true);
     setAlert(alert, null);
-    const data = { title: values.title.trim(), body: values.body, status };
+    const coverId = cover.getCoverId();
+    const tierId = access.getChange();
+    const schedule = access.scheduleChange();
+    const data = {
+      title: values.title.trim(), body: values.body, status,
+      ...(coverId === undefined ? {} : { cover_id: coverId }),
+      ...(tierId === undefined ? {} : { min_tier_id: tierId }),
+      ...(schedule === undefined ? {} : { access_schedule: schedule }),
+      ...(end === undefined ? {} : { publication_ends_at: end }),
+    };
     try {
       const save = async () => {
         if (post) {
@@ -190,7 +249,10 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (!form.isConnected || !id) {
         return;
       }
-      saved = { title: titleInput.value, body };
+      saved = snapshot;
+      cover.markSaved();
+      access.markSaved();
+      publicationEnd.markSaved(end);
       showToast(getSavedMessage(status, action));
       if (afterSave) {
         afterSave();
@@ -212,6 +274,26 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       if (err.isUnauthorized) {
         return;
       }
+      if (err.status === 400 && err.code === 'invalid_publication_end') {
+        publicationEnd.showError('Проверьте дату и время завершения или уберите дату');
+        return;
+      }
+      if (err.status === 400 && err.code === 'invalid_access_schedule') {
+        access.rejectSchedule(false);
+        return;
+      }
+      if ((tierId || schedule) && ((err.status === 400 && err.code === 'invalid_min_tier')
+        || (err.status === 409 && err.code === 'post_tier_archived'))) {
+        if (schedule) {
+          access.rejectSchedule(true);
+        } else if (tierId) {
+          access.rejectTier(tierId);
+        }
+        return;
+      }
+      if (post && err.status === 409 && !err.isCsrfError && !err.isMutationTimeout && err.code !== 'post_tier_archived') {
+        refreshPost.hidden = false;
+      }
       setAlert(alert, getErrorText(err), getErrorTitle(status, action));
       alert.scrollIntoView({ block: 'nearest' });
     } finally {
@@ -220,6 +302,30 @@ function bindEditor(root: HTMLElement, loaded: Post | null, navigate: Navigate, 
       }
     }
   };
+
+  refreshPost.addEventListener('click', async () => {
+    if (!post || isSaving || !isSessionCurrent(context)) {
+      return;
+    }
+    const { id } = post;
+    setBusy(true);
+    try {
+      const fresh = await runSessionRequest(context, () => getPost(id));
+      if (!signal.aborted && fresh?.author.id === context.userId) {
+        binding.abort();
+        root.innerHTML = postEditorTemplate(buildViewModel(fresh));
+        bindEditor(root, fresh, navigate, context, pageSignal);
+      }
+    } catch {
+      if (!signal.aborted && isSessionCurrent(context)) {
+        setAlert(alert, 'Попробуйте ещё раз. После обновления несохранённые изменения будут потеряны', 'Не удалось обновить пост');
+      }
+    } finally {
+      if (!signal.aborted) {
+        setBusy(false);
+      }
+    }
+  }, { signal });
 
   for (const button of buttons) {
     button.addEventListener('click', () => {
