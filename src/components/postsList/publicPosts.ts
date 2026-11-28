@@ -6,10 +6,13 @@ import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
 import type { PostPreview, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
 import type { OfflinePostsPage } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery, isBackendUnavailable, watchOfflineExpiry } from '@/modules/offline/offline.recovery.ts';
+import { getOfflineDeadline } from '@/modules/offline/offline.deadline.ts';
+import { expireOfflinePublications } from '@/modules/offline/offline.storage.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
+import { bindPostCardCovers } from '@/components/postCard/bindPostCardCovers.ts';
 import { LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList.constants.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 
@@ -22,6 +25,7 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
  * @param offlineEnabled
  * @param readOnly
  * @param setRefreshNotice
+ * @param onlineOnly Текущая выдача доступна только онлайн.
  */
 export function bindPublicPosts(
   root: HTMLElement,
@@ -31,8 +35,10 @@ export function bindPublicPosts(
   offlineEnabled = feed,
   readOnly = false,
   setRefreshNotice: SetRefreshNotice = () => {},
+  onlineOnly = () => false,
 ) {
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
+  const unbindCovers = bindPostCardCovers(panel);
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
   const options = POST_SORT_OPTIONS.map((option) => ({ ...option, selected: option.value === 'new' }));
   sortRoot.innerHTML = sortMenuTemplate({ id: feed ? 'feed-sort' : 'public-profile-sort', currentLabel: options[0].label, options });
@@ -45,6 +51,27 @@ export function bindPublicPosts(
   let unavailable = false;
   let recoverAfterLoad = false;
   let retryAction: (() => void) | undefined;
+  const expiry = watchOfflineExpiry(() => {
+    if (!offline) {
+      return undefined;
+    }
+    let next = Infinity;
+    let expired = false;
+    panel.querySelectorAll<HTMLElement>('[data-offline-preview]').forEach((element) => {
+      const deadline = getOfflineDeadline(element.dataset.offlinePreview);
+      if (deadline === undefined) {
+        element.textContent = '';
+        delete element.dataset.offlinePreview;
+        expired = true;
+      } else {
+        next = Math.min(next, deadline);
+      }
+    });
+    if (expired) {
+      void expireOfflinePublications(() => active);
+    }
+    return Number.isFinite(next) ? next : undefined;
+  });
 
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((entry) => entry.isIntersecting)) {
@@ -53,7 +80,7 @@ export function bindPublicPosts(
   }, { rootMargin: '200px' });
 
   async function load(append = false): Promise<void> {
-    if (!active || (append && (busy || !cursor))) {
+    if (!active || (append && (busy || cursor === null))) {
       return;
     }
     const id = ++request;
@@ -70,6 +97,10 @@ export function bindPublicPosts(
       panel.innerHTML = postsListTemplate({ message: LIST_LOADING_MESSAGE });
     }
     const moreText = panel.querySelector<HTMLElement>('[data-posts-more-text]');
+    const moreRetry = panel.querySelector<HTMLButtonElement>('[data-feed-retry]');
+    if (moreRetry) {
+      moreRetry.hidden = true;
+    }
     const stopLoading = moreText ? setLoadingText(moreText, LIST_LOADING_MESSAGE) : startLoading(panel);
     try {
       const page = await loadPage({ sort, cursor: next }, () => active && id === request);
@@ -84,6 +115,7 @@ export function bindPublicPosts(
       }
       const cards = page.items.map((item) => ({
         ...buildPostCard(item),
+        offlineDeadline: item.body_preview ? item.offline_cache_until ?? 'invalid' : undefined,
         hasLikesCount: item.hasLikesCount ?? item.likes_count !== undefined,
         locked: item.locked,
         offline,
@@ -104,8 +136,12 @@ export function bindPublicPosts(
           moreText.textContent = '';
         }
       } else {
+        const isEmpty = cards.length === 0 && cursor === null;
+        const filteredEmpty = isEmpty && onlineOnly();
         panel.innerHTML = postsListTemplate({
-          publicProfile: !feed, feed, cards, isEmpty: cards.length === 0 && !cursor, hasMore: !!cursor,
+          publicProfile: !feed, feed, cards, isEmpty, hasMore: cursor !== null,
+          feedStatus: filteredEmpty ? 'Посты не найдены' : undefined,
+          feedStatusDetail: filteredEmpty ? 'Попробуйте изменить запрос, тему или фильтры' : undefined,
         });
       }
       if (!offline && bindLike && cards.length > 0) {
@@ -117,11 +153,12 @@ export function bindPublicPosts(
           }
         });
       }
+      expiry.refresh();
       const more = panel.querySelector<HTMLElement>('[data-posts-more]');
       retryAction = offline ? () => { void load(); } : undefined;
       if (more) {
-        more.hidden = !cursor;
-        if (cursor) {
+        more.hidden = cursor === null;
+        if (cursor !== null) {
           observer.observe(more);
         }
       }
@@ -129,18 +166,30 @@ export function bindPublicPosts(
       if (!active || id !== request) {
         return;
       }
-      offline ||= offlineEnabled && isBackendUnavailable(error);
-      unavailable = isBackendUnavailable(error);
+      unavailable = isBackendUnavailable(error) && (!onlineOnly() || !navigator.onLine);
+      offline ||= !onlineOnly() && offlineEnabled && unavailable;
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+        expiry.refresh();
       }
+      const filteredOffline = onlineOnly() && !navigator.onLine;
       const message = append ? 'Не удалось загрузить ещё публикации' : 'Не удалось загрузить публикации';
       if (moreText) {
         moreText.textContent = message;
       } else {
-        panel.innerHTML = postsListTemplate({ message, isError: true });
+        panel.innerHTML = postsListTemplate(feed ? {
+          feedStatus: filteredOffline ? 'Результаты недоступны без интернета' : 'Не удалось загрузить посты',
+          feedStatusDetail: onlineOnly() && !filteredOffline ? 'Запрос и фильтры сохранены' : undefined,
+          isError: true,
+        } : { message, isError: true });
       }
-      retryAction = () => { void load(append && !offline); };
+      const retry = () => { void load(append && (feed || !offline)); };
+      const button = panel.querySelector<HTMLButtonElement>('[data-feed-retry]');
+      if (button) {
+        button.hidden = false;
+        button.onclick = retry;
+      }
+      retryAction = button ? undefined : retry;
     } finally {
       stopLoading();
       if (id === request) {
@@ -172,9 +221,14 @@ export function bindPublicPosts(
   }, () => offlineEnabled && active && unavailable);
   const handleOffline = () => {
     if (offlineEnabled && active) {
+      if (onlineOnly()) {
+        void load();
+        return;
+      }
       unavailable = true;
       offline = true;
       panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
+      expiry.refresh();
       if (!busy) {
         void load();
       }
@@ -190,6 +244,8 @@ export function bindPublicPosts(
       setRefreshNotice(null);
       window.removeEventListener('offline', handleOffline);
       unbindRecovery();
+      expiry.destroy();
+      unbindCovers();
       observer.disconnect();
       sortMenu.destroy();
     },
