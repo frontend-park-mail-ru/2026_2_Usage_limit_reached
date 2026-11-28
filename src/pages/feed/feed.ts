@@ -1,5 +1,6 @@
 import feedTemplate from './feed.hbs';
 import { getFeed, getFeedSettings } from '@/modules/api/posts.ts';
+import { ApiError } from '@/modules/api/request.ts';
 import { checkSession, getSessionVersion } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { bindLikedPosts } from '@/components/postsList/bindLikedPosts.ts';
@@ -9,7 +10,7 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
 import type { RouteParams } from '@/app/router.types.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { PROFILE_CATEGORIES } from '@/pages/settings/settings.constants.ts';
-import type { FeedQuery } from '@/modules/api/posts.types.ts';
+import type { FeedQuery, PostsPage } from '@/modules/api/posts.types.ts';
 
 const ATTACHMENT_FILTERS = [
   { value: '', label: 'Все посты', selected: true },
@@ -33,7 +34,18 @@ export function renderFeed(): string {
  */
 export function initFeed(root: HTMLElement, navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
   const unbindAvatarFallback = bindAvatarFallback(root);
-  const posts = bindLikedPosts(root, getFeed, navigate, true, undefined, false, setRefreshNotice);
+  const posts = bindLikedPosts(root, async (query, isCurrent): Promise<PostsPage> => {
+    try {
+      return await getFeed(query);
+    } catch (error) {
+      if (isCurrent() && (query.attachment_type || query.accessible_only)
+        && error instanceof ApiError && error.status === 403 && error.code === 'feed_advanced_filters_disabled') {
+        refreshSettings();
+        posts.updateFilters({ attachment_type: undefined, accessible_only: false });
+      }
+      throw error;
+    }
+  }, navigate, true, undefined, false, setRefreshNotice);
   const form = requireElement<HTMLFormElement>(root, '[data-feed-search]');
   const input = requireElement<HTMLInputElement>(form, '[name="q"]');
   const clear = requireElement<HTMLButtonElement>(form, '[type="reset"]');
@@ -129,13 +141,8 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   };
   let settingsRequest: AbortController | undefined;
   let settingsSession = '';
-  const syncSettings = () => {
-    const { status, user } = authStore.getState();
-    const session = JSON.stringify([status, user?.id, status === 'guest' ? null : getSessionVersion()]);
-    if (settingsSession === session) {
-      return;
-    }
-    settingsSession = session;
+  const refreshSettings = () => {
+    const { status } = authStore.getState();
     settingsRequest?.abort();
     const controller = new AbortController();
     settingsRequest = controller;
@@ -163,6 +170,14 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
       accessFilter.hidden = section.hidden || settings?.accessible_only_supported !== true;
     };
     void load();
+  };
+  const syncSettings = () => {
+    const { status, user } = authStore.getState();
+    const session = JSON.stringify([status, user?.id, status === 'guest' ? null : getSessionVersion()]);
+    if (settingsSession !== session) {
+      settingsSession = session;
+      refreshSettings();
+    }
   };
   const unsubscribeSettings = authStore.subscribe(syncSettings);
   syncSettings();

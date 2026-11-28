@@ -25,7 +25,7 @@ export type FeedFilters = Omit<FeedQuery, keyof PostsQuery>;
  */
 export function bindLikedPosts(
   root: HTMLElement,
-  loadPage: (query: FeedQuery) => Promise<PostsPage>,
+  loadPage: (query: FeedQuery, isCurrent: () => boolean) => Promise<PostsPage>,
   navigate: Navigate,
   feed = false,
   offlineProfile?: string,
@@ -53,7 +53,7 @@ export function bindLikedPosts(
     if (!current()) {
       return { items: [], next_cursor: null };
     }
-    const load = () => loadPage({ ...query, ...selection });
+    const load = () => loadPage({ ...query, ...selection }, current);
     if (!offlineEnabled) {
       return load();
     }
