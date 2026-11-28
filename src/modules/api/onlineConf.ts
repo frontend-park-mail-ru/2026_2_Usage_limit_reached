@@ -2,6 +2,8 @@ import { ApiError } from './apiError.ts';
 import { sendRequest } from './http.ts';
 import { request } from './request.ts';
 import type {
+  OnlineConfFlagInput,
+  OnlineConfFlagUpdate,
   OnlineConfListItem,
   OnlineConfListQuery,
   OnlineConfListResponse,
@@ -46,11 +48,11 @@ export function getOnlineConfList(
 }
 
 /** Создаёт флаг в выбранном скоупе. */
-export const createOnlineConfFlag = (data: { scope: string; name: string; rollout_percent: number }, signal: AbortSignal) =>
+export const createOnlineConfFlag = (data: OnlineConfFlagInput, signal: AbortSignal) =>
   request<void>('/onlineconf/admin/flags', { method: 'POST', data, signal, responseType: 'empty' });
 
-/** Обновляет процент раскатки флага. */
-export const updateOnlineConfFlagRollout = (id: string, rollout_percent: number, signal: AbortSignal) =>
+/** Обновляет изменённые поля флага. */
+export const updateOnlineConfFlag = (id: string, data: OnlineConfFlagUpdate, signal: AbortSignal) =>
   request<void>(`/onlineconf/admin/flags/${encodeURIComponent(id)}`, {
-    method: 'PATCH', data: { rollout_percent }, signal, responseType: 'empty',
+    method: 'PATCH', data, signal, responseType: 'empty',
   });

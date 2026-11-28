@@ -1,20 +1,14 @@
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { ApiError } from '@/modules/api/apiError.ts';
-import { createOnlineConfFlag, updateOnlineConfFlagRollout } from '@/modules/api/onlineConf.ts';
-import type { OnlineConfListItem } from '@/modules/api/onlineConf.types.ts';
+import { createOnlineConfFlag, updateOnlineConfFlag } from '@/modules/api/onlineConf.ts';
+import type { OnlineConfFlag, OnlineConfFlagUpdate, OnlineConfListItem } from '@/modules/api/onlineConf.types.ts';
 import type { AdminScreen } from './admin.types.ts';
 import { bindFlagOverrides, FLAG_OVERRIDES } from './adminFlagOverrides.ts';
-import type { FlagOverrides } from './adminFlagOverrides.ts';
 import listTemplate from './adminFlags.hbs';
 import formTemplate from './adminFlagForm.hbs';
 import './adminFlags.css';
 
-interface FlagListItem extends OnlineConfListItem, FlagOverrides {
-  id: string;
-  rollout_percent: number;
-}
-
-function isFlag(item: OnlineConfListItem): item is FlagListItem {
+function isFlag(item: OnlineConfListItem): item is OnlineConfFlag {
   return 'id' in item && typeof item.id === 'string' && item.id !== ''
     && 'rollout_percent' in item && typeof item.rollout_percent === 'number';
 }
@@ -33,7 +27,7 @@ export function renderFlagList(
   const list = requireElement<HTMLElement>(root, '[data-flag-list]');
   const editor = requireElement<HTMLElement>(root, '[data-flag-editor]');
 
-  function open(trigger: HTMLButtonElement, flag?: FlagListItem): void {
+  function open(trigger: HTMLButtonElement, flag?: OnlineConfFlag): void {
     list.hidden = true;
     editor.innerHTML = formTemplate({ ...flag, editing: Boolean(flag), overrides: FLAG_OVERRIDES });
     const form = requireElement<HTMLFormElement>(editor, 'form');
@@ -79,13 +73,12 @@ export function renderFlagList(
       if (!form.reportValidity()) {
         return;
       }
-      if (overrides.changed()) {
-        saveError.textContent = 'Сохранение списков пока недоступно';
-        saveError.hidden = false;
-        return;
-      }
       const percent = Number(rollout.value);
-      if (flag?.rollout_percent === percent) {
+      const data: OnlineConfFlagUpdate = overrides.values(Boolean(flag));
+      if (flag?.rollout_percent !== percent) {
+        data.rollout_percent = percent;
+      }
+      if (flag && Object.keys(data).length === 0) {
         close();
         return;
       }
@@ -102,9 +95,9 @@ export function renderFlagList(
       lockTabs(true);
       try {
         if (flag) {
-          await updateOnlineConfFlagRollout(flag.id, percent, signal);
+          await updateOnlineConfFlag(flag.id, data, signal);
         } else {
-          await createOnlineConfFlag({ scope: scopes.value, name: name.value.trim(), rollout_percent: percent }, signal);
+          await createOnlineConfFlag({ ...data, scope: scopes.value, name: name.value.trim(), rollout_percent: percent }, signal);
         }
         if (current()) {
           await reload();

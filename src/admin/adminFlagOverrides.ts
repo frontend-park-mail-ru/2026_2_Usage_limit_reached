@@ -1,15 +1,13 @@
 import { requireElement } from '@/utils/helpers/dom.ts';
+import type { OnlineConfFlagOverrides } from '@/modules/api/onlineConf.types.ts';
 
 export const FLAG_OVERRIDES = [
   { key: 'include_user_ids', label: 'Включить принудительно' },
   { key: 'exclude_user_ids', label: 'Исключить из раскатки' },
 ] as const;
 
-type OverrideKey = typeof FLAG_OVERRIDES[number]['key'];
-export type FlagOverrides = Partial<Record<OverrideKey, string[]>>;
-
 /** Подключает поля ID к форме флага. */
-export function bindFlagOverrides(form: HTMLFormElement, initial: FlagOverrides = {}) {
+export function bindFlagOverrides(form: HTMLFormElement, initial: OnlineConfFlagOverrides = {}) {
   const fields = FLAG_OVERRIDES.map(({ key }) => {
     const group = requireElement<HTMLFieldSetElement>(form, `[data-override="${key}"]`);
     const ids = new Set(initial[key]);
@@ -92,10 +90,16 @@ export function bindFlagOverrides(form: HTMLFormElement, initial: FlagOverrides 
       invalid?.input.focus();
       return !invalid;
     },
-    changed: () => fields.some(({ key, ids }) => {
-      const saved = initial[key] ?? [];
-      return ids.size !== saved.length || !saved.every((id) => ids.has(id));
-    }),
+    values: (changedOnly: boolean): OnlineConfFlagOverrides => {
+      const result: OnlineConfFlagOverrides = {};
+      for (const { key, ids } of fields) {
+        const saved = initial[key] ?? [];
+        if (!changedOnly || ids.size !== saved.length || !saved.every((id) => ids.has(id))) {
+          result[key] = [...ids];
+        }
+      }
+      return result;
+    },
     setSaving: (saving: boolean) => fields.forEach(({ group }) => { group.disabled = saving; }),
   };
 }
