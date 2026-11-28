@@ -7,6 +7,7 @@ import { requireElement } from '@/utils/helpers/dom.ts';
 import { ADMIN_LIST_MESSAGES, ADMIN_LIST_TABS } from './admin.constants.ts';
 import type { AdminScreen } from './admin.types.ts';
 import listTemplate from './adminList.hbs';
+import { renderFlagList } from './adminFlags.ts';
 
 /**
  * @param root
@@ -45,7 +46,11 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
       }
       const response = await getOnlineConfList(section, { scope: scope.value, q: search.value }, signal);
       if (!signal.aborted) {
-        results.innerHTML = listTemplate(response);
+        if (section === 'flags') {
+          renderFlagList(results, response.items, scope);
+        } else {
+          results.innerHTML = listTemplate(response);
+        }
       }
     } catch (error) {
       if (signal.aborted) {

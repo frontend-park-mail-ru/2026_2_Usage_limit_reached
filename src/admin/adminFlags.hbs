@@ -1,0 +1,18 @@
+<div data-flag-list>
+  <button class="button button_view_secondary admin__flag-create" type="button" data-flag-create>Создать флаг</button>
+  {{#if items}}
+    <ul class="admin__list admin__flag-list">
+      {{#each items}}
+        <li>
+          <span>{{name}}{{#if editable}} · {{rollout_percent}}%{{/if}}</span>
+          {{#if editable}}
+            <button class="button button_view_secondary" type="button" data-flag-edit="{{@index}}">Редактировать</button>
+          {{/if}}
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <p class="admin__list-message">Ничего не найдено</p>
+  {{/if}}
+</div>
+<div data-flag-editor></div>

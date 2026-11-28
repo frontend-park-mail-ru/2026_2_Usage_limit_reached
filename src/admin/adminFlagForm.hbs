@@ -1,0 +1,19 @@
+<form class="admin__flag-form" aria-labelledby="admin-flag-heading" novalidate>
+  <h2 id="admin-flag-heading">{{#if editing}}Редактирование флага{{else}}Создание флага{{/if}}</h2>
+  <div class="admin__filters">
+    <label>
+      Имя
+      <input name="name" value="{{name}}" required{{#if editing}} readonly{{/if}}>
+    </label>
+    <label>
+      Скоуп
+      <select name="scope" required{{#if editing}} disabled{{/if}}></select>
+    </label>
+    <label>
+      Процент раскатки
+      <input name="rollout_percent" value="{{rollout_percent}}" inputmode="numeric" aria-describedby="admin-flag-rollout-error" required>
+    </label>
+  </div>
+  <p class="admin__flag-error" id="admin-flag-rollout-error" aria-live="polite" hidden></p>
+  <button class="button button_view_secondary" type="button" data-flag-cancel>Отмена</button>
+</form>

@@ -1,0 +1,27 @@
+.admin__flag-create {
+  margin-bottom: 16px;
+}
+
+.admin__flag-list li > span {
+  display: inline-block;
+  margin: 0 12px 8px 0;
+}
+
+.admin__flag-form h2 {
+  margin-bottom: 16px;
+}
+
+.admin__panel:has(.admin__flag-form) > .admin__filters {
+  display: none;
+}
+
+.admin__flag-form .button,
+.admin__flag-list .button,
+.admin__flag-create {
+  width: auto;
+  min-height: 44px;
+}
+
+.admin__flag-error {
+  color: var(--color-error);
+}
