@@ -51,6 +51,7 @@ export interface ProfilePost {
   locked: boolean;
   title: string;
   body_preview: string;
+  offline_cache_until?: string | null;
   cover_url?: string | null;
   likes_count: number;
   liked_by_user: boolean;

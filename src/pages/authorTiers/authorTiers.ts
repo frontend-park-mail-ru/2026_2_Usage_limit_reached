@@ -12,6 +12,7 @@ export function renderAuthorTiers(): string {
 /** Проверяет права и загружает открытые и архивные уровни. */
 export function initAuthorTiers(root: HTMLElement): () => void {
   const panel = requireElement<HTMLElement>(root, '[data-author-tiers]');
+  const add = requireElement<HTMLElement>(root, '[data-add-tier]');
   return bindSubscriptionTiers(panel, async (signal) => {
     const profile = await checkSession();
     if (signal.aborted || !profile) {
@@ -25,6 +26,7 @@ export function initAuthorTiers(root: HTMLElement): () => void {
     if (!context || context.userId !== profile.user.id) {
       return undefined;
     }
+    add.hidden = false;
     return (await runSessionRequest(context, () => getMyTiers(signal)))?.items;
   }, 'Добавьте уровень, чтобы читатели могли оформить подписку', () => panel.isConnected);
 }

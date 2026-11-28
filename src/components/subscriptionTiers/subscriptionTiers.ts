@@ -1,4 +1,5 @@
 import type { SubscriptionTier } from '@/modules/api/tiers.ts';
+import { tierEditRoute } from '@/app/paths.ts';
 import { formatMoney } from '@/utils/helpers/money.ts';
 import subscriptionTiersTemplate from './subscriptionTiers.hbs';
 
@@ -28,6 +29,7 @@ export function bindSubscriptionTiers(
             ...tier,
             price: formatMoney(tier.price_minor, tier.currency),
             archived: tier.status === 'archived',
+            editHref: tier.status === 'open' ? tierEditRoute(tier.id) : undefined,
           })),
         });
       }
