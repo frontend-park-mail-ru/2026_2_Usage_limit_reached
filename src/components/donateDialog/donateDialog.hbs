@@ -1,6 +1,10 @@
 {{#> modal id="donate-dialog" title="Пожертвовать" className="donate-dialog" windowClass="donate-dialog__window"}}
   <div class="donate-dialog__step" data-donate-step="form">
     {{> alert title="Не удалось отправить пожертвование" className="donate-dialog__error"}}
+    <p class="donate-dialog__note" role="status" data-donate-uncertain hidden>
+      Минимальная сумма изменилась. Не удалось подтвердить результат предыдущей отправки.
+      Проверьте <a href="/donations" data-link>отправленные пожертвования</a> перед новой отправкой.
+    </p>
     <button class="button button_view_secondary donate-dialog__button" type="button" data-donate-retry-minimum hidden>Повторить загрузку</button>
     <div class="donate-dialog__author">
       <img class="donate-dialog__avatar" alt="" data-donate-avatar data-avatar />

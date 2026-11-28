@@ -45,12 +45,14 @@ export function initAdminConfigForm(
     root.hidden = false;
     const selectedScope = key?.scope ?? sourceScope.value;
     let initialValue = '';
+    let description: string | undefined;
 
     if (key) {
       showMessage(TEXT.loading);
       try {
         const config = await getOnlineConfConfig(key, signal);
         initialValue = JSON.stringify(config.value, null, 2);
+        description = config.description;
       } catch (error) {
         if (!signal.aborted && !handleAccessError(error)) {
           showMessage(TEXT.loadError);
@@ -103,7 +105,7 @@ export function initAdminConfigForm(
       form.inert = true;
       try {
         if (key) {
-          await updateOnlineConfConfig(key, value, signal);
+          await updateOnlineConfConfig(key, value, description, signal);
         } else {
           const scope = String(fields.get('scope') ?? selectedScope);
           await createOnlineConfConfig({ name, scope, value }, signal);

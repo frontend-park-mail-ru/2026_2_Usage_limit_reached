@@ -37,6 +37,7 @@ export class DonateDialog {
   private readonly amountHint: HTMLElement;
   private readonly messageInput: HTMLTextAreaElement;
   private readonly error: HTMLElement;
+  private readonly uncertainNotice: HTMLElement;
   private readonly backButton: HTMLButtonElement;
   private readonly sendButton: HTMLButtonElement;
   private readonly continueButton: HTMLButtonElement;
@@ -79,6 +80,7 @@ export class DonateDialog {
     this.sendButton = requireElement<HTMLButtonElement>(dialog, '[data-donate-send]');
     this.continueButton = requireElement(this.form, 'button[type="submit"]');
     this.retryMinimumButton = requireElement(dialog, '[data-donate-retry-minimum]');
+    this.uncertainNotice = requireElement(dialog, '[data-donate-uncertain]');
     this.onClick = this.handleClick.bind(this);
     this.onInput = this.handleInput.bind(this);
     this.onSubmit = this.handleSubmit.bind(this);
@@ -184,6 +186,7 @@ export class DonateDialog {
   private resetForm(): void {
     this.requestKey = null;
     this.retryAfterTimeout = false;
+    this.uncertainNotice.hidden = true;
     this.minimumRejected = false;
     this.hasSubmitted = false;
     this.form.reset();
@@ -368,7 +371,11 @@ export class DonateDialog {
       }
       this.retryAfterTimeout ||= err.isMutationTimeout;
       if (!err.isCsrfError && err.status === 400 && err.code === 'donation_amount_below_minimum') {
+        if (this.retryAfterTimeout) {
+          this.uncertainNotice.hidden = false;
+        }
         this.requestKey = null;
+        this.retryAfterTimeout = false;
         this.minimumRejected = true;
         this.showStep('form');
         void this.loadMinimum(context, this.opening);

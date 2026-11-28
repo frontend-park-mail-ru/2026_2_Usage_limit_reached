@@ -4,8 +4,8 @@ import { request } from './request.ts';
 import type {
   OnlineConfConfig,
   OnlineConfConfigKey,
+  OnlineConfFlag,
   OnlineConfFlagInput,
-  OnlineConfFlagUpdate,
   OnlineConfHistoryPage,
   OnlineConfJsonValue,
   OnlineConfListItem,
@@ -15,7 +15,42 @@ import type {
   OnlineConfSection,
 } from './onlineConf.types.ts';
 
-type OnlineConfListEntry = OnlineConfListItem | { key: string; name?: string };
+interface OnlineConfListEntry {
+  name?: string;
+  key?: string;
+  force_on_user_ids?: string[];
+  force_off_user_ids?: string[];
+}
+
+interface OnlineConfConfigResponse {
+  scope: string;
+  key: string;
+  value: string;
+  description?: string;
+}
+
+interface OnlineConfFlagResponse {
+  scope: string;
+  key: string;
+  rollout_percent: number;
+  force_on_user_ids: string[];
+  force_off_user_ids: string[];
+}
+
+function flagOverrides(item: OnlineConfListEntry) {
+  return { include_user_ids: item.force_on_user_ids, exclude_user_ids: item.force_off_user_ids };
+}
+
+function decodeConfig({ scope, key, value, description }: OnlineConfConfigResponse): OnlineConfConfig {
+  return { scope, name: key, value: JSON.parse(value) as OnlineConfJsonValue, description };
+}
+
+function encodeConfigValue(value: OnlineConfJsonValue) {
+  return {
+    value: JSON.stringify(value),
+    value_type: Array.isArray(value) ? 'array' : value !== null && typeof value === 'object' ? 'json' : 'scalar',
+  };
+}
 
 /** @throws {ApiError} */
 export async function checkAdminAccess(signal: AbortSignal): Promise<void> {
@@ -57,7 +92,11 @@ export async function getOnlineConfList(
     `/onlineconf/admin/${section}?${params}`, { signal, cache: 'no-store', redirect: 'error' },
   );
   const page = Array.isArray(response) ? { items: response } : response;
-  return { ...page, items: page.items.map((item) => 'key' in item ? { ...item, name: item.key } : item) };
+  return { ...page, items: page.items.map((item) => ({
+    ...item,
+    name: item.key ?? item.name ?? '',
+    ...(section === 'flags' && flagOverrides(item)),
+  })) };
 }
 
 /** Читает страницу истории ресурса в порядке сервера. */
@@ -72,35 +111,58 @@ export function getOnlineConfHistory(section: OnlineConfSection, scope: string, 
   return sendRequest<OnlineConfHistoryPage>(`/onlineconf/admin/history?${params}`, { signal, cache: 'no-store', redirect: 'error' });
 }
 
-function configItemPath({ scope, name }: OnlineConfConfigKey): string {
-  return `/onlineconf/admin/configs/item?${new URLSearchParams({ scope, name })}`;
+function resourcePath(section: OnlineConfSection, { scope, name }: OnlineConfConfigKey): string {
+  return `/onlineconf/admin/${section}/${encodeURIComponent(scope)}/${encodeURIComponent(name)}`;
 }
 
 /** @throws {ApiError} */
-export function getOnlineConfConfig(key: OnlineConfConfigKey, signal: AbortSignal): Promise<OnlineConfConfig> {
-  return sendRequest(configItemPath(key), { signal, cache: 'no-store', redirect: 'error' });
+export async function getOnlineConfConfig(key: OnlineConfConfigKey, signal: AbortSignal): Promise<OnlineConfConfig> {
+  return decodeConfig(await sendRequest<OnlineConfConfigResponse>(resourcePath('configs', key), {
+    signal, cache: 'no-store', redirect: 'error',
+  }));
 }
 
 /** @throws {ApiError} */
-export function createOnlineConfConfig(data: OnlineConfConfig, signal: AbortSignal): Promise<OnlineConfConfig> {
-  return request('/onlineconf/admin/configs', { method: 'POST', data, signal });
+export function createOnlineConfConfig({ scope, name, value }: OnlineConfConfig, signal: AbortSignal) {
+  return request<void>('/onlineconf/admin/configs', {
+    method: 'POST', data: { scope, key: name, ...encodeConfigValue(value) }, signal, responseType: 'empty',
+  });
 }
 
 /** @throws {ApiError} */
 export function updateOnlineConfConfig(
   key: OnlineConfConfigKey,
   value: OnlineConfJsonValue,
+  description: string | undefined,
   signal: AbortSignal,
-): Promise<OnlineConfConfig> {
-  return request(configItemPath(key), { method: 'PATCH', data: { value }, signal });
+) {
+  return request<void>(resourcePath('configs', key), {
+    method: 'PUT', data: { ...encodeConfigValue(value), description }, signal, responseType: 'empty',
+  });
 }
 
 /** Создаёт флаг в выбранном скоупе. */
-export const createOnlineConfFlag = (data: OnlineConfFlagInput, signal: AbortSignal) =>
-  request<void>('/onlineconf/admin/flags', { method: 'POST', data, signal, responseType: 'empty' });
+export const createOnlineConfFlag = ({ name, ...data }: OnlineConfFlagInput, signal: AbortSignal) =>
+  request<void>('/onlineconf/admin/flags', { method: 'POST', data: { ...data, key: name }, signal, responseType: 'empty' });
 
-/** Обновляет изменённые поля флага. */
-export const updateOnlineConfFlag = (id: string, data: OnlineConfFlagUpdate, signal: AbortSignal) =>
-  request<void>(`/onlineconf/admin/flags/${encodeURIComponent(id)}`, {
-    method: 'PATCH', data, signal, responseType: 'empty',
+export async function getOnlineConfFlag(flag: OnlineConfConfigKey, signal: AbortSignal): Promise<OnlineConfFlag> {
+  const result = await sendRequest<OnlineConfFlagResponse>(resourcePath('flags', flag), {
+    signal, cache: 'no-store', redirect: 'error',
+  });
+  return { ...result, name: result.key, ...flagOverrides(result) };
+}
+
+export const updateOnlineConfRollout = (flag: OnlineConfConfigKey, percent: number, signal: AbortSignal) =>
+  request<void>(`${resourcePath('flags', flag)}/rollout`, {
+    method: 'PUT', data: { percent }, signal, responseType: 'empty',
+  });
+
+export const setOnlineConfForce = (flag: OnlineConfConfigKey, userId: string, force: 'on' | 'off', signal: AbortSignal) =>
+  request<void>(`${resourcePath('flags', flag)}/force`, {
+    method: 'POST', data: { user_id: userId, force }, signal, responseType: 'empty',
+  });
+
+export const removeOnlineConfForce = (flag: OnlineConfConfigKey, userId: string, signal: AbortSignal) =>
+  request<void>(`${resourcePath('flags', flag)}/force/${encodeURIComponent(userId)}`, {
+    method: 'DELETE', signal, responseType: 'empty',
   });

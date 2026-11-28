@@ -15,12 +15,11 @@ export interface OnlineConfFlagOverrides {
 }
 
 export interface OnlineConfFlag extends OnlineConfListItem, OnlineConfFlagOverrides {
-  id: string;
+  scope: string;
   rollout_percent: number;
 }
 
-export type OnlineConfFlagUpdate = OnlineConfFlagOverrides & Partial<Pick<OnlineConfFlag, 'rollout_percent'>>;
-export type OnlineConfFlagInput = Omit<OnlineConfFlag, 'id'> & { scope: string };
+export type OnlineConfFlagInput = Pick<OnlineConfFlag, 'scope' | 'name' | 'rollout_percent'>;
 
 export interface OnlineConfListResponse<T> {
   items: T[];
@@ -50,6 +49,7 @@ export interface OnlineConfConfigKey {
 
 export interface OnlineConfConfig extends OnlineConfConfigKey {
   value: OnlineConfJsonValue;
+  description?: string;
 }
 
 export interface OnlineConfHistoryPage {

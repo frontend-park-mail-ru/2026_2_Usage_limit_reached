@@ -6,6 +6,8 @@ export const FLAG_OVERRIDES = [
   { key: 'exclude_user_ids', label: 'Исключить из раскатки' },
 ] as const;
 
+const USER_ID = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/;
+
 /** Подключает поля ID к форме флага. */
 export function bindFlagOverrides(form: HTMLFormElement, initial: OnlineConfFlagOverrides = {}) {
   const fields = FLAG_OVERRIDES.map(({ key }) => {
@@ -23,12 +25,14 @@ export function bindFlagOverrides(form: HTMLFormElement, initial: OnlineConfFlag
   const validate = (saving = false) => {
     for (const [index, field] of fields.entries()) {
       const other = fields[1 - index].ids;
-      const value = field.input.value.trim();
+      const value = field.input.value.trim().toLowerCase();
       let message = '';
       if ([...field.ids].some((id) => other.has(id)) || other.has(value)) {
         message = 'Этот пользователь уже есть в другом списке';
       } else if (field.ids.has(value)) {
         message = 'Этот пользователь уже есть в списке';
+      } else if (value && !USER_ID.test(value)) {
+        message = 'Укажите ID пользователя в формате UUID';
       } else if (saving && value) {
         message = 'Добавьте пользователя или очистите поле';
       }
@@ -61,9 +65,9 @@ export function bindFlagOverrides(form: HTMLFormElement, initial: OnlineConfFlag
       }));
     };
     const add = () => {
-      const value = field.input.value.trim();
+      const value = field.input.value.trim().toLowerCase();
       const other = fields.find((candidate) => candidate !== field);
-      if (value && !field.ids.has(value) && !other?.ids.has(value)) {
+      if (USER_ID.test(value) && !field.ids.has(value) && !other?.ids.has(value)) {
         field.ids.add(value);
         field.input.value = '';
         render();
@@ -90,16 +94,7 @@ export function bindFlagOverrides(form: HTMLFormElement, initial: OnlineConfFlag
       invalid?.input.focus();
       return !invalid;
     },
-    values: (changedOnly: boolean): OnlineConfFlagOverrides => {
-      const result: OnlineConfFlagOverrides = {};
-      for (const { key, ids } of fields) {
-        const saved = initial[key] ?? [];
-        if (!changedOnly || ids.size !== saved.length || !saved.every((id) => ids.has(id))) {
-          result[key] = [...ids];
-        }
-      }
-      return result;
-    },
+    values: (): OnlineConfFlagOverrides => Object.fromEntries(fields.map(({ key, ids }) => [key, [...ids]])),
     setSaving: (saving: boolean) => fields.forEach(({ group }) => { group.disabled = saving; }),
   };
 }
