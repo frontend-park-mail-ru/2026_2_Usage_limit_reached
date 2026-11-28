@@ -1,6 +1,7 @@
 import { postRoute, publicProfileRoute, ROUTES, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate, NavigationPath } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
+import { getPost } from '@/modules/api/posts.ts';
 import { getPublicProfile } from '@/modules/api/profile.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { checkSession, getSessionContext, runSessionMutation } from '@/modules/auth/auth.actions.ts';
@@ -49,8 +50,14 @@ export function initSubscription(root: HTMLElement, navigate: Navigate, { userna
     confirm = undefined;
     root.innerHTML = subscriptionTemplate({ heading: CHOOSE, message: 'Загружаем уровни…', backHref, postId });
     try {
-      const { user, author } = await getPublicProfile(username);
+      const { user, author } = postId
+        ? { user: (await getPost(postId)).author, author: true }
+        : await getPublicProfile(username);
       if (signal.aborted) {
+        return;
+      }
+      if (postId && user.username !== username) {
+        finish();
         return;
       }
       const target = subscriptionTarget(authStore.getState().user?.id, user.id);
