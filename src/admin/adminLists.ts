@@ -47,7 +47,9 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
       const response = await getOnlineConfList(section, { scope: scope.value, q: search.value }, signal);
       if (!signal.aborted) {
         if (section === 'flags') {
-          renderFlagList(results, response.items, scope);
+          renderFlagList(results, response.items, scope, load, onAccessLost, events.signal, (saving) => {
+            tabList.inert = saving;
+          });
         } else {
           results.innerHTML = listTemplate(response);
         }

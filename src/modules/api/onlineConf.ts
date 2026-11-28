@@ -1,5 +1,6 @@
 import { ApiError } from './apiError.ts';
 import { sendRequest } from './http.ts';
+import { request } from './request.ts';
 import type {
   OnlineConfListItem,
   OnlineConfListQuery,
@@ -43,3 +44,13 @@ export function getOnlineConfList(
   }
   return sendRequest(`/onlineconf/admin/${section}?${params}`, { signal, cache: 'no-store', redirect: 'error' });
 }
+
+/** Создаёт флаг в выбранном скоупе. */
+export const createOnlineConfFlag = (data: { scope: string; name: string; rollout_percent: number }, signal: AbortSignal) =>
+  request<void>('/onlineconf/admin/flags', { method: 'POST', data, signal, responseType: 'empty' });
+
+/** Обновляет процент раскатки флага. */
+export const updateOnlineConfFlagRollout = (id: string, rollout_percent: number, signal: AbortSignal) =>
+  request<void>(`/onlineconf/admin/flags/${encodeURIComponent(id)}`, {
+    method: 'PATCH', data: { rollout_percent }, signal, responseType: 'empty',
+  });

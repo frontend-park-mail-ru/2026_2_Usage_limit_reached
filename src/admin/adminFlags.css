@@ -25,3 +25,9 @@
 .admin__flag-error {
   color: var(--color-error);
 }
+
+.admin__flag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

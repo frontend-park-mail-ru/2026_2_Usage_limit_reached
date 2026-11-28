@@ -1,5 +1,8 @@
 import { requireElement } from '@/utils/helpers/dom.ts';
+import { ApiError } from '@/modules/api/apiError.ts';
+import { createOnlineConfFlag, updateOnlineConfFlagRollout } from '@/modules/api/onlineConf.ts';
 import type { OnlineConfListItem } from '@/modules/api/onlineConf.types.ts';
+import type { AdminScreen } from './admin.types.ts';
 import listTemplate from './adminFlags.hbs';
 import formTemplate from './adminFlagForm.hbs';
 import './adminFlags.css';
@@ -15,7 +18,15 @@ function isFlag(item: OnlineConfListItem): item is FlagListItem {
 }
 
 /** Показывает список флагов и форму выбранного действия. */
-export function renderFlagList(root: HTMLElement, items: OnlineConfListItem[], scope: HTMLSelectElement): void {
+export function renderFlagList(
+  root: HTMLElement,
+  items: OnlineConfListItem[],
+  scope: HTMLSelectElement,
+  reload: () => Promise<void>,
+  onAccessLost: (screen: AdminScreen) => void,
+  signal: AbortSignal,
+  lockTabs: (locked: boolean) => void,
+): void {
   root.innerHTML = listTemplate({ items: items.map((item) => ({ ...item, editable: isFlag(item) })) });
   const list = requireElement<HTMLElement>(root, '[data-flag-list]');
   const editor = requireElement<HTMLElement>(root, '[data-flag-editor]');
@@ -28,6 +39,9 @@ export function renderFlagList(root: HTMLElement, items: OnlineConfListItem[], s
     const scopes = requireElement<HTMLSelectElement>(form, '[name="scope"]');
     const rollout = requireElement<HTMLInputElement>(form, '[name="rollout_percent"]');
     const error = requireElement<HTMLElement>(form, '#admin-flag-rollout-error');
+    const saveError = requireElement<HTMLElement>(form, '[data-flag-save-error]');
+    const submit = requireElement<HTMLButtonElement>(form, '[type="submit"]');
+    const cancel = requireElement<HTMLButtonElement>(form, '[data-flag-cancel]');
     scopes.replaceChildren(...Array.from(scope.options, (option) => new Option(option.text, option.value)));
     scopes.value = scope.value;
 
@@ -42,14 +56,64 @@ export function renderFlagList(root: HTMLElement, items: OnlineConfListItem[], s
     };
     rollout.addEventListener('blur', validateRollout);
     rollout.addEventListener('input', validateRollout);
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      validateRollout();
-    });
-    requireElement(form, '[data-flag-cancel]').addEventListener('click', () => {
+    const close = () => {
       editor.replaceChildren();
       list.hidden = false;
       trigger.focus();
+    };
+    cancel.addEventListener('click', close);
+    const current = () => form.isConnected && !signal.aborted;
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submit.disabled || !current()) {
+        return;
+      }
+      validateRollout();
+      name.setCustomValidity(name.value.trim() ? '' : 'Укажите имя флага');
+      if (!form.reportValidity()) {
+        return;
+      }
+      const percent = Number(rollout.value);
+      if (flag?.rollout_percent === percent) {
+        close();
+        return;
+      }
+      const label = submit.textContent;
+      const setSaving = (saving: boolean) => {
+        submit.disabled = cancel.disabled = rollout.disabled = saving;
+        name.disabled = saving;
+        scopes.disabled = saving || Boolean(flag);
+        submit.textContent = saving ? 'Сохраняем…' : label;
+      };
+      saveError.hidden = true;
+      setSaving(true);
+      lockTabs(true);
+      try {
+        if (flag) {
+          await updateOnlineConfFlagRollout(flag.id, percent, signal);
+        } else {
+          await createOnlineConfFlag({ scope: scopes.value, name: name.value.trim(), rollout_percent: percent }, signal);
+        }
+        if (current()) {
+          await reload();
+        }
+      } catch (err) {
+        if (!current()) {
+          return;
+        }
+        if (err instanceof ApiError && !err.isCsrfError && (err.isUnauthorized || err.status === 403)) {
+          onAccessLost(err.isUnauthorized ? 'guest' : 'forbidden');
+          return;
+        }
+        saveError.textContent = err instanceof ApiError && err.isMutationTimeout
+          ? err.text : 'Не удалось сохранить флаг. Попробуйте ещё раз';
+        saveError.hidden = false;
+      } finally {
+        lockTabs(false);
+        if (current()) {
+          setSaving(false);
+        }
+      }
     });
     (flag ? rollout : name).focus();
   }
