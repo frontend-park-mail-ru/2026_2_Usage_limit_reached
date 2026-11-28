@@ -17,3 +17,24 @@ export interface OnlineConfListQuery {
   scope: string;
   q?: string;
 }
+
+export type OnlineConfJsonValue =
+  | null
+  | boolean
+  | number
+  | string
+  | OnlineConfJsonValue[]
+  | OnlineConfJsonObject;
+
+interface OnlineConfJsonObject {
+  [key: string]: OnlineConfJsonValue;
+}
+
+export interface OnlineConfConfigKey {
+  scope: string;
+  name: string;
+}
+
+export interface OnlineConfConfig extends OnlineConfConfigKey {
+  value: OnlineConfJsonValue;
+}
