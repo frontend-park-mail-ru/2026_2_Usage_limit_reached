@@ -40,6 +40,7 @@ export class DonateDialog {
   private readonly backButton: HTMLButtonElement;
   private readonly sendButton: HTMLButtonElement;
   private readonly continueButton: HTMLButtonElement;
+  private readonly retryMinimumButton: HTMLButtonElement;
   private readonly onClick: (event: MouseEvent) => void;
   private readonly onInput: () => void;
   private readonly onSubmit: (event: SubmitEvent) => void;
@@ -56,6 +57,8 @@ export class DonateDialog {
   private readOnly = false;
   private minimumMinor = toMinor(DONATION_AMOUNT_MIN);
   private opening = 0;
+  private minimumRejected = false;
+  private retryAfterTimeout = false;
 
   /**
    * @param dialog
@@ -75,6 +78,7 @@ export class DonateDialog {
     this.backButton = requireElement<HTMLButtonElement>(dialog, '[data-donate-back]');
     this.sendButton = requireElement<HTMLButtonElement>(dialog, '[data-donate-send]');
     this.continueButton = requireElement(this.form, 'button[type="submit"]');
+    this.retryMinimumButton = requireElement(dialog, '[data-donate-retry-minimum]');
     this.onClick = this.handleClick.bind(this);
     this.onInput = this.handleInput.bind(this);
     this.onSubmit = this.handleSubmit.bind(this);
@@ -105,7 +109,6 @@ export class DonateDialog {
     }
     this.context = context;
     this.author = author;
-    this.continueButton.disabled = true;
     this.setMinimum(toMinor(DONATION_AMOUNT_MIN));
     setFieldError(this.form, 'amount', null);
     setFieldError(this.form, 'message', null);
@@ -123,20 +126,34 @@ export class DonateDialog {
   }
 
   private async loadMinimum(context: SessionContext, opening: number): Promise<void> {
+    this.continueButton.disabled = true;
+    this.retryMinimumButton.hidden = true;
+    this.amountHint.hidden = this.minimumRejected;
+    if (this.minimumRejected) {
+      setFieldError(this.form, 'amount', 'Сумма ниже минимальной');
+      setAlert(this.error, 'Уточняем минимальную сумму');
+    }
     const settings = await getDonationSettings().catch(() => null);
     if (this.destroyed || !this.dialog.open || opening !== this.opening
         || this.context !== context || !isSessionCurrent(context) || !this.isSessionValid()) {
       return;
     }
-    this.continueButton.disabled = false;
-    if (!settings) {
-      return;
-    }
-    const minimum = settings.min_amount_minor;
+    const minimum = settings?.min_amount_minor ?? 0;
     if (!Number.isInteger(minimum) || minimum < toMinor(DONATION_AMOUNT_MIN)
         || minimum % toMinor(1) !== 0 || minimum >= toMinor(10 ** DONATION_AMOUNT_MAX_DIGITS)) {
+      this.continueButton.disabled = this.minimumRejected;
+      if (this.minimumRejected) {
+        setAlert(this.error, 'Не удалось узнать минимальную сумму');
+        this.retryMinimumButton.hidden = false;
+      }
       return;
     }
+    if (this.minimumRejected) {
+      setAlert(this.error, null);
+    }
+    this.minimumRejected = false;
+    this.amountHint.hidden = false;
+    this.continueButton.disabled = false;
     this.setMinimum(minimum);
     if (this.hasSubmitted) {
       this.checkForm();
@@ -166,6 +183,8 @@ export class DonateDialog {
   /** Очищает ввод после успеха, смены получателя или сессии. */
   private resetForm(): void {
     this.requestKey = null;
+    this.retryAfterTimeout = false;
+    this.minimumRejected = false;
     this.hasSubmitted = false;
     this.form.reset();
     this.amountInput.value = DEFAULT_AMOUNT;
@@ -215,7 +234,7 @@ export class DonateDialog {
    * Показывает ошибки полей и возвращает, верна ли форма.
    */
   private checkForm(): boolean {
-    const schema = donationSchema(this.minimumMinor);
+    const schema = donationSchema(this.retryAfterTimeout && this.requestKey ? toMinor(DONATION_AMOUNT_MIN) : this.minimumMinor);
     const { isValid, errors } = validate(this.values(), schema);
     for (const name of Object.keys(schema)) {
       setFieldError(this.form, name, errors[name] ?? null);
@@ -239,14 +258,18 @@ export class DonateDialog {
       this.showStep('form');
     } else if (event.target.closest('[data-donate-send]')) {
       void this.send();
+    } else if (event.target === this.retryMinimumButton && !this.retryMinimumButton.hidden && this.context) {
+      this.amountInput.focus();
+      void this.loadMinimum(this.context, this.opening);
     }
   }
 
   /** Новый ключ и свежие ошибки после правки формы */
   private handleInput(): void {
     this.requestKey = null;
+    this.retryAfterTimeout = false;
     this.updatePresets();
-    if (this.hasSubmitted) {
+    if (this.hasSubmitted && !this.minimumRejected) {
       this.checkForm();
     }
   }
@@ -304,6 +327,7 @@ export class DonateDialog {
     }
     const { amount, message } = this.values();
     const amountMinor = toMinor(Number(amount));
+    this.retryAfterTimeout &&= this.requestKey !== null;
     const requestKey = this.requestKey ?? createUuid();
     this.requestKey = requestKey;
     this.setSending(true);
@@ -340,6 +364,14 @@ export class DonateDialog {
         throw err;
       }
       if (!this.dialog.open || this.requestKey !== requestKey) {
+        return;
+      }
+      this.retryAfterTimeout ||= err.isMutationTimeout;
+      if (!err.isCsrfError && err.status === 400 && err.code === 'donation_amount_below_minimum') {
+        this.requestKey = null;
+        this.minimumRejected = true;
+        this.showStep('form');
+        void this.loadMinimum(context, this.opening);
         return;
       }
       if (!err.isCsrfError && err.status === 409) {

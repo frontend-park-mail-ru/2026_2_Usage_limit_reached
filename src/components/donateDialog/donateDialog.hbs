@@ -1,6 +1,7 @@
 {{#> modal id="donate-dialog" title="Пожертвовать" className="donate-dialog" windowClass="donate-dialog__window"}}
   <div class="donate-dialog__step" data-donate-step="form">
     {{> alert title="Не удалось отправить пожертвование" className="donate-dialog__error"}}
+    <button class="button button_view_secondary donate-dialog__button" type="button" data-donate-retry-minimum hidden>Повторить загрузку</button>
     <div class="donate-dialog__author">
       <img class="donate-dialog__avatar" alt="" data-donate-avatar data-avatar />
       <div class="donate-dialog__author-info">
