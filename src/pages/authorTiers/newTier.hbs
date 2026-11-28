@@ -34,6 +34,17 @@
         </div>
         <p class="tier-form__status" role="status"></p>
       </form>
+      {{#if editing}}
+        <section class="settings__card tier-archive" aria-labelledby="tier-archive-heading">
+          <h2 class="tier-archive__heading" id="tier-archive-heading">Архивация уровня</h2>
+          <p>После архивации уровень исчезнет из подписок, доступных для покупки. Действующие подписчики сохранят доступ до конца оплаченного периода.</p>
+          <button class="button button_view_secondary tier-button" type="button" data-archive-tier>Архивировать уровень</button>
+        </section>
+        {{> confirmDialog id="tier-archive" title="Архивировать уровень?" hideSubject=true
+            text="Подписаться на уровень или продлить подписку больше не получится. Оплаченный доступ сохранится до конца срока. Восстановить уровень нельзя."
+            errorTitle="Не удалось архивировать уровень" cancelLabel="Отмена" confirmLabel="Архивировать"
+            errorConfirmLabel="Повторить" checkHref="/settings/tiers"}}
+      {{/if}}
     {{else}}
       <p role="status">{{message}}</p>
       {{#if retry}}

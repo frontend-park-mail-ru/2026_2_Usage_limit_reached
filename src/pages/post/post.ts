@@ -2,6 +2,7 @@ import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import postTemplate from './post.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { formatPostDate } from '@/utils/helpers/posts.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
 import { getAttachmentUrl } from '@/utils/helpers/attachments.ts';
 import { getPostReturnPath, withPostReturnPath } from '@/utils/helpers/postNavigation.ts';
 import {
@@ -13,7 +14,9 @@ import {
 } from '@/modules/auth/auth.actions.ts';
 import { authStore } from '@/modules/auth/auth.store.ts';
 import { loadOfflinePost } from '@/modules/offline/offline.pages.ts';
-import { bindOfflineRecovery } from '@/modules/offline/offline.recovery.ts';
+import { bindOfflineRecovery, watchOfflineExpiry } from '@/modules/offline/offline.recovery.ts';
+import { getOfflineDeadline } from '@/modules/offline/offline.deadline.ts';
+import { expireOfflinePublications } from '@/modules/offline/offline.storage.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { deletePost, getPost } from '@/modules/api/posts.ts';
 import type { Post } from '@/modules/api/posts.types.ts';
@@ -28,7 +31,7 @@ import { DonateDialog } from '@/components/donateDialog/donateDialog.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
 import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
-import { ROUTES, matchRoute, postEditRoute, publicProfileRoute } from '@/app/paths.ts';
+import { ROUTES, matchRoute, postEditRoute, publicProfileRoute, subscriptionRoute } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
@@ -65,6 +68,30 @@ function buildViewModel(post: Post, isOwner: boolean) {
     isOwner,
     menuItems: POST_MENU_ITEMS,
   };
+}
+
+/** Готовит причину ограничения и условия доступа к закрытому посту. */
+function buildAccessNote(restriction: Post['access_restriction']) {
+  switch (restriction?.reason) {
+    case 'subscription_required':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: restriction.lowest_available_price_minor === null ? undefined
+          : `От ${formatMoney(restriction.lowest_available_price_minor, restriction.currency)} за 30 дней`,
+      };
+    case 'upgrade_required':
+      return {
+        message: `Нужен уровень «${restriction.required_tier.name}»`,
+        detail: restriction.current_tier ? `Ваш уровень — «${restriction.current_tier.name}»` : undefined,
+      };
+    case 'no_eligible_tier':
+      return {
+        message: `Для доступа нужен уровень «${restriction.required_tier.name}» или выше`,
+        detail: 'Среди доступных уровней сейчас нет подходящего',
+      };
+    default:
+      return { message: 'У вас нет доступа к этой публикации' };
+  }
 }
 
 /**
@@ -222,6 +249,20 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
   let busy = false;
   let recoverAfterLoad = false;
   let donateDialog: DonateDialog | undefined;
+  let offlinePost: Post | undefined;
+  const expiry = watchOfflineExpiry(() => {
+    if (!offlinePost) {
+      return undefined;
+    }
+    const deadline = getOfflineDeadline(offlinePost.offline_cache_until);
+    if (deadline === undefined) {
+      offlinePost = undefined;
+      root.innerHTML = postTemplate({ message: LOAD_ERROR, isError: true });
+      bindBackLink(root);
+      void expireOfflinePublications(() => active);
+    }
+    return deadline;
+  });
   const sessionKey = () => {
     const { status, user } = authStore.getState();
     return status + (user?.id ?? '');
@@ -229,6 +270,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
 
   const load = async () => {
     const id = ++request;
+    offlinePost = undefined;
     busy = true;
     setRefreshNotice(needsRetry ? { pending: true } : null, () => { void load(); });
     const isCurrent = () => active && request === id;
@@ -254,7 +296,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
         const result = await loadOfflinePost(params.id ?? '', () => getPost(params.id ?? ''),
           () => isCurrent() && version === getSessionVersion());
         post = result;
-        offline = result.savedAt !== undefined;
+        offline = result.savedAt !== undefined || !navigator.onLine;
         hasOfflineAttachments = !!result.hasAttachments;
         needsRetry = offline;
       } catch (error) {
@@ -308,18 +350,30 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
       document.title = post.title;
       if (post.locked) {
         const lockedCoverUrl = !offline && post.cover_url ? getAttachmentUrl(post.cover_url) : null;
-        const showRestricted = () => {
-          root.innerHTML = postTemplate({ unavailable: true, restricted: true });
-          bindBackLink(root);
-        };
-        if (!lockedCoverUrl) {
-          showRestricted();
-          return;
-        }
-        root.innerHTML = postTemplate({ ...buildViewModel(post, false), lockedCoverUrl });
-        requireElement(root, '.post-page__cover').addEventListener('error', () => {
-          if (isCurrent()) {
-            showRestricted();
+        const reason = post.access_restriction?.reason;
+        const accessAction = !offline && post.status === 'published' ? (
+          reason === 'subscription_required' ? 'Подписаться'
+            : reason === 'upgrade_required' ? 'Повысить уровень' : undefined
+        ) : undefined;
+        root.innerHTML = postTemplate({
+          ...buildViewModel(post, false),
+          locked: true,
+          lockedCoverUrl,
+          accessNote: buildAccessNote(post.access_restriction),
+          accessAction,
+          accessHref: accessAction
+            ? `${subscriptionRoute(post.author.username)}?${new URLSearchParams({ post_id: post.id })}` : undefined,
+        });
+        const cover = root.querySelector<HTMLImageElement>('.post-page__cover');
+        root.querySelector('.post-page__access-action')?.addEventListener('click', (event) => {
+          if (offline || !navigator.onLine) {
+            event.preventDefault();
+          }
+        });
+        cover?.addEventListener('error', () => {
+          if (isCurrent() && cover.isConnected) {
+            cover.parentElement?.classList.remove('post-page__card-with-cover');
+            cover.remove();
           }
         }, { once: true });
         bindBackLink(root);
@@ -338,6 +392,8 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
             : 'Содержимое поста недоступно без интернета';
           body.append(message);
         }
+        offlinePost = post;
+        expiry.refresh();
         return;
       }
       disposeBody = bindPostAttachments(body, post.attachments ?? []);
@@ -383,7 +439,16 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     donateDialog?.setReadOnly(true);
     root.querySelectorAll<HTMLButtonElement>('.like-button, [data-donate], .post-page__menu button')
       .forEach((button) => { button.disabled = true; });
+    const accessAction = root.querySelector('.post-page__access-action');
+    if (accessAction) {
+      accessAction.setAttribute('role', 'link');
+      accessAction.setAttribute('aria-disabled', 'true');
+      accessAction.removeAttribute('href');
+    }
     setRefreshNotice({ pending: busy }, () => { void load(); });
+    if (!busy && disposeBody) {
+      void load();
+    }
   };
   window.addEventListener('offline', handleOffline);
   void load();
@@ -392,6 +457,7 @@ export function initPost(root: HTMLElement, navigate: Navigate, params: RoutePar
     active = false;
     cancelLoading(root);
     unbindRecovery();
+    expiry.destroy();
     window.removeEventListener('offline', handleOffline);
     unsubscribe();
     unbindAvatarFallback();

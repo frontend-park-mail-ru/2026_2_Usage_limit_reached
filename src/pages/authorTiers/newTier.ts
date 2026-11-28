@@ -2,6 +2,7 @@ import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
 import type { RouteParams } from '@/app/router.types.ts';
 import { setAlert } from '@/components/alert/alert.ts';
+import { ConfirmDialog } from '@/components/confirmDialog/confirmDialog.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import { createTier, getMyTiers, updateTier } from '@/modules/api/tiers.ts';
 import type { SubscriptionTier } from '@/modules/api/tiers.ts';
@@ -60,19 +61,24 @@ function bindTierForm(root: HTMLElement, context: SessionContext, navigate: Navi
   const originalDescription = description.value;
   const priceHint = requireElement<HTMLElement>(form, '#tier-price-hint');
   const errorTitle = edit ? 'Не удалось сохранить изменения' : 'Не удалось создать уровень';
+  const archiveButton = root.querySelector<HTMLButtonElement>('[data-archive-tier]');
+  const archiveDialog = root.querySelector<HTMLDialogElement>('#tier-archive-dialog');
   let busy = false;
   let stopped = false;
   let refreshRequired = false;
   let currentTier = edit?.tier;
   let priceRules = edit && getTierPriceRules(edit.tier, edit.items);
 
-  const setBusy = (pending: boolean) => {
+  const setBusy = (pending: boolean, message = edit ? 'Сохраняем изменения…' : 'Создаём уровень…') => {
     busy = pending;
     button.disabled = pending || stopped;
+    if (archiveButton) {
+      archiveButton.disabled = pending || stopped;
+    }
     fields.forEach((field) => { field.readOnly = pending; });
     price.readOnly ||= !!priceRules?.fixed;
     returnLinks.forEach((link) => { link.inert = pending; });
-    status.textContent = pending ? (edit ? 'Сохраняем изменения…' : 'Создаём уровень…') : '';
+    status.textContent = pending ? message : '';
   };
 
   const stopEditing = (message: string) => {
@@ -109,7 +115,7 @@ function bindTierForm(root: HTMLElement, context: SessionContext, navigate: Navi
   }
 
   async function submit(values: FormValues): Promise<void> {
-    if (busy || stopped || !isSessionCurrent(context)) {
+    if (busy || stopped || archiveDialog?.open || !isSessionCurrent(context)) {
       return;
     }
     setBusy(true);
@@ -197,6 +203,61 @@ function bindTierForm(root: HTMLElement, context: SessionContext, navigate: Navi
   if (edit) {
     priceHint.hidden = !priceRules?.fixed;
     price.readOnly = !!priceRules?.fixed;
+  }
+  if (archiveButton && archiveDialog) {
+    const dialog = new ConfirmDialog(archiveDialog, true);
+    const title = requireElement(archiveDialog, '.modal__title');
+    const errorHeading = requireElement(archiveDialog, '[data-alert-title]');
+    const checkArchive = requireElement<HTMLElement>(archiveDialog, '[data-confirm-check]');
+    const archiveStatus = document.createElement('p');
+    archiveStatus.className = 'tier-form__status';
+    archiveStatus.setAttribute('role', 'status');
+    checkArchive.after(archiveStatus);
+    archiveButton.addEventListener('click', () => {
+      if (busy || stopped || !currentTier || !isSessionCurrent(context)) {
+        return;
+      }
+      const { id, name } = currentTier;
+      title.textContent = `Архивировать уровень «${name}»?`;
+      checkArchive.hidden = true;
+      dialog.open(null, async () => {
+        if (busy || !isSessionCurrent(context)) {
+          return null;
+        }
+        setBusy(true, 'Архивируем уровень…');
+        archiveStatus.textContent = 'Архивируем уровень…';
+        checkArchive.hidden = true;
+        try {
+          const result = await runSessionMutation(context, () => updateTier(id, { status: 'archived' }));
+          if (result && !signal.aborted) {
+            navigate(ROUTES.settingsTiers, { replace: true });
+          }
+          return null;
+        } catch (error) {
+          if (signal.aborted) {
+            return null;
+          }
+          errorHeading.textContent = 'Не удалось архивировать уровень';
+          if (error instanceof ApiError) {
+            if (error.isMutationResponseTimeout) {
+              navigate(ROUTES.settingsTiers, { replace: true });
+              return null;
+            }
+            if (error.isMutationTimeout) {
+              errorHeading.textContent = 'Не удалось подтвердить архивацию';
+              checkArchive.hidden = false;
+              return 'Проверьте, есть ли у уровня пометка «В архиве»';
+            }
+            return error.code === 'tier_not_found' ? MISSING : error.text;
+          }
+          return 'Попробуйте ещё раз';
+        } finally {
+          archiveStatus.textContent = '';
+          setBusy(false);
+        }
+      });
+    }, { signal });
+    signal.addEventListener('abort', () => dialog.destroy(), { once: true });
   }
   bindValidation(form, schema, (values) => { void submit(values); });
 }
