@@ -146,6 +146,7 @@ export function bindPublicPosts(
           publicProfile: !feed, feed, cards, isEmpty, hasMore: cursor !== null,
           feedStatus: filteredEmpty ? 'Посты не найдены' : undefined,
           feedStatusDetail: filteredEmpty ? 'Попробуйте изменить запрос, тему или фильтры' : undefined,
+          feedStatusMobileDetail: filteredEmpty ? 'Попробуйте изменить запрос или фильтры' : undefined,
         });
       }
       if (!offline && bindLike && cards.length > 0) {

@@ -1,7 +1,10 @@
 {{#if feedStatus}}
   <div class="feed__state{{#if isError}} feed__state_error{{/if}}" role="status">
     <p>{{feedStatus}}</p>
-    {{#if feedStatusDetail}}<p>{{feedStatusDetail}}</p>{{/if}}
+    {{#if feedStatusDetail}}
+      <p{{#if feedStatusMobileDetail}} class="feed__state-detail-desktop"{{/if}}>{{feedStatusDetail}}</p>
+    {{/if}}
+    {{#if feedStatusMobileDetail}}<p class="feed__state-detail-mobile">{{feedStatusMobileDetail}}</p>{{/if}}
   </div>
   {{#if isError}}<button class="button button_view_secondary feed__retry" type="button" data-feed-retry>Повторить</button>{{/if}}
 {{else if message}}

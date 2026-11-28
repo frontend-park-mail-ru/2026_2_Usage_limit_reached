@@ -299,6 +299,10 @@
   font-weight: 500;
 }
 
+.feed__state-detail-mobile {
+  display: none;
+}
+
 .feed__retry {
   width: 120px;
   max-width: 100%;
@@ -321,6 +325,19 @@
 @media (max-width: 720px) {
   .feed {
     padding: 16px;
+  }
+
+  .feed__state-detail-desktop {
+    display: none;
+  }
+
+  .feed__state-detail-mobile {
+    display: block;
+  }
+
+  .feed__state_error + .feed__retry {
+    width: 100%;
+    margin-top: 16px;
   }
 
   .feed__toolbar {
