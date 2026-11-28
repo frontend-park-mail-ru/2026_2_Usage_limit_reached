@@ -3,4 +3,6 @@ export interface RequestOptions {
   method?: string;
   data?: object | FormData;
   responseType?: 'json' | 'empty';
+  timeoutMs?: number;
+  signal?: AbortSignal;
 }

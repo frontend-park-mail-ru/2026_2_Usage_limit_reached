@@ -1,15 +1,15 @@
 <nav class="sidebar" aria-label="Основная навигация">
   <div class="sidebar__top">
-    <a class="sidebar__logo-link" href="/" data-link aria-label="Лента">
+    <a class="sidebar__logo-link" href="/" data-link aria-label="На главную">
       <img class="sidebar__logo" src="/assets/sidebar/logo.svg" alt="">
     </a>
     <div class="sidebar__items">
-      <div class="sidebar__unavailable" tabindex="0" role="group" aria-label="Поиск" aria-describedby="sidebar-search-hint">
-        <button class="sidebar__item sidebar__item-search" type="button" disabled aria-label="Поиск">
-          <span class="sidebar__icon sidebar__icon-search" aria-hidden="true"></span>
-        </button>
-        <span class="sidebar__hint" id="sidebar-search-hint" role="tooltip" hidden>Будет доступно позже</span>
-      </div>
+      <a class="sidebar__item sidebar__item-link" href="{{feedHref}}" data-link aria-label="Лента">
+        <span class="sidebar__icon sidebar__icon-feed" aria-hidden="true"></span>
+      </a>
+      <a class="sidebar__item sidebar__item-link" href="{{searchHref}}" data-link aria-label="Поиск">
+        <span class="sidebar__icon sidebar__icon-search" aria-hidden="true"></span>
+      </a>
       <div class="sidebar__unavailable" tabindex="0" role="group" aria-label="Уведомления" aria-describedby="sidebar-notification-hint">
         <button class="sidebar__item sidebar__item-notification" type="button" disabled aria-label="Уведомления">
           <span class="sidebar__icon sidebar__icon-notification" aria-hidden="true"></span>
