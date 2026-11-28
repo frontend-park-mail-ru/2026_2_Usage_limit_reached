@@ -13,6 +13,8 @@ export class SortMenu {
    */
   constructor(root: HTMLElement, onChange: (value: string) => void) {
     this.label = requireElement<HTMLElement>(root, '[data-sort-label]');
+    const fullLabel = requireElement(this.label, '[data-sort-full-label]');
+    const shortLabel = requireElement(this.label, '[data-sort-short-label]');
     this.options = [...root.querySelectorAll<HTMLButtonElement>('.sort-menu__option')];
     this.menu = new ActionMenu(root, (value) => {
       const option = this.options.find((item) => item.dataset.action === value);
@@ -22,7 +24,8 @@ export class SortMenu {
       for (const item of this.options) {
         item.setAttribute('aria-checked', String(item === option));
       }
-      this.label.textContent = option.textContent;
+      fullLabel.textContent = option.textContent;
+      shortLabel.textContent = option.dataset.shortLabel ?? '';
       this.label.setAttribute('aria-label', `Порядок: ${option.textContent ?? ''}`);
       onChange(value);
     });

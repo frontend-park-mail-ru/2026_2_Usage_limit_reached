@@ -40,7 +40,11 @@ export function bindPublicPosts(
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const unbindCovers = bindPostCardCovers(panel);
   const sortRoot = requireElement<HTMLElement>(root, '[data-public-sort]');
-  const options = POST_SORT_OPTIONS.map((option) => ({ ...option, selected: option.value === 'new' }));
+  const options = POST_SORT_OPTIONS.map((option) => ({
+    ...option,
+    selected: option.value === 'new',
+    shortLabel: feed && option.value === 'popular' ? 'Популярные' : undefined,
+  }));
   sortRoot.innerHTML = sortMenuTemplate({ id: feed ? 'feed-sort' : 'public-profile-sort', currentLabel: options[0].label, options });
   let sort: PostsSort = 'new';
   let cursor: string | null = null;

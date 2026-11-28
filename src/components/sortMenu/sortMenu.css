@@ -18,6 +18,16 @@
   border-color: var(--color-input-border-hover);
 }
 
+[data-sort-short-label] {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .feed__sort [data-sort-short-label] {
+    display: inline;
+  }
+}
+
 .sort-menu__list {
   width: 220px;
 }

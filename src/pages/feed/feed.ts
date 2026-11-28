@@ -37,6 +37,24 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const clear = requireElement<HTMLButtonElement>(form, '[type="reset"]');
   const events = new AbortController();
   const { signal } = events;
+  const mobile = window.matchMedia('(max-width: 720px)');
+  const title = requireElement(root, '#feed-title');
+  const sort = requireElement(root, '[data-public-sort]');
+  const filterPanel = requireElement(root, '#feed-filters');
+  const syncToolbar = () => {
+    input.placeholder = mobile.matches ? 'Поиск' : 'Поиск по постам';
+    const focused = document.activeElement;
+    if (mobile.matches) {
+      title.after(sort);
+    } else {
+      filterPanel.before(sort);
+    }
+    if (focused instanceof HTMLElement && sort.contains(focused)) {
+      focused.focus({ preventScroll: true });
+    }
+  };
+  syncToolbar();
+  mobile.addEventListener('change', syncToolbar, { signal });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     posts.updateFilters({ q: input.value });
