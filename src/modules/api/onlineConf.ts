@@ -1,6 +1,10 @@
 import { ApiError } from './apiError.ts';
 import { sendRequest } from './http.ts';
+import { request } from './request.ts';
 import type {
+  OnlineConfConfig,
+  OnlineConfConfigKey,
+  OnlineConfJsonValue,
   OnlineConfListItem,
   OnlineConfListQuery,
   OnlineConfListResponse,
@@ -42,4 +46,27 @@ export function getOnlineConfList(
     params.set('q', search);
   }
   return sendRequest(`/onlineconf/admin/${section}?${params}`, { signal, cache: 'no-store', redirect: 'error' });
+}
+
+function configItemPath({ scope, name }: OnlineConfConfigKey): string {
+  return `/onlineconf/admin/configs/item?${new URLSearchParams({ scope, name })}`;
+}
+
+/** @throws {ApiError} */
+export function getOnlineConfConfig(key: OnlineConfConfigKey, signal: AbortSignal): Promise<OnlineConfConfig> {
+  return sendRequest(configItemPath(key), { signal, cache: 'no-store', redirect: 'error' });
+}
+
+/** @throws {ApiError} */
+export function createOnlineConfConfig(data: OnlineConfConfig, signal: AbortSignal): Promise<OnlineConfConfig> {
+  return request('/onlineconf/admin/configs', { method: 'POST', data, signal });
+}
+
+/** @throws {ApiError} */
+export function updateOnlineConfConfig(
+  key: OnlineConfConfigKey,
+  value: OnlineConfJsonValue,
+  signal: AbortSignal,
+): Promise<OnlineConfConfig> {
+  return request(configItemPath(key), { method: 'PATCH', data: { value }, signal });
 }
