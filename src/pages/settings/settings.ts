@@ -1,7 +1,11 @@
-import { startLoading } from '@/utils/helpers/delayedLoading.ts';
+import { startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import settingsTemplate from './settings.hbs';
 import { requireElement } from '@/utils/helpers/dom.ts';
-import { checkSession, getSessionContext, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
+import { checkSession, getSessionContext, getSessionVersion, isSessionCurrent } from '@/modules/auth/auth.actions.ts';
+import { authStore } from '@/modules/auth/auth.store.ts';
+import { captureOfflineToken, readOfflineCopy } from '@/modules/offline/offline.storage.ts';
+import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
+import type { SavedProfile } from '@/modules/offline/offline.types.ts';
 import { saveProfile, uploadAvatar, deleteAvatar, openSavedProfile } from '@/modules/profile/profile.actions.ts';
 import type { SessionContext } from '@/modules/auth/auth.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
@@ -19,6 +23,8 @@ import { AvatarCropper } from '@/components/avatarCropper/avatarCropper.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { setAlert } from '@/components/alert/alert.ts';
 import type { Navigate } from '@/app/paths.ts';
+import type { RouteParams } from '@/app/router.types.ts';
+import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
 import {
   AVATAR_DELETED_MESSAGE,
   AVATAR_DELETE_ERROR,
@@ -40,14 +46,14 @@ export function renderSettings(): string {
  * Данные профиля для шаблона.
  * @param profile
  */
-function buildSettingsViewModel(profile: Profile) {
+function buildSettingsViewModel(profile: Profile | SavedProfile) {
   const category = profile.author?.category ?? '';
   const categories = [...new Set([...(category ? [category] : []), ...PROFILE_CATEGORIES])];
   return {
     nickname: profile.user.nickname,
     username: profile.user.username,
-    avatarUrl: profile.user.avatar_url ?? AVATAR_PLACEHOLDER,
-    hasAvatar: !!profile.user.avatar_url,
+    avatarUrl: ('avatar_url' in profile.user && profile.user.avatar_url) || AVATAR_PLACEHOLDER,
+    hasAvatar: 'avatar_url' in profile.user && !!profile.user.avatar_url,
     isAuthor: !!profile.author,
     category,
     bio: profile.author?.bio ?? '',
@@ -83,7 +89,7 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
   const button = requireElement<HTMLButtonElement>(form, 'button[type="submit"]');
   const alert = requireElement<HTMLElement>(root, '.settings__save-error');
-  if (button.disabled || !isSessionCurrent(context)) {
+  if (button.matches(':disabled') || !isSessionCurrent(context)) {
     return;
   }
   button.disabled = true;
@@ -119,9 +125,10 @@ async function submitSettings(root: HTMLElement, profile: Profile, values: FormV
  * @param root
  * @param context
  */
-function bindAvatar(root: HTMLElement, context: SessionContext): void {
+function bindAvatar(root: HTMLElement, context: SessionContext): () => void {
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
-  const isActive = () => form.isConnected && isSessionCurrent(context);
+  const isActive = () => form.isConnected && isSessionCurrent(context)
+    && !root.querySelector<HTMLFieldSetElement>('[data-settings-fields]')?.disabled;
   const avatar = requireElement<HTMLImageElement>(root, '[data-avatar]');
   const deleteButton = requireElement<HTMLButtonElement>(root, '[data-avatar-delete]');
   const hint = requireElement<HTMLElement>(root, '[data-avatar-hint]');
@@ -184,6 +191,9 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
   };
 
   const handleApply = async () => {
+    if (!isActive()) {
+      return;
+    }
     applyButton.disabled = true;
     try {
       const blob = await cropper.toBlob();
@@ -237,6 +247,11 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
   fileInput.addEventListener('change', handleFile);
   applyButton.addEventListener('click', handleApply);
   deleteButton.addEventListener('click', handleDelete);
+  return () => {
+    cropper.destroy();
+    picker.destroy();
+    crop.destroy();
+  };
 }
 
 /**
@@ -246,15 +261,14 @@ function bindAvatar(root: HTMLElement, context: SessionContext): void {
  * @param navigate
  * @param context
  */
-function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, context: SessionContext): void {
+function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, context: SessionContext): () => void {
   const form = requireElement<HTMLFormElement>(root, '#settings-form');
   const category = root.querySelector<HTMLElement>('.select');
-  if (category) {
-    new Select(category);
-  }
+  const select = category ? new Select(category) : undefined;
   const schema = profile.author ? authorSettingsSchema(profile.author) : userSettingsSchema;
   bindValidation(form, schema, (values) => submitSettings(root, profile, values, navigate, context));
-  bindAvatar(root, context);
+  const disposeAvatar = bindAvatar(root, context);
+  return () => { select?.destroy(); disposeAvatar(); };
 }
 
 /**
@@ -262,31 +276,154 @@ function bindSettings(root: HTMLElement, profile: Profile, navigate: Navigate, c
  * @param root
  * @param navigate
  */
-export async function initSettings(root: HTMLElement, navigate: Navigate): Promise<void> {
-  const stopLoading = startLoading(root);
-  try {
-    const loadingPage = root.firstElementChild;
-    let profile: Profile | undefined;
+export function initSettings(root: HTMLElement, navigate: Navigate, _params: RouteParams, setRefreshNotice: SetRefreshNotice): () => void {
+  let active = true;
+  let request = 0;
+  let busy = false;
+  let readOnly = false;
+  let needsRetry = false;
+  let ownerId: string | undefined;
+  let baseline: Record<string, string> | undefined;
+  let recoveryPending = false;
+  let disposeForm: (() => void) | undefined;
+  const values = () => Object.fromEntries([...root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('#settings-form input, #settings-form textarea')]
+    .filter((input) => ['nickname', 'bio', 'category'].includes(input.name)).map((input) => [input.name, input.value]));
+  const setReadOnly = (value: boolean) => {
+    readOnly = value;
+    needsRetry = value;
+    setRefreshNotice(value ? { pending: busy } : null, () => { void load(); });
+    root.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLTextAreaElement>('input, button, textarea')
+      .forEach((element) => { element.disabled = value || element.getAttribute('name') === 'username'; });
+    root.querySelectorAll<HTMLElement>('[data-settings-offline]').forEach((element) => { element.hidden = !value; });
+    const fieldset = root.querySelector<HTMLFieldSetElement>('[data-settings-fields]');
+    if (fieldset) {
+      fieldset.disabled = value;
+    }
+    if (value) {
+      root.querySelectorAll<HTMLElement>('.select__list').forEach((list) => { list.hidden = true; });
+    }
+  };
+  const load = async () => {
+    if (!active || busy) {
+      return;
+    }
+    const id = ++request;
+    const version = getSessionVersion();
+    const current = () => active && id === request && version === getSessionVersion();
+    busy = true;
+    if (needsRetry) {
+      setRefreshNotice({ pending: true }, () => { void load(); });
+    }
+    const stopLoading = startLoading(root);
     try {
-      profile = await checkSession();
-    } catch (err) {
-      if (root.firstElementChild !== loadingPage || (err instanceof ApiError && err.isUnauthorized)) {
+      let profile: Profile | SavedProfile | undefined;
+      let offline = false;
+      try {
+        profile = await checkSession();
+      } catch (error) {
+        if (!isBackendUnavailable(error)) {
+          throw error;
+        }
+        offline = true;
+        const copy = await readOfflineCopy(ownerId);
+        const token = await captureOfflineToken();
+        profile = copy && copy.generation === token?.generation ? copy.profile : undefined;
+      }
+      if (!current()) {
         return;
       }
-      const message = err instanceof ApiError && err.status === 0 ? err.text : LOAD_ERROR;
-      root.innerHTML = settingsTemplate({ message, isError: true });
-      return;
+      if (!profile) {
+        if (offline && root.querySelector('#settings-form')) {
+          setReadOnly(true);
+          return;
+        }
+        disposeForm?.();
+        disposeForm = undefined;
+        root.innerHTML = settingsTemplate({ message: 'Не удалось открыть настройки', isError: true });
+        readOnly = offline;
+        needsRetry = true;
+      } else {
+        const edits = ownerId === profile.user.id && baseline
+          ? Object.entries(values()).filter(([name, value]) => value !== baseline?.[name]) : [];
+        ownerId = profile.user.id;
+        if (offline && edits.length > 0) {
+          setReadOnly(true);
+          return;
+        }
+        disposeForm?.();
+        disposeForm = undefined;
+        root.innerHTML = settingsTemplate({ ...buildSettingsViewModel(profile), offline });
+        baseline = values();
+        for (const [name, value] of edits) {
+          const input = root.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`);
+          if (input) {
+            input.value = value;
+          }
+        }
+        const context = getSessionContext();
+        if (!offline && context && context.userId === ownerId) {
+          disposeForm = bindSettings(root, profile as Profile, navigate, context);
+        }
+        setReadOnly(offline);
+      }
+    } catch (error) {
+      if (current() && !(error instanceof ApiError && error.isUnauthorized)) {
+        if (root.querySelector('#settings-form')
+          && !(error instanceof ApiError && [403, 404].includes(error.status))) {
+          setReadOnly(true);
+          return;
+        }
+        disposeForm?.();
+        disposeForm = undefined;
+        root.innerHTML = settingsTemplate({ message: LOAD_ERROR, isError: true });
+        needsRetry = true;
+      }
+    } finally {
+      stopLoading();
+      if (id === request) {
+        busy = false;
+        setRefreshNotice(needsRetry ? { pending: false } : null, () => { void load(); });
+        if (recoveryPending) {
+          recoveryPending = false;
+          if (active && readOnly) {
+            void load();
+          }
+        }
+      }
     }
-    if (!profile || root.firstElementChild !== loadingPage) {
-      return;
+  };
+  const handleOffline = () => {
+    setReadOnly(true);
+    root.querySelectorAll<HTMLDialogElement>('dialog[open]').forEach((dialog) => { dialog.close(); });
+  };
+  window.addEventListener('offline', handleOffline);
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (busy) {
+      recoveryPending = true;
+    } else {
+      void load();
     }
-    const context = getSessionContext();
-    if (!context || context.userId !== profile.user.id) {
-      return;
+  }, () => active && readOnly && !root.querySelector('dialog[open]'));
+  const unsubscribe = authStore.subscribe(() => {
+    if (active && authStore.getState().status === 'unknown') {
+      baseline = undefined;
+      ownerId = undefined;
+      request += 1;
+      busy = false;
+      disposeForm?.();
+      disposeForm = undefined;
+      root.innerHTML = renderSettings();
+      void load();
     }
-    root.innerHTML = settingsTemplate(buildSettingsViewModel(profile));
-    bindSettings(root, profile, navigate, context);
-  } finally {
-    stopLoading();
-  }
+  });
+  void load();
+  return () => {
+    active = false;
+    setRefreshNotice(null);
+    disposeForm?.();
+    cancelLoading(root);
+    unsubscribe();
+    unbindRecovery();
+    window.removeEventListener('offline', handleOffline);
+  };
 }

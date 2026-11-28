@@ -58,11 +58,15 @@ export const sameAs = (field: string, message: string): Rule =>
   (value, values = {}) => (value === values[field] ? null : message);
 
 /**
- * В HTML должен быть заполненный текст.
+ * Проверяет, что в посте есть текст или маркер вложения.
  * @param message
  */
-export const richTextRequired = (message: string): Rule =>
-  (value) => ((new DOMParser().parseFromString(value, 'text/html').body.textContent ?? '').trim() !== '' ? null : message);
+export const postContentRequired = (message: string): Rule => (value) => {
+  const { body } = new DOMParser().parseFromString(value, 'text/html');
+  const hasAttachment = [...body.querySelectorAll('figure[data-attachment-id]')]
+    .some((marker) => !!marker.getAttribute('data-attachment-id')?.trim());
+  return body.textContent?.trim() || hasAttachment ? null : message;
+};
 
 /**
  * Значение должно быть полным https-адресом.

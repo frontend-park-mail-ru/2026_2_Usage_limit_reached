@@ -50,6 +50,7 @@ export class DonateDialog {
   private context: SessionContext | undefined;
   private readonly unsubscribeAuth: () => void;
   private destroyed = false;
+  private readOnly = false;
 
   /**
    * @param dialog
@@ -104,6 +105,12 @@ export class DonateDialog {
     this.updatePresets();
     this.modal.open();
     this.showStep('form');
+  }
+
+  /** Блокирует отправку без потери введённого сообщения. */
+  setReadOnly(readOnly: boolean): void {
+    this.readOnly = readOnly;
+    this.setSending(this.isSending);
   }
 
   /** Снимает обработчики. */
@@ -235,7 +242,7 @@ export class DonateDialog {
    */
   private setSending(isSending: boolean): void {
     this.isSending = isSending;
-    this.sendButton.disabled = isSending;
+    this.sendButton.disabled = isSending || this.readOnly;
     this.backButton.disabled = isSending;
     this.dialog.querySelectorAll<HTMLButtonElement>('[data-modal-close]').forEach((button) => {
       button.disabled = isSending;
@@ -247,7 +254,7 @@ export class DonateDialog {
   private async send(): Promise<void> {
     const context = this.context;
     const author = this.author;
-    if (!author || !context || !isSessionCurrent(context) || this.isSending || this.destroyed || !this.isSessionValid()) {
+    if (!author || !context || !isSessionCurrent(context) || this.isSending || this.readOnly || this.destroyed || !this.isSessionValid()) {
       return;
     }
     const { amount, message } = this.values();

@@ -3,12 +3,17 @@ import type { RouteMatch, RouteParams } from './router.types.ts';
 export const ROUTES = {
   home: '/',
   feed: '/feed',
+  search: '/search',
   login: '/login',
   register: '/register',
   profile: '/profile',
   becomeAuthor: '/become-author',
   publicProfile: '/users/:username',
+  subscription: '/users/:username/subscription',
   settings: '/settings',
+  settingsTiers: '/settings/tiers',
+  settingsTierNew: '/settings/tiers/new',
+  settingsTierEdit: '/settings/tiers/:id/edit',
   donations: '/donations',
   postNew: '/posts/new',
   post: '/posts/:id',
@@ -84,11 +89,17 @@ export const postRoute = (id: string): RoutePath => `/posts/${encodeURIComponent
 /** Адрес публичного профиля пользователя. */
 export const publicProfileRoute = (username: string): RoutePath => `/users/${encodeURIComponent(username)}`;
 
+/** Адрес выбора уровня подписки. */
+export const subscriptionRoute = (username: string): RoutePath => `/users/${encodeURIComponent(username)}/subscription`;
+
 /**
  * Адрес редактирования поста.
  * @param id
  */
 export const postEditRoute = (id: string): RoutePath => `/posts/${encodeURIComponent(id)}/edit`;
+
+/** Адрес формы редактирования уровня. */
+export const tierEditRoute = (id: string): RoutePath => `/settings/tiers/${encodeURIComponent(id)}/edit`;
 
 /**
  * Проверяет, входит ли адрес в список маршрутов приложения.

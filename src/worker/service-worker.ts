@@ -41,7 +41,8 @@ async function readApplicationAsset(request: Request): Promise<Response> {
 function handleFetch(event: FetchEvent): void {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== 'GET' || url.origin !== self.location.origin) {
+  if (request.method !== 'GET' || url.origin !== self.location.origin
+    || url.pathname === '/api' || url.pathname.startsWith('/api/')) {
     return;
   }
   if (assetPaths.has(url.pathname) && !url.search) {

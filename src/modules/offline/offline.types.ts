@@ -4,6 +4,8 @@ import type { ProfilePost, ProfilePostsQuery } from '@/modules/api/profile.types
 export interface OfflineToken {
   generation: string;
   ownerId: string | null;
+  publicationSequence?: number;
+  publicationOrders?: Map<string, { body?: number; preview?: number; revoked?: number }>;
 }
 
 /** Резервные ревизии захватываются до запроса, без подтверждения владельца. */
@@ -12,13 +14,17 @@ export type OfflineClearToken = OfflineToken | { generations: readonly string[] 
 export interface SavedProfile {
   savedAt: number;
   user: { id: string; username: string; nickname: string };
-  author?: { bio: string };
+  author?: { bio: string; category?: string | null };
 }
 
 export interface SavedPosts {
   savedAt: number;
+  pages?: number;
   query: ProfilePostsQuery;
-  items: Pick<ProfilePost, 'id' | 'title' | 'locked' | 'body_preview' | 'published_or_updated_at'>[];
+  items: (Pick<ProfilePost, 'id' | 'title' | 'locked' | 'body_preview' | 'offline_cache_until' | 'published_or_updated_at'> & {
+    likes_count?: number;
+    liked_by_user?: boolean;
+  })[];
   next_cursor: string | null;
 }
 

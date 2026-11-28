@@ -20,20 +20,13 @@
         <p class="profile__username">{{username}}</p>
         {{#if hasAuthor}}
 {{> profileBio}}
-          {{#if offline}}
-            {{#unless postsMissing}}
-              <p class="profile__post-count">{{postCountLabel}}{{#if hasMorePosts}}. Есть ещё посты, они не загружены.{{/if}}</p>
-            {{/unless}}
-          {{/if}}
         {{/if}}
       </div>
     </div>
-    {{#unless offline}}
     <div class="profile__actions">
       <a class="button button_view_secondary profile__button profile__button-edit" href="/settings" data-link>Редактировать профиль</a>
       <a class="button button_view_secondary profile__button profile__button-donations" href="/donations" data-link>Пожертвования</a>
     </div>
-    {{/unless}}
     {{/if}}
   </div>
 
@@ -52,13 +45,14 @@
   {{#if showPosts}}
   <section class="profile__posts" aria-label="Публикации">
     {{#if offline}}
+      {{#if hasAuthor}}
       <div class="profile__toolbar">
         <h2 class="profile__title">Посты</h2>
+        <div data-public-sort></div>
       </div>
-      {{#if postsMissing}}
-        <p class="profile__error">Нет сохранённых постов. Попробуйте обновить страницу позже.</p>
+      <div data-public-posts></div>
       {{else}}
-        {{> postsList}}
+        <p class="profile__username">Нет сохранённых постов</p>
       {{/if}}
     {{else}}
       <div class="profile__toolbar">

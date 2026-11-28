@@ -22,7 +22,9 @@ export async function expireSession(
   notifyTabs = true,
 ): Promise<boolean> {
   const version = sessionVersion;
-  const cleared = await clearOfflineCopy(expected, () => version === sessionVersion);
+  const anonymous = !confirmedSession && pendingChangeVersion === undefined
+    && expected && 'ownerId' in expected && expected.ownerId === null;
+  const cleared = anonymous ? true : await clearOfflineCopy(expected, () => version === sessionVersion);
   if (cleared === false || version !== sessionVersion) {
     return false;
   }
@@ -227,6 +229,7 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
   if (query.cursor !== undefined) {
     parameters.cursor = query.cursor;
   }
+  const token = await captureOfflineToken(true);
   let posts;
   try {
     posts = await runSessionRequest(context, () => getProfilePosts(parameters));
@@ -242,7 +245,8 @@ export async function loadProfilePosts(query: ProfilePostsQuery = DEFAULT_PROFIL
   if (!posts || !isCurrent() || !isSessionCurrent(context) || posts.items.some((item) => item.author.id !== context.userId)) {
     return undefined;
   }
-  const saved = await saveOfflinePosts(context.offlineToken, posts, parameters, () => isCurrent() && isSessionCurrent(context));
+  const expected = token?.generation === context.offlineToken?.generation ? token : undefined;
+  const saved = await saveOfflinePosts(expected, posts, parameters, () => isCurrent() && isSessionCurrent(context));
   return saved !== false && isCurrent() && isSessionCurrent(context) ? posts : undefined;
 }
 
