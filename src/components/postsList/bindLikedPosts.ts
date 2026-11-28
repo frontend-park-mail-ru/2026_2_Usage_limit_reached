@@ -8,8 +8,10 @@ import { sendLike } from '@/components/likeButton/sendLike.ts';
 import { showToast } from '@/components/toast/toast.ts';
 import { ROUTES } from '@/app/paths.ts';
 import type { Navigate } from '@/app/paths.ts';
-import type { PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
+import type { FeedQuery, PostsPage, PostsQuery } from '@/modules/api/posts.types.ts';
 import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.types.ts';
+
+export type FeedFilters = Omit<FeedQuery, keyof PostsQuery>;
 
 /**
  * Подключает лайки и обновление списка при смене сессии.
@@ -23,32 +25,40 @@ import type { SetRefreshNotice } from '@/components/refreshNotice/refreshNotice.
  */
 export function bindLikedPosts(
   root: HTMLElement,
-  loadPage: (query: PostsQuery) => Promise<PostsPage>,
+  loadPage: (query: FeedQuery) => Promise<PostsPage>,
   navigate: Navigate,
   feed = false,
   offlineProfile?: string,
   readOnly = false,
   setRefreshNotice?: SetRefreshNotice,
-): () => void {
+) {
   const pendingLikes = new Map<ReturnType<typeof sendLike>, SessionContext>();
   let offline = false;
+  let filters: FeedFilters = {};
   const offlineEnabled = feed || offlineProfile !== undefined;
+  const onlineOnly = () => Boolean(filters.q || filters.tag || filters.attachment_type || filters.accessible_only);
   const posts = bindPublicPosts(root, async (query, isCurrent) => {
+    const selection = filters;
+    const filtered = onlineOnly();
     if (authStore.getState().status === 'unknown' || (offlineEnabled && offline)) {
       await checkSession().catch(() => {});
     }
     const context = getSessionContext();
+    const version = getSessionVersion();
     const pending = [...pendingLikes].filter(([, owner]) => owner === context);
     if (pending.length > 0) {
       await Promise.allSettled(pending.map(([request]) => request));
     }
-    const version = getSessionVersion();
-    if (!offlineEnabled) {
-      return loadPage(query);
+    const current = () => isCurrent() && version === getSessionVersion();
+    if (!current()) {
+      return { items: [], next_cursor: null };
     }
-    const page = await loadOfflinePosts(query, () => loadPage(query),
-      () => isCurrent() && version === getSessionVersion(), offlineProfile);
-    if (isCurrent()) {
+    const load = () => loadPage({ ...query, ...selection });
+    if (!offlineEnabled) {
+      return load();
+    }
+    const page = await loadOfflinePosts(query, load, current, offlineProfile, filtered);
+    if (current()) {
       offline = page.savedAt !== undefined;
     }
     return page;
@@ -77,7 +87,7 @@ export function bindLikedPosts(
         pendingLikes.delete(request);
       }
     });
-  }, feed, offlineEnabled, readOnly, setRefreshNotice);
+  }, feed, offlineEnabled, readOnly, setRefreshNotice, onlineOnly);
   let previous = authStore.getState();
   const unsubscribe = authStore.subscribe(() => {
     const current = authStore.getState();
@@ -88,8 +98,20 @@ export function bindLikedPosts(
       posts.reload();
     }
   });
-  return () => {
-    unsubscribe();
-    posts.destroy();
+  return {
+    updateFilters(changes: FeedFilters) {
+      const next = { ...filters, ...changes };
+      const q = next.q?.trim() || undefined;
+      const accessible_only = next.accessible_only || undefined;
+      if (q !== filters.q || next.tag !== filters.tag || next.attachment_type !== filters.attachment_type
+        || accessible_only !== filters.accessible_only) {
+        filters = { ...next, q, accessible_only };
+        posts.reload();
+      }
+    },
+    destroy() {
+      unsubscribe();
+      posts.destroy();
+    },
   };
 }
