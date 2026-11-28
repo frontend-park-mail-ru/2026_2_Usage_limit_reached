@@ -1,4 +1,4 @@
-import { required, minLength, maxLength, maxByteLength, minNumber, pattern, email, sameAs, richTextRequired, httpsUrl } from './rules.ts';
+import { required, minLength, maxLength, maxByteLength, minNumber, pattern, email, sameAs, postContentRequired, httpsUrl } from './rules.ts';
 import type { Rule, Schema } from './validation.types.ts';
 import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX, DONATION_AMOUNT_MIN, DONATION_AMOUNT_MAX_DIGITS, DONATION_MESSAGE_MAX } from './schemas.constants.ts';
 
@@ -70,7 +70,7 @@ export const postSchema: Schema = {
     maxLength(POST_TITLE_MAX, 'До 255 символов'),
   ],
   body: [
-    richTextRequired('Введите текст публикации'),
+    postContentRequired('Добавьте текст или вложение'),
     maxLength(POST_BODY_MAX, 'Текст слишком длинный. Сократите его'),
   ],
 };

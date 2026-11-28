@@ -1,0 +1,13 @@
+<li class="author-search__result">
+  <a class="author-search__card" href="{{href}}" data-link>
+    <span class="author-search__avatar" aria-hidden="true">
+      {{initials}}
+      {{#if avatar_url}}<img src="{{avatar_url}}" alt="" width="48" height="48">{{/if}}
+    </span>
+    <span class="author-search__details">
+      <strong>{{nickname}}</strong>
+      <span class="author-search__username">@{{username}}</span>
+      {{#if bio}}<span class="author-search__bio">{{bio}}</span>{{/if}}
+    </span>
+  </a>
+</li>
