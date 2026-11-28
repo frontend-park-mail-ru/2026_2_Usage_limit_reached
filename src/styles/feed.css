@@ -127,8 +127,7 @@
   background: rgb(61 64 91 / 8%);
 }
 
-.feed__attachment-section[hidden],
-.feed__access-filter[hidden] {
+.feed__attachment-section[hidden] {
   display: none;
 }
 
@@ -285,14 +284,6 @@ html:has(.feed__filter-sheet[open]) {
   -webkit-tap-highlight-color: transparent;
 }
 
-.feed__filter-sheet .feed__access-filter {
-  min-height: 44px;
-  margin: 0;
-  padding: 0;
-  font-weight: 400;
-  -webkit-tap-highlight-color: transparent;
-}
-
 .feed__filter-sheet .feed__filter-actions {
   margin-top: 10px;
   padding: 0;
@@ -349,45 +340,6 @@ html:has(.feed__filter-sheet[open]) {
 
 .feed__attachment-options label:not(:has(:checked)) span {
   visibility: hidden;
-}
-
-.feed__access-filter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 36px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgb(61 64 91 / 12%);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.feed__access-filter input {
-  display: flex;
-  align-items: center;
-  appearance: none;
-  box-sizing: border-box;
-  width: 36px;
-  height: 20px;
-  margin: 0;
-  padding: 2px;
-  border-radius: 10px;
-  background: rgb(61 64 91 / 24%);
-  cursor: pointer;
-}
-
-.feed__access-filter input::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-white);
-}
-
-.feed__access-filter input:checked {
-  justify-content: flex-end;
-  background: var(--color-primary);
 }
 
 .feed__filter-actions {

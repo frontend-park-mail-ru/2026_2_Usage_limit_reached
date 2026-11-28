@@ -23,11 +23,11 @@
             {{/each}}
           </div>
         </details>
-        <details class="feed__attachment-section" open hidden>
+        <details class="feed__attachment-section" open>
           <summary>Вложения <span data-attachment-value></span></summary>
           <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">
             <span id="feed-attachments">Вложения</span>
-            <small id="feed-attachments-hint">Обложки постов не учитываются</small>
+            <small id="feed-attachments-hint">Обложки постов не учитываются. Доступность фильтра определяет сервер.</small>
             {{#each attachments}}
               <label>
                 <input type="radio" name="attachment_type" value="{{value}}"{{#if selected}} checked{{/if}}>
@@ -36,10 +36,6 @@
             {{/each}}
           </div>
         </details>
-        <label class="feed__access-filter" hidden>
-          Доступно мне
-          <input type="checkbox" name="accessible_only" role="switch">
-        </label>
         <div class="feed__filter-actions">
           <button class="button button_borderless" type="reset">Сбросить</button>
           <button class="button button_view_primary" type="submit">Применить</button>
