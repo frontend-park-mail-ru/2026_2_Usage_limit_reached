@@ -1,7 +1,17 @@
+.posts-list__grid-container {
+  container: posts-list / inline-size;
+}
+
 .posts-list__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px 16px;
+}
+
+@container posts-list (min-width: 992px) {
+  .posts-list__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .posts-list__loading,
@@ -96,10 +106,6 @@
 }
 
 @media (max-width: 1280px) {
-  .posts-list__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .posts-list__empty-posts {
     padding: 32px;
   }
@@ -108,6 +114,7 @@
 @media (max-width: 720px) {
   .posts-list__grid {
     grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
   .posts-list__empty-posts {

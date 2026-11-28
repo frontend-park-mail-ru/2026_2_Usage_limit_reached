@@ -398,10 +398,6 @@
     border: 1px solid rgb(61 64 91 / 50%);
   }
 
-  .feed .posts-list__grid {
-    gap: 16px;
-  }
-
   .feed .post-card:not(:has(.post-card__cover)) {
     min-height: 0;
     gap: 12px;

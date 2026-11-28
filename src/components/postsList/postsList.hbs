@@ -33,10 +33,12 @@
     </div>
   {{/if}}
 {{else}}
-  <div class="posts-list__grid" data-posts-grid>
-    {{#each cards}}
-      {{> postCard}}
-    {{/each}}
+  <div class="posts-list__grid-container">
+    <div class="posts-list__grid" data-posts-grid>
+      {{#each cards}}
+        {{> postCard}}
+      {{/each}}
+    </div>
   </div>
   <div class="posts-list__more" data-posts-more{{#unless hasMore}} hidden{{/unless}}>
     <p class="posts-list__more-text" role="status" data-posts-more-text></p>
