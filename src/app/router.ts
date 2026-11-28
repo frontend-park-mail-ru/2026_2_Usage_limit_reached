@@ -100,7 +100,17 @@ function getAuthRedirect(path: string, search: URLSearchParams): NavigationPath 
 
 /** Заменяет текущий адрес, если состояние сессии требует другую страницу. */
 function redirectByAuth(): boolean {
-  const target = getAuthRedirect(window.location.pathname, new URLSearchParams(window.location.search));
+  const { pathname, search } = window.location;
+  const params = new URLSearchParams(search);
+  if (
+    pathname === ROUTES.login
+    && params.get('return_to') === ROUTES.admin
+    && authStore.getState().status === 'authenticated'
+  ) {
+    window.location.replace(ROUTES.admin);
+    return true;
+  }
+  const target = getAuthRedirect(pathname, params);
   if (!target) {
     return false;
   }
