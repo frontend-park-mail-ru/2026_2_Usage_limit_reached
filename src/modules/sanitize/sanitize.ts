@@ -17,8 +17,9 @@ export function normalizeUrl(href: string): string | null {
  * Копирует узел, оставляя только разрешённую разметку.
  * @param node
  * @param doc
+ * @param keepAttachments
  */
-function cleanNode(node: Node, doc: Document): Node[] {
+function cleanNode(node: Node, doc: Document, keepAttachments: boolean): Node[] {
   if (node.nodeType === Node.TEXT_NODE) {
     return [doc.createTextNode(node.textContent ?? '')];
   }
@@ -30,7 +31,13 @@ function cleanNode(node: Node, doc: Document): Node[] {
   if (REMOVED_WITH_CONTENT.has(name)) {
     return [];
   }
-  const children = [...element.childNodes].flatMap((child) => cleanNode(child, doc));
+  const id = keepAttachments && name === 'FIGURE' ? element.getAttribute('data-attachment-id') : null;
+  if (id) {
+    const marker = doc.createElement('figure');
+    marker.setAttribute('data-attachment-id', id);
+    return [marker];
+  }
+  const children = [...element.childNodes].flatMap((child) => cleanNode(child, doc, keepAttachments));
   const tag = TAG_ALIASES[name] ?? name;
   const href = tag === 'A' ? normalizeUrl(element.getAttribute('href') ?? '') : null;
   if (!ALLOWED_TAGS.has(tag) || (tag === 'A' && !href)) {
@@ -47,13 +54,14 @@ function cleanNode(node: Node, doc: Document): Node[] {
 }
 
 /**
- * Оставляет в HTML поста только разрешённые теги и https-ссылки.
+ * Оставляет разрешённые теги, https-ссылки и, при необходимости, маркеры вложений.
  * @param html
+ * @param keepAttachments
  */
-export function sanitizeHtml(html: string): string {
+export function sanitizeHtml(html: string, keepAttachments = false): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const container = doc.createElement('div');
-  container.append(...[...doc.body.childNodes].flatMap((child) => cleanNode(child, doc)));
+  container.append(...[...doc.body.childNodes].flatMap((child) => cleanNode(child, doc, keepAttachments)));
   return container.innerHTML;
 }
 

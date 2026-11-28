@@ -13,6 +13,14 @@ interface AuthorSearchPage {
 }
 
 /** Ищет авторов по отображаемому имени или имени пользователя. */
-export function searchAuthors(q: string): Promise<AuthorSearchPage> {
-  return request<AuthorSearchPage>(`/authors?${new URLSearchParams({ q })}`);
+export function searchAuthors(q: string, tags: string[], cursor: string | null): Promise<AuthorSearchPage> {
+  const params = new URLSearchParams();
+  if (q) {
+    params.set('q', q);
+  }
+  tags.forEach((tag) => params.append('tag', tag));
+  if (cursor !== null) {
+    params.set('cursor', cursor);
+  }
+  return request<AuthorSearchPage>(`/authors?${params}`);
 }
