@@ -13,6 +13,9 @@
           <p>{{price}} за 30 дней</p>
         </div>
         {{#if description}}<p class="subscription-tiers__description">{{description}}</p>{{/if}}
+        {{#if editHref}}
+          <a class="button button_view_secondary tier-button subscription-tiers__edit" href="{{editHref}}" data-link>Редактировать</a>
+        {{/if}}
       </li>
     {{/each}}
   </ul>
