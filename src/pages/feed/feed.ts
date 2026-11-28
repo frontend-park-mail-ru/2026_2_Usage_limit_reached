@@ -91,29 +91,43 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     input.focus();
   }, { signal });
   const topics = root.querySelectorAll<HTMLButtonElement>('[data-topic]');
+  let appliedTag = '';
+  const syncTopics = () => {
+    topics.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.topic === appliedTag)));
+    filterButton.toggleAttribute('data-topic-applied', Boolean(appliedTag));
+  };
   topics.forEach((topic) => topic.addEventListener('click', () => {
-    topics.forEach((button) => button.setAttribute('aria-pressed', String(button === topic)));
-    posts.updateFilters({ tag: topic.dataset.topic || undefined });
+    appliedTag = topic.dataset.topic ?? '';
+    syncTopics();
+    posts.updateFilters({ tag: appliedTag || undefined });
   }, { signal }));
   const attachment = panel.elements.namedItem('attachment_type') as RadioNodeList;
+  const tag = panel.elements.namedItem('tag') as RadioNodeList;
+  const topicSection = requireElement<HTMLDetailsElement>(panel, '.feed__topic-section');
+  const topicValue = requireElement(panel, '[data-topic-value]');
   const attachmentValue = requireElement(panel, '[data-attachment-value]');
   const accessible = requireElement<HTMLInputElement>(panel, '[name="accessible_only"]');
   let appliedAttachment: FeedQuery['attachment_type'];
   let appliedAccessible = false;
-  const syncAttachmentValue = () => {
+  const syncFilterValues = () => {
     attachmentValue.textContent = ATTACHMENT_FILTERS.find(({ value }) => value === attachment.value)?.label ?? '';
+    topicValue.textContent = tag.value || 'Все темы';
   };
   const restoreFilters = () => {
     panel.reset();
     accessible.checked = appliedAccessible;
+    if (appliedTag) {
+      tag.value = appliedTag;
+    }
     if (appliedAttachment) {
       attachment.value = appliedAttachment;
     }
-    syncAttachmentValue();
+    syncFilterValues();
   };
   filterButton.addEventListener('click', () => {
     if (mobile.matches) {
       restoreFilters();
+      topicSection.open = false;
       section.open = false;
       sheet.showModal();
       sheet.scrollTop = 0;
@@ -125,9 +139,10 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
       filterButton.focus({ preventScroll: true });
     }
   }, { signal });
-  panel.addEventListener('change', syncAttachmentValue, { signal });
+  panel.addEventListener('change', syncFilterValues, { signal });
   panel.addEventListener('reset', () => {
     attachmentValue.textContent = ATTACHMENT_FILTERS[0].label;
+    topicValue.textContent = 'Все темы';
   }, { signal });
   panel.addEventListener('beforetoggle', (event) => {
     if (event.newState === 'open') {
@@ -138,8 +153,12 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     event.preventDefault();
     appliedAttachment = (attachment.value || undefined) as FeedQuery['attachment_type'];
     appliedAccessible = accessible.checked;
+    if (sheet.open) {
+      appliedTag = tag.value;
+      syncTopics();
+    }
     filterButton.toggleAttribute('data-applied', Boolean(appliedAttachment) || appliedAccessible);
-    posts.updateFilters({ attachment_type: appliedAttachment, accessible_only: appliedAccessible });
+    posts.updateFilters({ tag: appliedTag || undefined, attachment_type: appliedAttachment, accessible_only: appliedAccessible });
     if (sheet.open) {
       sheet.close();
     } else {

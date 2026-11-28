@@ -14,6 +14,15 @@
       </button>
       <div class="feed__sort" data-public-sort></div>
       <form class="feed__filters" id="feed-filters" popover aria-label="Фильтры">
+        <details class="feed__topic-section">
+          <summary>Тема <span data-topic-value></span></summary>
+          <div class="feed__attachment-options" role="radiogroup" aria-label="Тема">
+            <label><input type="radio" name="tag" value="" checked>Все темы <span aria-hidden="true">✓</span></label>
+            {{#each topics}}
+              <label><input type="radio" name="tag" value="{{this}}">{{this}} <span aria-hidden="true">✓</span></label>
+            {{/each}}
+          </div>
+        </details>
         <details class="feed__attachment-section" open>
           <summary>Вложения <span data-attachment-value></span></summary>
           <div class="feed__attachment-options" role="radiogroup" aria-labelledby="feed-attachments" aria-describedby="feed-attachments-hint">

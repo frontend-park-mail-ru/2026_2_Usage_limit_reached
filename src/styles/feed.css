@@ -116,7 +116,8 @@
   cursor: pointer;
 }
 
-.feed__filters-button[data-applied]::after {
+.feed__filters-button[data-applied]::after,
+.feed__filters-button[data-topic-applied][aria-haspopup='dialog']::after {
   content: '';
   position: absolute;
   z-index: -1;
@@ -147,6 +148,15 @@
 
 .feed__attachment-section > summary {
   display: none;
+}
+
+.feed__topic-section {
+  display: none;
+}
+
+.feed__filter-sheet .feed__topic-section {
+  display: block;
+  border-bottom: 1px solid rgb(61 64 91 / 12%);
 }
 
 .feed__filter-sheet {
@@ -255,6 +265,7 @@ html:has(.feed__filter-sheet[open]) {
 .feed__filter-sheet .feed__attachment-options label,
 .feed__filter-sheet .feed__filter-actions .button {
   height: 44px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .feed__filter-sheet .feed__access-filter {
@@ -454,6 +465,19 @@ html:has(.feed__filter-sheet[open]) {
 @media (max-width: 720px) {
   .feed {
     padding: 16px;
+  }
+
+  .feed__topics {
+    display: none;
+  }
+
+  .feed__filters-button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .feed__filters-button[data-applied]::after,
+  .feed__filters-button[data-topic-applied][aria-haspopup='dialog']::after {
+    inset: 2px;
   }
 
   .feed__state-detail-desktop {
