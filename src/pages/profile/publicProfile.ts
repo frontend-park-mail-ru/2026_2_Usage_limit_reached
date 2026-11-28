@@ -81,7 +81,7 @@ export function initPublicProfile(root: HTMLElement, navigate: Navigate, params:
       disposeBio = bindProfileBio(root);
       if (author) {
         disposePosts = bindLikedPosts(root, (query) => getPublicPosts(params.username, query), navigate, false, params.username, offline,
-          (state, retry) => { if (!needsRetry) { setRefreshNotice(state, retry); } });
+          (state, retry) => { if (!needsRetry) { setRefreshNotice(state, retry); } }).destroy;
         const donate = requireElement<HTMLButtonElement>(root, '[data-donate]');
         donate.disabled = offline;
         root.querySelector('[data-subscribe]')?.addEventListener('click', (event) => {

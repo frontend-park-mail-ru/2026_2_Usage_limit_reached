@@ -1,4 +1,4 @@
-import type { PostAttachment } from './attachments.ts';
+import type { AttachmentType, PostAttachment } from './attachments.ts';
 
 export type PostStatus = 'draft' | 'published' | 'archived';
 
@@ -40,6 +40,13 @@ export interface PostsPage {
 export interface PostsQuery {
   sort: PostsSort;
   cursor?: string | null;
+}
+
+export interface FeedQuery extends PostsQuery {
+  q?: string;
+  tag?: string;
+  attachment_type?: 'any' | AttachmentType;
+  accessible_only?: boolean;
 }
 
 export interface PostAccessStage {
