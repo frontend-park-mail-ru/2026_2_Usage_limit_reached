@@ -1,6 +1,9 @@
 import { request } from './request.ts';
 import type { DonationInput, DonationResult, DonationsDirection, DonationsPage } from './donations.types.ts';
 
+/** Получает минимальную сумму пожертвования в копейках. */
+export const getDonationSettings = () => request<{ min_amount_minor: number }>('/donations/settings');
+
 /**
  * Отправляет пожертвование автору.
  * @param authorId

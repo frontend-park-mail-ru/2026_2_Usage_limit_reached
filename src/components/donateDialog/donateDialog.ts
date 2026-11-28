@@ -7,7 +7,8 @@ import { formatMoney, toMinor } from '@/utils/helpers/money.ts';
 import { validate } from '@/modules/validation/validate.ts';
 import { donationSchema } from '@/modules/validation/schemas.ts';
 import { setFieldError } from '@/modules/validation/bindForm.ts';
-import { sendDonation } from '@/modules/api/donations.ts';
+import { getDonationSettings, sendDonation } from '@/modules/api/donations.ts';
+import { DONATION_AMOUNT_MAX_DIGITS, DONATION_AMOUNT_MIN } from '@/modules/validation/schemas.constants.ts';
 import { ApiError } from '@/modules/api/request.ts';
 import type { PostAuthor } from '@/modules/api/posts.types.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
@@ -33,10 +34,12 @@ export class DonateDialog {
   private readonly title: HTMLElement;
   private readonly form: HTMLFormElement;
   private readonly amountInput: HTMLInputElement;
+  private readonly amountHint: HTMLElement;
   private readonly messageInput: HTMLTextAreaElement;
   private readonly error: HTMLElement;
   private readonly backButton: HTMLButtonElement;
   private readonly sendButton: HTMLButtonElement;
+  private readonly continueButton: HTMLButtonElement;
   private readonly onClick: (event: MouseEvent) => void;
   private readonly onInput: () => void;
   private readonly onSubmit: (event: SubmitEvent) => void;
@@ -51,6 +54,8 @@ export class DonateDialog {
   private readonly unsubscribeAuth: () => void;
   private destroyed = false;
   private readOnly = false;
+  private minimumMinor = toMinor(DONATION_AMOUNT_MIN);
+  private opening = 0;
 
   /**
    * @param dialog
@@ -64,10 +69,12 @@ export class DonateDialog {
     this.title = requireElement<HTMLElement>(dialog, '.modal__title');
     this.form = requireElement<HTMLFormElement>(dialog, '.donate-dialog__form');
     this.amountInput = requireElement<HTMLInputElement>(this.form, '[name="amount"]');
+    this.amountHint = requireElement(this.form, '#donate-amount-hint');
     this.messageInput = requireElement<HTMLTextAreaElement>(this.form, '[name="message"]');
     this.error = requireElement<HTMLElement>(dialog, '.donate-dialog__error');
     this.backButton = requireElement<HTMLButtonElement>(dialog, '[data-donate-back]');
     this.sendButton = requireElement<HTMLButtonElement>(dialog, '[data-donate-send]');
+    this.continueButton = requireElement(this.form, 'button[type="submit"]');
     this.onClick = this.handleClick.bind(this);
     this.onInput = this.handleInput.bind(this);
     this.onSubmit = this.handleSubmit.bind(this);
@@ -98,6 +105,8 @@ export class DonateDialog {
     }
     this.context = context;
     this.author = author;
+    this.continueButton.disabled = true;
+    this.setMinimum(toMinor(DONATION_AMOUNT_MIN));
     setFieldError(this.form, 'amount', null);
     setFieldError(this.form, 'message', null);
     setAlert(this.error, null);
@@ -105,6 +114,33 @@ export class DonateDialog {
     this.updatePresets();
     this.modal.open();
     this.showStep('form');
+    void this.loadMinimum(context, ++this.opening);
+  }
+
+  private setMinimum(minimumMinor: number): void {
+    this.minimumMinor = minimumMinor;
+    this.amountHint.textContent = `Любая сумма от ${formatMoney(minimumMinor)}`;
+  }
+
+  private async loadMinimum(context: SessionContext, opening: number): Promise<void> {
+    const settings = await getDonationSettings().catch(() => null);
+    if (this.destroyed || !this.dialog.open || opening !== this.opening
+        || this.context !== context || !isSessionCurrent(context) || !this.isSessionValid()) {
+      return;
+    }
+    this.continueButton.disabled = false;
+    if (!settings) {
+      return;
+    }
+    const minimum = settings.min_amount_minor;
+    if (!Number.isInteger(minimum) || minimum < toMinor(DONATION_AMOUNT_MIN)
+        || minimum % toMinor(1) !== 0 || minimum >= toMinor(10 ** DONATION_AMOUNT_MAX_DIGITS)) {
+      return;
+    }
+    this.setMinimum(minimum);
+    if (this.hasSubmitted) {
+      this.checkForm();
+    }
   }
 
   /** Блокирует отправку без потери введённого сообщения. */
@@ -179,8 +215,9 @@ export class DonateDialog {
    * Показывает ошибки полей и возвращает, верна ли форма.
    */
   private checkForm(): boolean {
-    const { isValid, errors } = validate(this.values(), donationSchema);
-    for (const name of Object.keys(donationSchema)) {
+    const schema = donationSchema(this.minimumMinor);
+    const { isValid, errors } = validate(this.values(), schema);
+    for (const name of Object.keys(schema)) {
       setFieldError(this.form, name, errors[name] ?? null);
     }
     return isValid;
@@ -220,6 +257,9 @@ export class DonateDialog {
    */
   private handleSubmit(event: SubmitEvent): void {
     event.preventDefault();
+    if (this.continueButton.disabled) {
+      return;
+    }
     this.hasSubmitted = true;
     if (!this.checkForm()) {
       this.form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -254,7 +294,12 @@ export class DonateDialog {
   private async send(): Promise<void> {
     const context = this.context;
     const author = this.author;
-    if (!author || !context || !isSessionCurrent(context) || this.isSending || this.readOnly || this.destroyed || !this.isSessionValid()) {
+    if (!author || !context || !isSessionCurrent(context) || this.continueButton.disabled
+        || this.isSending || this.readOnly || this.destroyed || !this.isSessionValid()) {
+      return;
+    }
+    if (!this.requestKey && !this.checkForm()) {
+      this.showStep('form');
       return;
     }
     const { amount, message } = this.values();

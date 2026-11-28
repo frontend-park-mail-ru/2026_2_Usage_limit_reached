@@ -1,6 +1,8 @@
 import { required, minLength, maxLength, maxByteLength, minNumber, pattern, email, sameAs, postContentRequired, httpsUrl } from './rules.ts';
 import type { Rule, Schema } from './validation.types.ts';
-import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX, DONATION_AMOUNT_MIN, DONATION_AMOUNT_MAX_DIGITS, DONATION_MESSAGE_MAX } from './schemas.constants.ts';
+import { formatMoney } from '@/utils/helpers/money.ts';
+import { MINOR_IN_MAJOR } from '@/utils/helpers/money.constants.ts';
+import { EMAIL_MAX, USERNAME_MIN, USERNAME_MAX, NICKNAME_MAX, PASSWORD_MIN, PASSWORD_MAX, PASSWORD_MAX_BYTES, BIO_MAX, POST_TITLE_MAX, POST_BODY_MAX, DONATION_AMOUNT_MAX_DIGITS, DONATION_MESSAGE_MAX } from './schemas.constants.ts';
 
 const PASSWORD_REQUIREMENTS_ERROR = `Пароль должен содержать от ${PASSWORD_MIN} до ${PASSWORD_MAX} символов, хотя бы одну латинскую букву и цифру`;
 
@@ -80,12 +82,12 @@ export const linkSchema: Schema = {
   url: [httpsUrl('Ссылка должна начинаться с https://')],
 };
 
-export const donationSchema: Schema = {
+export const donationSchema = (minimumMinor: number): Schema => ({
   amount: [
     required('Введите сумму больше нуля'),
     pattern(/^\d+$/, 'Введите сумму целым числом'),
     maxLength(DONATION_AMOUNT_MAX_DIGITS, 'Слишком большая сумма'),
-    minNumber(DONATION_AMOUNT_MIN, 'Введите сумму больше нуля'),
+    minNumber(minimumMinor / MINOR_IN_MAJOR, `Введите сумму от ${formatMoney(minimumMinor)}`),
   ],
   message: [maxLength(DONATION_MESSAGE_MAX, 'До 200 символов')],
-};
+});
