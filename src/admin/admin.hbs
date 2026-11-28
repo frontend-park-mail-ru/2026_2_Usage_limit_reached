@@ -1,12 +1,22 @@
 {{#if authorized}}
-  <div class="admin__sections">
-    <section class="admin__panel" id="configs">
-      <h2>Конфигурации</h2>
-    </section>
-    <section class="admin__panel" id="flags">
-      <h2>Feature flags</h2>
-    </section>
-  </div>
+  {{> tabs id="onlineconf-tabs" panelId="onlineconf-panel" label="Раздел OnlineConf" items=tabs className="admin__tabs"}}
+  <section class="admin__panel" id="onlineconf-panel" role="tabpanel" aria-labelledby="onlineconf-tabs-tab-configs">
+    <div class="admin__filters">
+      <label>
+        Скоуп
+        <select id="admin-scope" disabled></select>
+      </label>
+      <label>
+        Поиск по имени
+        <input id="admin-search" type="search" disabled />
+      </label>
+    </div>
+    <div class="admin__config-actions" data-config-actions hidden>
+      <button class="button button_view_secondary" type="button" data-create-config>Создать конфиг</button>
+    </div>
+    <div class="admin__config-form-slot" id="admin-config-form" hidden></div>
+    <div id="admin-list-results"></div>
+  </section>
 {{else}}
   <section class="admin__panel admin__access">
     <h2>{{title}}</h2>

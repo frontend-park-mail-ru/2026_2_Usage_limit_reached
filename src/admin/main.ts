@@ -5,18 +5,28 @@ import { ApiError } from '@/modules/api/apiError.ts';
 import { initCsrfSync } from '@/modules/api/csrf.ts';
 import { checkAdminAccess } from '@/modules/api/onlineConf.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
-import { ADMIN_ACCESS_CHECK_INTERVAL_MS, ADMIN_SCREENS } from './admin.constants.ts';
+import { ADMIN_ACCESS_CHECK_INTERVAL_MS, ADMIN_LIST_TABS, ADMIN_SCREENS } from './admin.constants.ts';
 import type { AdminScreen } from './admin.types.ts';
+import { initAdminLists } from './adminLists.ts';
 import template from './admin.hbs';
 
 const root = requireElement<HTMLElement>(document, '#admin-content');
 let currentScreen: AdminScreen | undefined;
 let pending: AbortController | undefined;
+let stopLists: (() => void) | undefined;
 
 function render(screen: AdminScreen): void {
   if (screen !== currentScreen) {
+    stopLists?.();
+    stopLists = undefined;
     currentScreen = screen;
-    root.innerHTML = template(ADMIN_SCREENS[screen]);
+    root.innerHTML = template({ ...ADMIN_SCREENS[screen], tabs: ADMIN_LIST_TABS });
+    if (screen === 'authorized') {
+      stopLists = initAdminLists(root, (nextScreen) => {
+        pending?.abort();
+        render(nextScreen);
+      });
+    }
   }
 }
 
@@ -70,6 +80,8 @@ window.addEventListener('pageshow', (event) => {
 });
 window.addEventListener('pagehide', (event) => {
   pending?.abort();
+  stopLists?.();
+  stopLists = undefined;
   if (!event.persisted) {
     stopSessionSync();
     window.clearInterval(timer);

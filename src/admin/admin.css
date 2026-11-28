@@ -20,18 +20,90 @@
 }
 
 .admin__header a,
-.admin__access .button {
+.admin__access .button,
+.admin__list-message + .button,
+.admin__config-actions .button,
+.admin__config-row .button {
   display: inline-flex;
   align-items: center;
   width: auto;
   min-height: 44px;
+}
+
+.admin__header a,
+.admin .button_view_secondary {
   color: var(--color-text);
 }
 
-.admin__sections {
+.admin__tabs {
+  margin-bottom: 16px;
+}
+
+.admin__filters {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin__filters label {
+  display: grid;
+  gap: 8px;
+}
+
+.admin__filters select,
+.admin__filters input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 12px;
+  background: var(--color-white);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.admin__filters :disabled {
+  opacity: 0.6;
+}
+
+.admin__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 24px;
+  overflow-wrap: anywhere;
+}
+
+.admin__list-message {
+  margin: 0;
+}
+
+.admin__list-message + .button {
+  margin-top: 12px;
+}
+
+.admin__config-actions:not([hidden]),
+.admin__config-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin__config-row {
+  justify-content: space-between;
+}
+
+.admin__panel > .admin__config-actions,
+.admin__config-form-slot {
+  margin-bottom: 16px;
+}
+
+.admin__config-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 
 .admin__panel {
@@ -46,7 +118,17 @@
 }
 
 @media (max-width: 720px) {
-  .admin__sections {
+  .tabs.admin__tabs {
+    display: flex;
+  }
+
+  .admin__tabs .tabs__tab {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .admin__filters {
     grid-template-columns: minmax(0, 1fr);
   }
 }
