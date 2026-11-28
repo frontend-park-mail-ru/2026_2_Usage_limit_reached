@@ -1,0 +1,12 @@
+{{#if items}}
+  <ul class="admin__list">
+    {{#each items}}
+      <li>{{name}}</li>
+    {{/each}}
+  </ul>
+{{else}}
+  <p class="admin__list-message">{{#if message}}{{message}}{{else}}Ничего не найдено{{/if}}</p>
+  {{#if retry}}
+    <button class="button button_view_secondary" type="button" data-list-retry>Повторить</button>
+  {{/if}}
+{{/if}}
