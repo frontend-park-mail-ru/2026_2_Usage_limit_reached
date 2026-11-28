@@ -20,3 +20,15 @@ export const ADMIN_SCREENS: AdminScreens = {
     retry: true,
   },
 };
+
+export const ADMIN_LIST_TABS = [
+  { value: 'configs', label: 'Конфигурации', selected: true },
+  { value: 'flags', label: 'Feature flags', selected: false },
+] as const;
+
+export const ADMIN_LIST_MESSAGES = {
+  loading: 'Загрузка…',
+  noScopes: 'Нет доступных скоупов',
+  scopesError: 'Не удалось загрузить скоупы',
+  listError: 'Не удалось загрузить список',
+} as const;
