@@ -21,11 +21,17 @@
 
 .admin__header a,
 .admin__access .button,
-.admin__list-message + .button {
+.admin__list-message + .button,
+.admin__config-actions .button,
+.admin__config-row .button {
   display: inline-flex;
   align-items: center;
   width: auto;
   min-height: 44px;
+}
+
+.admin__header a,
+.admin .button_view_secondary {
   color: var(--color-text);
 }
 
@@ -75,6 +81,29 @@
 
 .admin__list-message + .button {
   margin-top: 12px;
+}
+
+.admin__config-actions:not([hidden]),
+.admin__config-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin__config-row {
+  justify-content: space-between;
+}
+
+.admin__panel > .admin__config-actions,
+.admin__config-form-slot {
+  margin-bottom: 16px;
+}
+
+.admin__config-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
 }
 
 .admin__panel {
