@@ -40,7 +40,7 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
     } catch (error) {
       if (isCurrent() && (query.attachment_type || query.accessible_only)
         && error instanceof ApiError && error.status === 403 && error.code === 'feed_advanced_filters_disabled') {
-        refreshSettings();
+        refreshSettings(false);
         posts.updateFilters({ attachment_type: undefined, accessible_only: false });
       }
       throw error;
@@ -59,6 +59,8 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   const tools = requireElement(root, '.feed__tools');
   const sheet = requireElement<HTMLDialogElement>(root, '#feed-filter-sheet');
   const section = requireElement<HTMLDetailsElement>(panel, '.feed__attachment-section');
+  const attachmentHint = requireElement(section, '#feed-attachments-hint');
+  const defaultAttachmentHint = attachmentHint.textContent;
   const syncToolbar = () => {
     input.placeholder = mobile.matches ? 'Поиск' : 'Поиск по постам';
     const focused = document.activeElement;
@@ -141,12 +143,13 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
   };
   let settingsRequest: AbortController | undefined;
   let settingsSession = '';
-  const refreshSettings = () => {
+  const refreshSettings = (allowFallback = true) => {
     const { status } = authStore.getState();
     settingsRequest?.abort();
     const controller = new AbortController();
     settingsRequest = controller;
     section.hidden = true;
+    attachmentHint.textContent = defaultAttachmentHint;
     accessFilter.hidden = true;
     appliedAttachment = undefined;
     appliedAccessible = false;
@@ -162,12 +165,20 @@ export function initFeed(root: HTMLElement, navigate: Navigate, _params: RoutePa
       if (controller.signal.aborted) {
         return;
       }
-      const settings = await getFeedSettings(controller.signal).catch(() => null);
+      let useFallback = false;
+      const settings = await getFeedSettings(controller.signal).catch((error: unknown) => {
+        // В старом API фильтрацию решает сервер, а ручки настроек ещё нет.
+        useFallback = allowFallback && error instanceof ApiError && [404, 405].includes(error.status);
+        return null;
+      });
       if (controller.signal.aborted) {
         return;
       }
-      section.hidden = settings?.advanced_filters_enabled !== true;
+      section.hidden = !useFallback && settings?.advanced_filters_enabled !== true;
       accessFilter.hidden = section.hidden || settings?.accessible_only_supported !== true;
+      if (useFallback) {
+        attachmentHint.textContent = 'Обложки постов не учитываются. Сервер может вернуть посты без учёта фильтра.';
+      }
     };
     void load();
   };
