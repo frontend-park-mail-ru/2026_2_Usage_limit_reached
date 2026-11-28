@@ -2,6 +2,11 @@
   {{> alert title=errorTitle className="confirm-dialog__error"}}
   {{#unless hideSubject}}<p class="confirm-dialog__subject" data-confirm-subject></p>{{/unless}}
   <p class="confirm-dialog__text">{{text}}</p>
+  {{#if checkHref}}
+    <div data-confirm-check hidden>
+      <a href="{{checkHref}}" target="_blank" rel="noopener">Проверить список уровней в новой вкладке</a>
+    </div>
+  {{/if}}
   <div class="confirm-dialog__actions">
     <button class="button button_view_secondary confirm-dialog__button-cancel" type="button" data-modal-close data-error-label="{{errorCancelLabel}}">{{cancelLabel}}</button>
     <button class="button button_view_primary confirm-dialog__button-confirm" type="button" data-confirm-submit data-error-label="{{errorConfirmLabel}}">{{confirmLabel}}</button>

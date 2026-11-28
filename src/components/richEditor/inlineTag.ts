@@ -25,7 +25,7 @@ function getPieces(range: Range): TextPiece[] {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
-    if (!range.intersectsNode(node)) {
+    if (node.parentElement?.closest('[contenteditable="false"]') || !range.intersectsNode(node)) {
       continue;
     }
     const start = node === range.startContainer ? range.startOffset : 0;

@@ -1,5 +1,6 @@
 import { setLoadingText, startLoading, cancelLoading } from '@/utils/helpers/delayedLoading.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
+import { bindPostCardCovers } from '@/components/postCard/bindPostCardCovers.ts';
 import profileTemplate from './profile.hbs';
 import { bindProfileBio } from '@/components/profileBio/profileBio.ts';
 import { LikeButton } from '@/components/likeButton/likeButton.ts';
@@ -72,6 +73,7 @@ export function buildProfileViewModel(
       id: item.id,
       href: withPostReturnPath(postRoute(item.id), ROUTES.profile),
       title: item.title,
+      locked: item.locked,
       preview: item.locked ? '' : htmlToText(item.body_preview),
       likesCount: item.likes_count,
       liked: item.liked_by_user,
@@ -410,6 +412,7 @@ function bindPosts(
     void load(true);
   });
   const unbindRecovery = bindOfflineRecovery(() => retryAction?.(), () => isActive() && !!retryAction && !busy);
+  const unbindCovers = bindPostCardCovers(panel);
   panel.setAttribute('aria-labelledby', 'profile-tabs-tab-posts');
   renderSort();
   showList(initialPage);
@@ -423,6 +426,7 @@ function bindPosts(
     dialog.destroy();
     postDialog.destroy();
     unbindRecovery();
+    unbindCovers();
     setRefreshNotice(null);
   };
 }
