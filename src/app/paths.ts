@@ -9,6 +9,7 @@ export const ROUTES = {
   profile: '/profile',
   becomeAuthor: '/become-author',
   publicProfile: '/users/:username',
+  subscription: '/users/:username/subscription',
   settings: '/settings',
   settingsTiers: '/settings/tiers',
   settingsTierNew: '/settings/tiers/new',
@@ -87,6 +88,9 @@ export const postRoute = (id: string): RoutePath => `/posts/${encodeURIComponent
 
 /** Адрес публичного профиля пользователя. */
 export const publicProfileRoute = (username: string): RoutePath => `/users/${encodeURIComponent(username)}`;
+
+/** Адрес выбора уровня подписки. */
+export const subscriptionRoute = (username: string): RoutePath => `/users/${encodeURIComponent(username)}/subscription`;
 
 /**
  * Адрес редактирования поста.
