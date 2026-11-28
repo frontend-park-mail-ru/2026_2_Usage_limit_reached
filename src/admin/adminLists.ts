@@ -7,6 +7,7 @@ import { requireElement } from '@/utils/helpers/dom.ts';
 import { ADMIN_LIST_MESSAGES, ADMIN_LIST_TABS } from './admin.constants.ts';
 import type { AdminScreen } from './admin.types.ts';
 import listTemplate from './adminList.hbs';
+import { initAdminConfigForm } from './adminConfigForm.ts';
 
 /**
  * @param root
@@ -18,15 +19,20 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
   const scope = requireElement<HTMLSelectElement>(root, '#admin-scope');
   const search = requireElement<HTMLInputElement>(root, '#admin-search');
   const results = requireElement<HTMLElement>(root, '#admin-list-results');
+  const configActions = requireElement<HTMLElement>(panel, '[data-config-actions]');
+  const createConfig = requireElement<HTMLButtonElement>(configActions, '[data-create-config]');
+  const configFormRoot = requireElement<HTMLElement>(panel, '#admin-config-form');
   const events = new AbortController();
   let section: OnlineConfSection = ADMIN_LIST_TABS[0].value;
   let pending: AbortController | undefined;
+  const configForm = initAdminConfigForm(configFormRoot, scope, () => void load(), onAccessLost);
 
   async function load(): Promise<void> {
     pending?.abort();
     const controller = new AbortController();
     pending = controller;
     const { signal } = controller;
+    configActions.hidden = section !== 'configs' || scope.disabled;
     results.innerHTML = listTemplate({ message: ADMIN_LIST_MESSAGES.loading });
 
     try {
@@ -42,10 +48,11 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
         scope.replaceChildren(...items.map(({ id, name }) => new Option(name, id)));
         scope.disabled = false;
         search.disabled = false;
+        configActions.hidden = section !== 'configs';
       }
       const response = await getOnlineConfList(section, { scope: scope.value, q: search.value }, signal);
       if (!signal.aborted) {
-        results.innerHTML = listTemplate(response);
+        results.innerHTML = listTemplate({ ...response, editable: section === 'configs' });
       }
     } catch (error) {
       if (signal.aborted) {
@@ -69,17 +76,30 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
     if (!tab) {
       return;
     }
+    configForm.close();
     section = tab.value;
     const selectedTab = requireElement<HTMLButtonElement>(tabList, '[aria-selected="true"]');
     panel.setAttribute('aria-labelledby', selectedTab.id);
     void load();
   });
   const options = { signal: events.signal };
-  scope.addEventListener('change', () => void load(), options);
+  scope.addEventListener('change', () => {
+    configForm.close();
+    void load();
+  }, options);
   search.addEventListener('input', () => void load(), options);
+  createConfig.addEventListener('click', () => void configForm.open(), options);
   results.addEventListener('click', (event) => {
-    if (event.target instanceof Element && event.target.closest('[data-list-retry]')) {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+    if (event.target.closest('[data-list-retry]')) {
       void load();
+      return;
+    }
+    const name = event.target.closest<HTMLButtonElement>('[data-edit-config]')?.dataset.editConfig;
+    if (name) {
+      void configForm.open({ scope: scope.value, name });
     }
   }, options);
   void load();
@@ -87,6 +107,7 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
   return () => {
     events.abort();
     pending?.abort();
+    configForm.close();
     tabs.destroy();
   };
 }
