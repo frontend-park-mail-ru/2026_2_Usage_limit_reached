@@ -48,6 +48,16 @@
   display: none;
 }
 
+.profile__public-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.profile__public-actions [aria-disabled='true'] {
+  opacity: 0.6;
+}
+
 .profile__title {
   margin: 0;
 }
@@ -118,6 +128,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
