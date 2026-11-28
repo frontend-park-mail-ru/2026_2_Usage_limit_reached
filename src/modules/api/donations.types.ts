@@ -30,7 +30,7 @@ export interface Donation {
   amount_minor: number;
   currency: string;
   status: string;
-  created_or_paid_at: string;
+  created_at: string;
   user: DonationUser | null;
 }
 
