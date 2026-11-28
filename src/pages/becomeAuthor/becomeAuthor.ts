@@ -255,7 +255,7 @@ function bindBecomeAuthor(root: HTMLElement, navigate: Navigate, profile: Profil
         showRequestError(root, 'Сессия изменилась. Проверьте профиль перед повтором.', true);
         return;
       }
-      if (result.author) {
+      if (typeof result.bio === 'string') {
         finishSuccessfully();
       } else {
         requiresStatusCheck = true;

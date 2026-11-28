@@ -1,5 +1,5 @@
 import * as profileApi from '@/modules/api/profile.ts';
-import type { AuthorCreationInput, Profile, ProfileUpdate } from '@/modules/api/profile.types.ts';
+import type { AuthorCreationInput, ProfileAuthor, ProfileUpdate } from '@/modules/api/profile.types.ts';
 import { getSessionContext, isSessionCurrent, runSessionRequest, runSessionMutation } from '@/modules/auth/auth.actions.ts';
 import { saveOfflineProfile } from '@/modules/offline/offline.storage.ts';
 import { updateSession } from '@/modules/api/session.ts';
@@ -27,7 +27,7 @@ export function openSavedProfile(saved: SavedProfileNavigation, navigate: Naviga
 }
 
 /** Создаёт профиль автора и отзывает устаревшую offline-копию. */
-export async function becomeAuthor(data: AuthorCreationInput, context: SessionContext): Promise<Profile | undefined> {
+export async function becomeAuthor(data: AuthorCreationInput, context: SessionContext): Promise<ProfileAuthor | undefined> {
   return runSessionMutation(context, () => profileApi.createAuthor(data));
 }
 
