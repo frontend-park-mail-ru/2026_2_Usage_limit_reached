@@ -251,6 +251,7 @@ export function saveOfflinePosts(expected: OfflineToken | undefined, posts: Prof
         title: item.title,
         locked: item.locked,
         body_preview: item.locked ? '' : item.body_preview,
+        likes_count: item.likes_count,
         published_or_updated_at: item.published_or_updated_at,
       })),
       next_cursor: posts.next_cursor,

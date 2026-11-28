@@ -22,7 +22,9 @@ export async function expireSession(
   notifyTabs = true,
 ): Promise<boolean> {
   const version = sessionVersion;
-  const cleared = await clearOfflineCopy(expected, () => version === sessionVersion);
+  const anonymous = !confirmedSession && pendingChangeVersion === undefined
+    && expected && 'ownerId' in expected && expected.ownerId === null;
+  const cleared = anonymous ? true : await clearOfflineCopy(expected, () => version === sessionVersion);
   if (cleared === false || version !== sessionVersion) {
     return false;
   }

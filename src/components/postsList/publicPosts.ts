@@ -5,10 +5,9 @@ import sortMenuTemplate from '@/components/sortMenu/sortMenu.hbs';
 import { SortMenu } from '@/components/sortMenu/sortMenu.ts';
 import { publicProfileRoute } from '@/app/paths.ts';
 import type { PostPreview, PostsQuery, PostsSort } from '@/modules/api/posts.types.ts';
-import type { OfflinePostsPage } from '@/modules/offline/offline.feed.ts';
+import type { OfflinePostsPage } from '@/modules/offline/offline.pages.ts';
 import { bindOfflineRecovery, isBackendUnavailable } from '@/modules/offline/offline.recovery.ts';
 import { ApiError } from '@/modules/api/request.ts';
-import { formatPostDate } from '@/utils/helpers/posts.ts';
 import { AVATAR_PLACEHOLDER } from '@/modules/profile/profile.constants.ts';
 import { requireElement } from '@/utils/helpers/dom.ts';
 import { buildPostCard } from '@/components/postCard/buildPostCard.ts';
@@ -20,12 +19,16 @@ import { LIST_ERROR, LIST_LOADING_MESSAGE, POST_SORT_OPTIONS } from './postsList
  * @param loadPage
  * @param bindLike
  * @param feed
+ * @param offlineEnabled
+ * @param readOnly
  */
 export function bindPublicPosts(
   root: HTMLElement,
   loadPage: (query: PostsQuery, isCurrent: () => boolean) => Promise<OfflinePostsPage>,
   bindLike?: (button: HTMLButtonElement, item: PostPreview) => void,
-  feed = false
+  feed = false,
+  offlineEnabled = feed,
+  readOnly = false,
 ) {
   const panel = requireElement<HTMLElement>(root, '[data-public-posts]');
   const retry = requireElement<HTMLButtonElement>(root, '[data-list-retry]');
@@ -37,7 +40,9 @@ export function bindPublicPosts(
   let request = 0;
   let busy = false;
   let active = true;
-  let offline = false;
+  let offline = readOnly;
+  let unavailable = false;
+  let recoverAfterLoad = false;
   const notice = root.querySelector<HTMLElement>('[data-offline-notice]');
 
   const observer = new IntersectionObserver((entries) => {
@@ -58,7 +63,7 @@ export function bindPublicPosts(
     if (!append) {
       cancelLoading(panel);
       cursor = null;
-      offline = false;
+      offline = readOnly;
       if (notice) {
         notice.hidden = true;
       }
@@ -72,10 +77,11 @@ export function bindPublicPosts(
         return;
       }
       cursor = page.next_cursor;
+      unavailable = page.savedAt !== undefined;
       offline ||= page.savedAt !== undefined;
       if (page.savedAt !== undefined) {
         if (notice) {
-          notice.textContent = `Сохранённая копия · ${formatPostDate(new Date(page.savedAt).toISOString())}. Доступен только просмотр`;
+          notice.textContent = 'Сохранённая копия. Доступен только просмотр';
           notice.hidden = false;
         }
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
@@ -126,7 +132,8 @@ export function bindPublicPosts(
       if (!active || id !== request) {
         return;
       }
-      offline ||= feed && isBackendUnavailable(error);
+      offline ||= offlineEnabled && isBackendUnavailable(error);
+      unavailable = isBackendUnavailable(error);
       if (offline) {
         panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
       }
@@ -145,6 +152,12 @@ export function bindPublicPosts(
       stopLoading();
       if (id === request) {
         busy = false;
+        if (recoverAfterLoad) {
+          recoverAfterLoad = false;
+          if (active && unavailable) {
+            void load();
+          }
+        }
       }
     }
   }
@@ -157,9 +170,16 @@ export function bindPublicPosts(
     }
   });
   retry.addEventListener('click', () => { void load(!!cursor && !offline); });
-  const unbindRecovery = bindOfflineRecovery(() => { void load(); }, () => feed && active && offline && !busy);
+  const unbindRecovery = bindOfflineRecovery(() => {
+    if (busy) {
+      recoverAfterLoad = true;
+    } else {
+      void load();
+    }
+  }, () => offlineEnabled && active && unavailable);
   const handleOffline = () => {
-    if (feed && active) {
+    if (offlineEnabled && active) {
+      unavailable = true;
       offline = true;
       panel.querySelectorAll<HTMLButtonElement>('.like-button').forEach((button) => { button.disabled = true; });
       if (!busy) {
