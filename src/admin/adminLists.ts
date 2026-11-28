@@ -9,12 +9,15 @@ import type { AdminScreen } from './admin.types.ts';
 import listTemplate from './adminList.hbs';
 import { initAdminConfigForm } from './adminConfigForm.ts';
 import { renderFlagList } from './adminFlags.ts';
+import { initAdminHistory } from './adminHistory.ts';
+import type { LoadAdminHistory } from './adminHistory.ts';
 
 /**
  * @param root
  * @param onAccessLost
+ * @param loadHistory
  */
-export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminScreen) => void): () => void {
+export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminScreen) => void, loadHistory?: LoadAdminHistory): () => void {
   const tabList = requireElement<HTMLElement>(root, '.admin__tabs');
   const panel = requireElement<HTMLElement>(root, '#onlineconf-panel');
   const scope = requireElement<HTMLSelectElement>(root, '#admin-scope');
@@ -27,8 +30,10 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
   let section: OnlineConfSection = ADMIN_LIST_TABS[0].value;
   let pending: AbortController | undefined;
   const configForm = initAdminConfigForm(configFormRoot, scope, () => void load(), onAccessLost);
+  const history = initAdminHistory(requireElement(panel, '#admin-history'), loadHistory);
 
   async function load(): Promise<void> {
+    history.close();
     pending?.abort();
     const controller = new AbortController();
     pending = controller;
@@ -104,6 +109,14 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
       void load();
       return;
     }
+    const historyButton = event.target.closest<HTMLButtonElement>('[data-history-name]');
+    if (historyButton) {
+      configForm.close();
+      history.open({
+        section, scope: scope.value, name: historyButton.dataset.historyName ?? '', id: historyButton.dataset.historyId || undefined,
+      }, historyButton);
+      return;
+    }
     const name = event.target.closest<HTMLButtonElement>('[data-edit-config]')?.dataset.editConfig;
     if (name) {
       void configForm.open({ scope: scope.value, name });
@@ -114,6 +127,7 @@ export function initAdminLists(root: HTMLElement, onAccessLost: (screen: AdminSc
   return () => {
     events.abort();
     pending?.abort();
+    history.close();
     configForm.close();
     tabs.destroy();
   };

@@ -1,0 +1,6 @@
+<button class="button button_view_secondary" type="button" data-history-back>К списку</button>
+<h2 id="admin-history-title">{{#if config}}История конфига{{else}}История флага{{/if}}</h2>
+<p class="admin__history-resource">{{name}} · {{scope}}</p>
+<p role="status" data-history-status></p>
+<button class="button button_view_secondary" type="button" data-history-retry hidden>Повторить</button>
+<ol class="admin__history-entries" data-history-entries></ol>

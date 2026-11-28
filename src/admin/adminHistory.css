@@ -1,0 +1,61 @@
+.admin__panel:has(.admin__history:not([hidden])) > :not(.admin__history) {
+  display: none;
+}
+
+.admin__history {
+  overflow-wrap: anywhere;
+}
+
+.admin__history .button {
+  width: auto;
+  min-height: 44px;
+}
+
+.admin__history [hidden],
+.admin__history [role='status']:empty,
+.admin__history-entries:empty {
+  display: none;
+}
+
+.admin__history h2 {
+  margin-block-start: 16px;
+}
+
+.admin__history-resource {
+  margin-block-start: 8px;
+}
+
+.admin__history-entries {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.admin__history-entries li {
+  padding: 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 12px;
+}
+
+.admin__history-entries time {
+  display: block;
+  margin-top: 4px;
+}
+
+.admin__history-entries dt {
+  margin-block: 12px 4px;
+  font-weight: 600;
+}
+
+.admin__history-entries dd {
+  margin: 0;
+}
+
+.admin__history-entries pre {
+  margin: 4px 0 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--color-toggle-hover-background);
+  white-space: pre-wrap;
+}
