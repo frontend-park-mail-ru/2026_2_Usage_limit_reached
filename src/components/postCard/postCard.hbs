@@ -23,7 +23,7 @@
     {{#if coverUrl}}
       <img class="post-card__cover" src="{{coverUrl}}" alt="" loading="lazy">
     {{/if}}
-    <p class="post-card__excerpt">{{preview}}</p>
+    <p class="post-card__excerpt"{{#if offlineDeadline}} data-offline-preview="{{offlineDeadline}}"{{/if}}>{{preview}}</p>
   {{/if}}
   <h3 class="post-card__title" id="post-card-title-{{id}}">{{title}}</h3>
   <div class="post-card__footer">

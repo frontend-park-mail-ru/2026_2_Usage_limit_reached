@@ -1,4 +1,4 @@
-import type { PostAttachment } from './attachments.ts';
+import type { AttachmentType, PostAttachment } from './attachments.ts';
 
 export type PostStatus = 'draft' | 'published' | 'archived';
 
@@ -25,6 +25,7 @@ export interface PostPreview {
   locked: boolean;
   title: string;
   body_preview: string;
+  offline_cache_until?: string | null;
   cover_url?: string | null;
   likes_count: number;
   liked_by_user: boolean;
@@ -41,6 +42,13 @@ export interface PostsQuery {
   cursor?: string | null;
 }
 
+export interface FeedQuery extends PostsQuery {
+  q?: string;
+  tag?: string;
+  attachment_type?: 'any' | AttachmentType;
+  accessible_only?: boolean;
+}
+
 export interface PostAccessStage {
   starts_at: string;
   min_tier_id: string | null;
@@ -51,6 +59,7 @@ export interface Post {
   author: PostAuthor;
   title: string;
   body: string;
+  offline_cache_until?: string | null;
   attachments?: PostAttachment[];
   cover_url?: string | null;
   min_tier_id?: string | null;
