@@ -1,0 +1,24 @@
+<form class="admin__config-form" aria-labelledby="admin-config-title" novalidate>
+  <h2 id="admin-config-title">{{title}}</h2>
+  {{> formField id="admin-config-name" name="name" label="Имя" type="text" value=name readOnly=editing large=true}}
+  <div class="form-field">
+    <label class="form-field__label" for="admin-config-scope">Скоуп</label>
+    <select class="form-field__input form-field__input_large" id="admin-config-scope" name="scope" {{#if editing}}disabled{{/if}}>
+      {{#each scopes}}
+        <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="form-field">
+    <label class="form-field__label" for="admin-config-value">Значение (JSON)</label>
+    <textarea class="form-field__input form-field__input-textarea" id="admin-config-value" name="value" rows="5"
+      aria-describedby="admin-config-value-hint admin-config-value-error">{{value}}</textarea>
+    <p class="form-field__hint" id="admin-config-value-hint">Строки вводите в двойных кавычках, например <code>"текст"</code>.</p>
+    <p class="form-field__error" id="admin-config-value-error" data-error-for="value" aria-live="polite"></p>
+  </div>
+  <p class="form-field__error" data-form-error role="alert"></p>
+  <div class="admin__config-actions">
+    <button class="button button_view_primary" type="submit">Сохранить</button>
+    <button class="button button_view_secondary" type="button" data-cancel-config>Отмена</button>
+  </div>
+</form>
